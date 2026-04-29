@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/widget_background"
+    android:gravity="center_vertical">
+
+    <TextView
+        android:id="@+id/widget_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SIDERAL"
+        android:textColor="#80000000"
+        android:textSize="9sp"
+        android:letterSpacing="0.25"
+        android:fontFamily="sans-serif-light"
+        android:layout_marginBottom="10dp" />
+
+    <TextView
+        android:id="@+id/widget_frase"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Cargando tu lectura..."
+        android:textColor="#DD000000"
+        android:textSize="14sp"
+        android:lineSpacingMultiplier="1.5"
+        android:fontFamily="sans-serif-light" />
+
+</LinearLayout>

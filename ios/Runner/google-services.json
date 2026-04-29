@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "424940223395",
+    "project_id": "astro-fd0bf",
+    "storage_bucket": "astro-fd0bf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:424940223395:android:ccef9d59a3b3afec37f816",
+        "android_client_info": {
+          "package_name": "com.ecos.astroapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "424940223395-9t9r7fcma2slfmstcbp314enmkkmj28l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDaOtqXMxssoH_y-VGAE5hsUS0JCQl9-No"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "424940223395-9t9r7fcma2slfmstcbp314enmkkmj28l.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "424940223395-b5ph60qtjc3nhn2ssh79v1rjocc7l5qp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.miPrimeraApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
