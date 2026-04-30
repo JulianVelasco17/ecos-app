@@ -539,46 +539,16 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                 const SizedBox(height: 20),
                 GestureDetector(
                   key: _keyMasAlla,
-                  onTap: () async {
+                  onTap: () {
                     final box = _keyMasAlla.currentContext!
                         .findRenderObject() as RenderBox;
                     final origen = box.localToGlobal(
                         box.size.center(Offset.zero));
-                    final nav = Navigator.of(context);
-
-                    // Debug: regenera sin usar caché
-                    setState(() => _cargando = true);
-                    final lectura = await ClaudeService.generarAstrosDelDia(
-                      nombre: widget.nombre,
-                      signoSolar: _miSolar,
-                      signoLunar: _miLunar,
-                      ascendente: _miAsc,
-                      fraseBase: _fraseBase,
-                      areaFrase: _areaFrase,
-                      planetas: _miPlanetas,
-                    );
-                    String? nuevaFrase;
-                    String? nuevoDesarrollo;
-                    try {
-                      final limpia = lectura.replaceAll(RegExp(r'```json|```'), '').trim();
-                      final json = jsonDecode(limpia);
-                      nuevaFrase = _fraseBase;
-                      nuevoDesarrollo = json['parrafo'] as String?;
-                    } catch (_) {
-                      nuevaFrase = _fraseBase;
-                    }
-                    if (!mounted) return;
-                    setState(() {
-                      _frase = nuevaFrase;
-                      _desarrollo = nuevoDesarrollo;
-                      _cargando = false;
-                    });
-
-                    nav.push(
+                    Navigator.of(context).push(
                       MasAllaRoute(
                         origen: origen,
-                        frase: nuevaFrase,
-                        desarrollo: nuevoDesarrollo,
+                        frase: _frase,
+                        desarrollo: _desarrollo,
                       ),
                     );
                   },

@@ -186,8 +186,7 @@ class _PantallaMasAllaState extends State<PantallaMasAlla> {
                 // Contenido
                 Expanded(
                   child: _cargando
-                      ? const Center(
-                          child: CircularProgressIndicator(color: Color(0x44F3EBD6), strokeWidth: 1.5))
+                      ? const SizedBox.shrink()
                       : Padding(
                           padding: const EdgeInsets.fromLTRB(28, 28, 28, 16),
                           child: Column(
