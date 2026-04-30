@@ -33,8 +33,17 @@ class _PantallaClimaAstralState extends State<PantallaClimaAstral> {
     final fechaKey = '${hoy.year}-${hoy.month.toString().padLeft(2, '0')}-${hoy.day.toString().padLeft(2, '0')}';
     final miUid = FirebaseAuth.instance.currentUser?.uid;
 
-    final planetas = CalculosPlanetarios.calcularPosiciones(hoy);
-    final lons = CalculosAstrales.calcularLongitudes(hoy, 0, 0);
+    final utc = hoy.toUtc();
+    final lons = CalculosAstrales.calcularLongitudes(utc, utc.hour, utc.minute);
+    const _nombres = ['Sol','Luna','Mercurio','Venus','Marte','Júpiter','Saturno','Urano','Neptuno','Plutón'];
+    const _simbolos = {'Sol':'☉','Luna':'☽','Mercurio':'☿','Venus':'♀','Marte':'♂','Júpiter':'♃','Saturno':'♄','Urano':'♅','Neptuno':'♆','Plutón':'♇'};
+    const _signosLista = ['Aries','Tauro','Géminis','Cáncer','Leo','Virgo','Libra','Escorpio','Sagitario','Capricornio','Acuario','Piscis'];
+    const _simbolosSignos = ['ARI','TAU','GEM','CAN','LEO','VIR','LIB','ESC','SAG','CAP','ACU','PIS'];
+    final planetas = _nombres.where((n) => lons.containsKey(n)).map((n) {
+      final lon = lons[n]!;
+      final idx = ((lon % 360) / 30).floor() % 12;
+      return PlanetaInfo(nombre: n, simbolo: _simbolos[n]!, signo: _signosLista[idx], simboloSigno: _simbolosSignos[idx], longitud: lon);
+    }).toList();
 
     String caption;
     if (miUid != null) {
@@ -235,7 +244,7 @@ class _PantallaClimaAstralState extends State<PantallaClimaAstral> {
                           'Sagitario':'Sag','Capricornio':'Cap','Acuario':'Acu','Piscis':'Pis',
                         };
                         final signo = signos[((lon % 360) / 30).floor() % 12];
-                        final grado = (lon % 30).floor();
+                        final grado = (lon % 30).toStringAsFixed(1);
                         return GestureDetector(
                           onTap: () => setState(() =>
                               _seleccionado = selec ? null : nombre),

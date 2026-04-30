@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'perfil_usuario.dart';
+import '../services/calculos_astrales.dart';
+import 'afinidad.dart';
 import 'buscar_amigos.dart';
 
 class PantallaAmigos extends StatelessWidget {
@@ -99,17 +100,55 @@ class PantallaAmigos extends StatelessWidget {
 
                           return ListTile(
                             contentPadding: EdgeInsets.zero,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => PantallaPerfilUsuario(
-                                  uid: amigoUid,
-                                  nombre: nombre,
-                                  nombreUsuario: usuario,
-                                  fotoUrl: fotoUrl,
+                            onTap: () async {
+                              final miUid = FirebaseAuth.instance.currentUser?.uid;
+                              if (miUid == null) return;
+                              final miDoc = await FirebaseFirestore.instance
+                                  .collection('usuarios').doc(miUid).get();
+                              if (!miDoc.exists) return;
+                              final mi = miDoc.data()!;
+
+                              CartaAstral cartaDe(Map<String, dynamic> d) {
+                                final ts = d['fechaNacimiento'];
+                                final fecha = (ts).toDate() as DateTime;
+                                final horaStr = d['horaNacimiento'] as String? ?? '12:00';
+                                final p = horaStr.split(':');
+                                return CalculosAstrales.calcular(
+                                  fechaNacimiento: fecha,
+                                  hora: int.tryParse(p[0]) ?? 12,
+                                  minutos: int.tryParse(p.length > 1 ? p[1] : '0') ?? 0,
+                                  latitud: (d['latitud'] as num?)?.toDouble() ?? 0,
+                                  longitud: (d['longitud'] as num?)?.toDouble() ?? 0,
+                                );
+                              }
+
+                              final miCarta     = cartaDe(mi);
+                              final amigoCarta  = cartaDe(data);
+
+                              if (!context.mounted) return;
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => PantallaAfinidad(
+                                    miUid:        miUid,
+                                    miNombre:     mi['nombre'] ?? '',
+                                    miSolar:      miCarta.signoSolar,
+                                    miLunar:      miCarta.signoLunar,
+                                    miAsc:        miCarta.ascendente,
+                                    miPlanetas:   miCarta.planetas,
+                                    amigoUid:     amigoUid,
+                                    amigoNombre:  nombre,
+                                    amigoUsername: usuario,
+                                    amigoFotoUrl: fotoUrl,
+                                    amigoSolar:   amigoCarta.signoSolar,
+                                    amigoLunar:   amigoCarta.signoLunar,
+                                    amigoAsc:     amigoCarta.ascendente,
+                                    amigoPlanetas: amigoCarta.planetas,
+                                    captionHoy:   '',
+                                  ),
                                 ),
-                              ),
-                            ),
+                              );
+                            },
                             leading: CircleAvatar(
                               radius: 20,
                               backgroundColor: Colors.black12,

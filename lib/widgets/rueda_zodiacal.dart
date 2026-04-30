@@ -214,7 +214,7 @@ class RuedaZodiacalPainter extends CustomPainter {
     canvas.drawCircle(pos, 13, Paint()..color = color.withValues(alpha: 0.12 * alpha));
     canvas.drawCircle(pos, 8,  Paint()..color = color.withValues(alpha: 0.28 * alpha));
     canvas.drawCircle(pos, 5,  Paint()..color = color.withValues(alpha: alpha));
-    _pintarSimbolo(canvas, pos, simbolo, 10, Colors.white.withValues(alpha: 0.9 * alpha));
+    _pintarSimbolo(canvas, pos, simbolo, 13, Colors.white.withValues(alpha: 0.9 * alpha));
   }
 
   void _dibujarPlanetaGenerico(Canvas canvas, Offset pos, double alpha, String simbolo) {
@@ -224,7 +224,7 @@ class RuedaZodiacalPainter extends CustomPainter {
       ..color = Colors.black.withValues(alpha: 0.14 * alpha)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.8);
-    _pintarSimbolo(canvas, pos, simbolo, 11, Colors.black.withValues(alpha: 0.65 * alpha));
+    _pintarSimbolo(canvas, pos, simbolo, 14, Colors.black.withValues(alpha: 0.65 * alpha));
   }
 
   void _dibujarAscendente(Canvas canvas, Offset pos, double alpha, String simbolo) {
@@ -234,7 +234,7 @@ class RuedaZodiacalPainter extends CustomPainter {
       ..color = const Color(0xFF7EB8C9).withValues(alpha: 0.6 * alpha)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0);
-    _pintarSimbolo(canvas, pos, simbolo, 11, const Color(0xFF7EB8C9).withValues(alpha: alpha));
+    _pintarSimbolo(canvas, pos, simbolo, 14, const Color(0xFF7EB8C9).withValues(alpha: alpha));
   }
 
   void _pintarSimbolo(Canvas canvas, Offset pos, String simbolo, double fontSize, Color color) {
@@ -266,24 +266,24 @@ class RuedaZodiacalPainter extends CustomPainter {
         final p2 = Offset(centro.dx + radio * cos(a2), centro.dy + radio * sin(a2));
 
         // Sextil 60° — línea punteada suave
-        if ((d - 60).abs() < 3) {
+        if ((d - 60).abs() < 6) {
           _lineaEstilizada(canvas, p1, p2,
               Paint()..color = Colors.black.withValues(alpha: 0.20)..strokeWidth = 0.7,
               dashOn: 2.0, dashOff: 5.0);
         }
         // Cuadratura 90° — guiones medianos
-        else if ((d - 90).abs() < 3) {
+        else if ((d - 90).abs() < 6) {
           _lineaEstilizada(canvas, p1, p2,
               Paint()..color = Colors.black.withValues(alpha: 0.35)..strokeWidth = 0.9,
               dashOn: 6.0, dashOff: 4.0);
         }
         // Trígono 120° — línea sólida suave
-        else if ((d - 120).abs() < 3) {
+        else if ((d - 120).abs() < 6) {
           canvas.drawLine(p1, p2,
               Paint()..color = Colors.black.withValues(alpha: 0.22)..strokeWidth = 0.8);
         }
         // Oposición 180° — guiones largos
-        else if ((d - 180).abs() < 3) {
+        else if ((d - 180).abs() < 6) {
           _lineaEstilizada(canvas, p1, p2,
               Paint()..color = Colors.black.withValues(alpha: 0.40)..strokeWidth = 1.0,
               dashOn: 12.0, dashOff: 5.0);

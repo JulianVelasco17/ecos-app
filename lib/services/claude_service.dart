@@ -325,6 +325,36 @@ Responde SOLO con este JSON sin nada más:
     return await _llamarClaude(prompt, maxTokens: 600);
   }
 
+  // Genera una lectura profunda expandida de carta astral (7 secciones)
+  static Future<String> generarLecturaCartaProfunda({
+    required String nombre,
+    required String signoSolar,
+    required String signoLunar,
+    required String ascendente,
+    required List<String> aspectos,
+    required Map<String, String> planetas,
+  }) async {
+    final n = nombre.split(' ').first;
+    final planetasStr = planetas.entries.map((e) => '${e.key} en ${e.value}').join(', ');
+    final prompt = '''
+Eres la voz de una app de astrología profunda. Carta natal de $n: Sol en $signoSolar, Luna en $signoLunar, Ascendente en $ascendente. Planetas: $planetasStr. Aspectos dominantes: ${aspectos.take(8).join('; ')}.
+
+Escribe una lectura completa de carta natal organizada en 7 secciones. Cada sección: 2-3 oraciones directas, concretas, íntimas. No menciones signos ni planetas — tradúcelos a experiencias humanas reales. Tono: revelador, sin florituras, como alguien que te conoce de verdad. Sin "energía", "vibra", "universo", "flujo". Sin guiones largos. Sin markdown.
+
+Responde SOLO con este JSON sin nada más:
+{
+  "esencia": "Quién eres en el núcleo — tu naturaleza más verdadera.",
+  "proposito": "Para qué viniste — tu dirección de vida.",
+  "amor": "Cómo amas, qué buscas, qué te desafía en relaciones.",
+  "sombra": "Tu mayor patrón inconsciente — lo que sabotea sin que lo veas.",
+  "dones": "Tus talentos naturales más distinctivos.",
+  "carrera": "Dónde florecen tus capacidades en el trabajo.",
+  "crecimiento": "Tu frontera de evolución — lo que este ciclo pide de ti."
+}
+''';
+    return await _llamarClaude(prompt, maxTokens: 900);
+  }
+
   // Genera una lectura de sinastría entre dos personas
   static Future<String> generarSinastria({
     required String nombre1,

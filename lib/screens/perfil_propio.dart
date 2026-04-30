@@ -9,6 +9,7 @@ import '../services/calculos_astrales.dart';
 import '../services/aspectos_natales.dart';
 import '../services/claude_service.dart';
 import '../widgets/rueda_zodiacal.dart';
+import 'lectura_carta_profunda.dart';
 
 class PantallaPerfilPropio extends StatefulWidget {
   const PantallaPerfilPropio({super.key});
@@ -366,6 +367,42 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
                       }).toList(),
                     ),
 
+                    const SizedBox(height: 32),
+                    GestureDetector(
+                      onTap: () => Navigator.push(context,
+                          MaterialPageRoute(builder: (_) => const PantallaLecturaCartaProfunda())),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Row(
+                          children: [
+                            Text('✦', style: TextStyle(color: Color(0xFFB8973A), fontSize: 13)),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('LECTURA PROFUNDA',
+                                      style: TextStyle(color: Color(0xFFB8973A),
+                                          fontSize: 10, letterSpacing: 3)),
+                                  SizedBox(height: 4),
+                                  Text('Tu carta natal completa',
+                                      style: TextStyle(color: Color(0xFFE7D8C9),
+                                          fontSize: 13, fontWeight: FontWeight.w300,
+                                          letterSpacing: 0.3)),
+                                ],
+                              ),
+                            ),
+                            Icon(Icons.arrow_forward_ios,
+                                color: Color(0x44E7D8C9), size: 14),
+                          ],
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 48),
 
                     if (_lectura.isNotEmpty) ...[

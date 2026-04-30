@@ -4,33 +4,24 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class AuthService {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
-  static final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   static const _serverClientId = '424940223395-9t9r7fcma2slfmstcbp314enmkkmj28l.apps.googleusercontent.com';
-
-  // Se inicializa una sola vez
-  static bool _googleInitializado = false;
+  static const _iosClientId    = '424940223395-tlh06k38h4mi8fdivhir7407i7ju43a9.apps.googleusercontent.com';
 
   // Usuario actualmente loggeado (null si no hay sesión)
   static User? get usuarioActual => _auth.currentUser;
 
   // Inicia sesión con Google
-  // Devuelve el User si tuvo éxito, null si el usuario canceló
   static Future<User?> loginConGoogle() async {
     try {
-      // initialize() solo debe llamarse una vez en toda la app
-      if (!_googleInitializado) {
-        await _googleSignIn.initialize(serverClientId: _serverClientId);
-        _googleInitializado = true;
-      }
-      final cuentaGoogle = await _googleSignIn.authenticate();
-
-      // Obtenemos las credenciales de Google
-      final autenticacion = cuentaGoogle.authentication;
-      final credencial = GoogleAuthProvider.credential(
-        idToken: autenticacion.idToken,
+      await GoogleSignIn.instance.initialize(
+        clientId: _iosClientId,
+        serverClientId: _serverClientId,
       );
-
-      // Iniciamos sesión en Firebase con esas credenciales
+      final cuenta = await GoogleSignIn.instance.authenticate();
+      final auth = cuenta.authentication;
+      final credencial = GoogleAuthProvider.credential(
+        idToken: auth.idToken,
+      );
       final resultado = await _auth.signInWithCredential(credencial);
       return resultado.user;
     } catch (e) {
@@ -67,7 +58,7 @@ class AuthService {
 
   // Cierra sesión
   static Future<void> cerrarSesion() async {
-    await _googleSignIn.signOut();
+    await GoogleSignIn.instance.signOut();
     await _auth.signOut();
   }
 }

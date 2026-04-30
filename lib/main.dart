@@ -108,7 +108,7 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
       duration: const Duration(milliseconds: 700),
     );
 
-    _oscurecimiento = Tween<double>(begin: 0.0, end: 0.85).animate(
+    _oscurecimiento = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _controladorOscurecer, curve: Curves.easeIn),
     );
 
@@ -134,10 +134,14 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
     }
     await AuthService.loginAnonimo();
     if (!mounted) return;
+    // Oscurecer a negro total antes de navegar
+    await _controladorOscurecer.forward();
+    if (!mounted) return;
     Navigator.push(context, _CircularRevealRoute(
       origin: origen,
       builder: (_) => const PantallaRegistro(),
     ));
+    _controladorOscurecer.reset();
   }
 
   Future<void> _loginConApple() async {
@@ -260,43 +264,24 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
             ),
           ),
 
-          // Capa 4: panel de opciones arrastrable
-          if (_panelVisible)
-            NotificationListener<DraggableScrollableNotification>(
-              onNotification: (n) {
-                if (n.extent <= 0.02) {
-                  setState(() => _panelVisible = false);
-                  _controladorOscurecer.reverse();
-                }
-                return true;
-              },
-              child: DraggableScrollableSheet(
-                initialChildSize: 0.48,
-                minChildSize: 0.0,
-                maxChildSize: 0.48,
-                snap: true,
-                snapSizes: const [0.0, 0.48],
-                builder: (_, controller) => LayoutBuilder(
-                  builder: (context, constraints) => SingleChildScrollView(
-                    controller: controller,
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                      child: _PanelOpciones(
-                        onRegistro: _irARegistro,
-                        onLogin: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const PantallaLogin()),
-                        ),
-                        onGoogle: _loginConGoogle,
-                        procesandoGoogle: _procesandoGoogle,
-                        onApple: _loginConApple,
-                        procesandoApple: _procesandoApple,
-                      ),
-                    ),
-                  ),
-                ),
+          // Capa 4: panel fijo desde abajo
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeOut,
+            left: 0, right: 0,
+            bottom: _panelVisible ? 0 : -500,
+            child: _PanelOpciones(
+              onRegistro: _irARegistro,
+              onLogin: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PantallaLogin()),
               ),
+              onGoogle: _loginConGoogle,
+              procesandoGoogle: _procesandoGoogle,
+              onApple: _loginConApple,
+              procesandoApple: _procesandoApple,
             ),
+          ),
         ],
       ),
     );
