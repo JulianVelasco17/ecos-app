@@ -16,7 +16,10 @@ class _PantallaVenusSuscripcionState extends State<PantallaVenusSuscripcion> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     setState(() => _activando = true);
-    await FirebaseFirestore.instance.collection('usuarios').doc(uid).update({'venusActivo': true});
+    await FirebaseFirestore.instance.collection('usuarios').doc(uid).update({
+      'venusActivo': true,
+      'venusPagador': uid,
+    });
     if (!mounted) return;
     setState(() => _activando = false);
     Navigator.pop(context, true); // true = activado

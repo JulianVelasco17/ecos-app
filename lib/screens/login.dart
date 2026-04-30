@@ -5,6 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'home.dart';
 import 'registro.dart';
+import '../services/notification_service.dart';
 
 class PantallaLogin extends StatefulWidget {
   const PantallaLogin({super.key});
@@ -48,6 +49,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
       final doc = await FirebaseFirestore.instance.collection('usuarios').doc(uid).get();
       if (!mounted) return;
 
+      NotificationService.guardarTokenFCM();
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
@@ -123,6 +125,35 @@ class _PantallaLoginState extends State<PantallaLogin> {
                   style: const TextStyle(color: Colors.redAccent, fontSize: 12, letterSpacing: 0.5),
                 ),
               ],
+
+              const SizedBox(height: 16),
+
+              Align(
+                alignment: Alignment.centerRight,
+                child: GestureDetector(
+                  onTap: () async {
+                    final email = _emailController.text.trim();
+                    if (email.isEmpty) {
+                      setState(() => _error = 'ingresa tu correo primero');
+                      return;
+                    }
+                    try {
+                      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+                      if (mounted) setState(() => _error = 'te enviamos un correo para restablecer tu contraseña');
+                    } catch (_) {
+                      if (mounted) setState(() => _error = 'no encontramos esa cuenta');
+                    }
+                  },
+                  child: const Text(
+                    'olvidé mi contraseña',
+                    style: TextStyle(
+                      color: Colors.black38,
+                      fontSize: 12,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ),
 
               const SizedBox(height: 32),
 

@@ -108,7 +108,7 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
       duration: const Duration(milliseconds: 700),
     );
 
-    _oscurecimiento = Tween<double>(begin: 0.0, end: 1.0).animate(
+    _oscurecimiento = Tween<double>(begin: 0.0, end: 0.60).animate(
       CurvedAnimation(parent: _controladorOscurecer, curve: Curves.easeIn),
     );
 
@@ -123,9 +123,8 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
   }
 
   Future<void> _sumergirse() async {
-    await _controladorOscurecer.forward();
-    if (!mounted) return;
     setState(() => _panelVisible = true);
+    _controladorOscurecer.forward();
   }
 
   Future<void> _irARegistro(Offset origen) async {
@@ -134,14 +133,10 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
     }
     await AuthService.loginAnonimo();
     if (!mounted) return;
-    // Oscurecer a negro total antes de navegar
-    await _controladorOscurecer.forward();
-    if (!mounted) return;
     Navigator.push(context, _CircularRevealRoute(
       origin: origen,
       builder: (_) => const PantallaRegistro(),
     ));
-    _controladorOscurecer.reset();
   }
 
   Future<void> _loginConApple() async {
@@ -156,6 +151,7 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
 
     if (doc.exists) {
       final datos = doc.data()!;
+      NotificationService.guardarTokenFCM();
       Navigator.pushReplacement(context, MaterialPageRoute(
         builder: (_) => PantallaHome(nombre: datos['nombre'] ?? 'viajero'),
       ));
@@ -176,6 +172,7 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
 
     if (doc.exists) {
       final datos = doc.data()!;
+      NotificationService.guardarTokenFCM();
       Navigator.pushReplacement(context, MaterialPageRoute(
         builder: (_) => PantallaHome(nombre: datos['nombre'] ?? 'viajero'),
       ));
@@ -264,24 +261,39 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
             ),
           ),
 
-          // Capa 4: panel fijo desde abajo
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeOut,
-            left: 0, right: 0,
-            bottom: _panelVisible ? 0 : -500,
-            child: _PanelOpciones(
-              onRegistro: _irARegistro,
-              onLogin: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const PantallaLogin()),
+          // Capa 4: panel arrastrable
+          if (_panelVisible)
+            NotificationListener<DraggableScrollableNotification>(
+              onNotification: (n) {
+                if (n.extent <= 0.02) {
+                  setState(() => _panelVisible = false);
+                  _controladorOscurecer.reverse();
+                }
+                return true;
+              },
+              child: DraggableScrollableSheet(
+                initialChildSize: 0.48,
+                minChildSize: 0.0,
+                maxChildSize: 0.48,
+                snap: true,
+                snapSizes: const [0.0, 0.48],
+                builder: (_, controller) => SingleChildScrollView(
+                  controller: controller,
+                  physics: const ClampingScrollPhysics(),
+                  child: _PanelOpciones(
+                    onRegistro: _irARegistro,
+                    onLogin: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const PantallaLogin()),
+                    ),
+                    onGoogle: _loginConGoogle,
+                    procesandoGoogle: _procesandoGoogle,
+                    onApple: _loginConApple,
+                    procesandoApple: _procesandoApple,
+                  ),
+                ),
               ),
-              onGoogle: _loginConGoogle,
-              procesandoGoogle: _procesandoGoogle,
-              onApple: _loginConApple,
-              procesandoApple: _procesandoApple,
             ),
-          ),
         ],
       ),
     );
@@ -309,7 +321,14 @@ class _PanelOpciones extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Stack(
+      children: [
+        // Bloque beige que tapa el hueco debajo del border radius
+        Positioned(
+          bottom: 0, left: 0, right: 0,
+          child: Container(height: 60, color: const Color(0xFFF3EBD6)),
+        ),
+        Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(32, 40, 32, MediaQuery.of(context).padding.bottom + 40),
       decoration: const BoxDecoration(
@@ -317,7 +336,7 @@ class _PanelOpciones extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: MainAxisSize.max,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Handle visual
@@ -400,6 +419,8 @@ class _PanelOpciones extends StatelessWidget {
             ),
         ],
       ),
+        ),
+      ],
     );
   }
 }
@@ -441,7 +462,7 @@ class _CircularRevealRoute extends PageRoute<void> {
   _CircularRevealRoute({required this.builder, required this.origin});
 
   @override
-  Duration get transitionDuration => const Duration(milliseconds: 600);
+  Duration get transitionDuration => const Duration(milliseconds: 720);
 
   @override
   Color get barrierColor => Colors.transparent;

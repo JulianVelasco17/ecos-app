@@ -35,12 +35,17 @@ class _PantallaVenusState extends State<PantallaVenus> {
     final datos = doc.data()!;
 
     final tieneVenus = datos['venusActivo'] == true;
+    final enlace = datos['venusEnlace'] as Map<String, dynamic>?;
+
+    // Sin suscripción: mostrar paywall, SALVO que tenga una solicitud recibida pendiente
     if (!tieneVenus) {
-      setState(() => _estado = _EstadoVenus.sinSuscripcion);
-      return;
+      final estadoEnlace = enlace?['estado'] as String?;
+      if (estadoEnlace != 'pendiente_recibida') {
+        setState(() => _estado = _EstadoVenus.sinSuscripcion);
+        return;
+      }
     }
 
-    final enlace = datos['venusEnlace'] as Map<String, dynamic>?;
     if (enlace == null) {
       setState(() => _estado = _EstadoVenus.sinPareja);
       return;
@@ -62,10 +67,21 @@ class _PantallaVenusState extends State<PantallaVenus> {
     if (uid == null || _enlace == null) return;
 
     final parejaUid = _enlace!['uid'] as String;
-    await FirebaseFirestore.instance.collection('usuarios').doc(uid).update({'venusEnlace': FieldValue.delete()});
-    await FirebaseFirestore.instance.collection('usuarios').doc(parejaUid).update({'venusEnlace': FieldValue.delete()});
 
-    setState(() { _enlace = null; _estado = _EstadoVenus.sinPareja; });
+    // Si el que cancela es el pagador, desactivar Venus para ambos
+    final miDoc = await FirebaseFirestore.instance.collection('usuarios').doc(uid).get();
+    final esPagador = miDoc.data()?['venusPagador'] == uid;
+
+    await FirebaseFirestore.instance.collection('usuarios').doc(uid).update({
+      'venusEnlace': FieldValue.delete(),
+      if (esPagador) 'venusActivo': false,
+    });
+    await FirebaseFirestore.instance.collection('usuarios').doc(parejaUid).update({
+      'venusEnlace': FieldValue.delete(),
+      if (esPagador) 'venusActivo': false,
+    });
+
+    setState(() { _enlace = null; _estado = esPagador ? _EstadoVenus.sinSuscripcion : _EstadoVenus.sinPareja; });
   }
 
   Future<void> _aceptar() async {
@@ -80,6 +96,7 @@ class _PantallaVenusState extends State<PantallaVenus> {
 
     await FirebaseFirestore.instance.collection('usuarios').doc(uid).update({
       'venusEnlace': {..._enlace!, 'estado': 'activo'},
+      'venusActivo': true,
     });
     await FirebaseFirestore.instance.collection('usuarios').doc(parejaUid).update({
       'venusEnlace': {
@@ -89,6 +106,7 @@ class _PantallaVenusState extends State<PantallaVenus> {
         'fotoUrl': miFoto,
         'estado': 'activo',
       },
+      'venusActivo': true,
     });
 
     setState(() { _enlace = {..._enlace!, 'estado': 'activo'}; _estado = _EstadoVenus.enlazado; });
@@ -313,6 +331,7 @@ class _EnlazadaState extends State<_Enlazada> {
   String _miNombre   = '';
   String _parejaName = '';
   String? _miFotoUrl;
+  String? _parejaFotoUrl;
 
   @override
   void initState() {
@@ -377,15 +396,15 @@ class _EnlazadaState extends State<_Enlazada> {
         _lectura    = lectura;
         _miNombre   = miNombre;
         _parejaName = parejaName;
-        _miFotoUrl  = miDatos['fotoUrl'] as String?;
-        _cargando   = false;
+        _miFotoUrl      = miDatos['fotoUrl'] as String?;
+        _parejaFotoUrl  = parejaDatos['fotoUrl'] as String?;
+        _cargando       = false;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final enlace = widget.enlace;
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
       child: Column(
@@ -425,8 +444,8 @@ class _EnlazadaState extends State<_Enlazada> {
                     child: CircleAvatar(
                       radius: 40,
                       backgroundColor: Colors.black12,
-                      backgroundImage: enlace['fotoUrl'] != null ? NetworkImage(enlace['fotoUrl'] as String) : null,
-                      child: enlace['fotoUrl'] == null ? const Icon(Icons.person, color: Colors.black38, size: 32) : null,
+                      backgroundImage: _parejaFotoUrl != null ? NetworkImage(_parejaFotoUrl!) : null,
+                      child: _parejaFotoUrl == null ? const Icon(Icons.person, color: Colors.black38, size: 32) : null,
                     ),
                   ),
                 ),

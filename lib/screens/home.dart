@@ -151,6 +151,7 @@ class _BotonNavCustom extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: SizedBox(
         width: 64,
         height: 64,
@@ -248,6 +249,7 @@ class _BotonNav extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: SizedBox(
         width: 64,
         height: 64,

@@ -1,7 +1,13 @@
+import 'dart:convert';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // IDs fijos por tipo de notificación
 const _idDiaria = 0;
@@ -204,5 +210,52 @@ class NotificationService {
     final prefs = await cargarPreferencias();
     if (!prefs.diariaActiva) return;
     await _programarDiaria(prefs.diariaHora, prefs.diariaMinutos, frase);
+  }
+
+  // ── FCM: guardar token del dispositivo en Firestore ───────────────────────
+
+  static Future<void> guardarTokenFCM() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final token = await FirebaseMessaging.instance.getToken();
+    if (token == null) return;
+    await FirebaseFirestore.instance.collection('usuarios').doc(uid).update({
+      'fcmToken': token,
+    });
+    // Actualizar token si cambia
+    FirebaseMessaging.instance.onTokenRefresh.listen((nuevoToken) {
+      FirebaseFirestore.instance.collection('usuarios').doc(uid).update({
+        'fcmToken': nuevoToken,
+      });
+    });
+  }
+
+  // ── FCM: enviar push a la pareja via FCM HTTP v1 ──────────────────────────
+
+  static Future<void> notificarPareja({
+    required String parejaUid,
+    required String titulo,
+    required String cuerpo,
+  }) async {
+    final parejaDoc = await FirebaseFirestore.instance
+        .collection('usuarios').doc(parejaUid).get();
+    final token = parejaDoc.data()?['fcmToken'] as String?;
+    if (token == null) return;
+
+    final serverKey = dotenv.env['FCM_SERVER_KEY'] ?? '';
+    if (serverKey.isEmpty) return;
+
+    await http.post(
+      Uri.parse('https://fcm.googleapis.com/fcm/send'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'key=$serverKey',
+      },
+      body: jsonEncode({
+        'to': token,
+        'notification': {'title': titulo, 'body': cuerpo},
+        'data': {'tipo': 'venus'},
+      }),
+    );
   }
 }
