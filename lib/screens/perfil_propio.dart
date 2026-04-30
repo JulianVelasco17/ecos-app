@@ -22,6 +22,7 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
   CartaAstral? _carta;
   Map<String, double> _longitudes = {};
   Map<String, String> _lectura = {};
+  List<Map<String, dynamic>> _guardadas = [];
   bool _cargando = true;
   final _pageCtrl  = PageController();
   int  _paginaCarta = 0;
@@ -135,12 +136,22 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
       }
     }
 
+    final guardadasSnap = await FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(uid)
+        .collection('lecturasGuardadas')
+        .orderBy('fecha', descending: true)
+        .get();
+
+    final guardadas = guardadasSnap.docs.map((d) => d.data()).toList();
+
     if (mounted) {
       setState(() {
         _datos      = datos;
         _carta      = carta;
         _longitudes = lons;
         _lectura    = lectura;
+        _guardadas  = guardadas;
         _cargando   = false;
       });
     }
@@ -250,9 +261,9 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
                       ),
                     ),
 
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 20),
                     const Divider(color: Colors.black12),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 16),
 
                     // Carta natal — mapa deslizable → tabla
                     const Text(
@@ -264,20 +275,18 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
                       ),
                     ),
 
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 8),
 
                     // PageView horizontal: rueda ↔ tabla
                     LayoutBuilder(builder: (context, constraints) {
                       final ruedaSize = constraints.maxWidth;
-                      final nEntradas = 3 + _carta!.planetas.length;
-                      final alturaTabla = 110.0 + nEntradas * 48.0 + 8.0;
-                      final alturaPageView = alturaTabla > ruedaSize ? alturaTabla : ruedaSize;
+                      final alturaPageView = ruedaSize; // siempre cuadrado
                       return SizedBox(
                         height: alturaPageView,
                         child: PageView(
                           controller: _pageCtrl,
                           children: [
-                            // Página 1: rueda (ocupa todo el ancho disponible)
+                            // Página 1: rueda
                             RepaintBoundary(
                               child: SizedBox(
                                 width:  ruedaSize,
@@ -296,8 +305,8 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
                               ),
                             ),
 
-                            // Página 2: tabla
-                            _TablaNatal(carta: _carta!),
+                            // Página 2: tabla scrolleable
+                            SingleChildScrollView(child: _TablaNatal(carta: _carta!)),
                           ],
                         ),
                       );
@@ -392,6 +401,61 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
                       )),
 
                       const SizedBox(height: 12),
+                    ],
+
+                    if (_guardadas.isNotEmpty) ...[
+                      const Divider(color: Colors.black12),
+                      const SizedBox(height: 40),
+
+                      const Text('GUARDADAS',
+                          style: TextStyle(color: Colors.black45, fontSize: 11, letterSpacing: 3)),
+                      const SizedBox(height: 24),
+
+                      ..._guardadas.map((g) {
+                        final frase = g['frase'] as String? ?? '';
+                        final expansion = g['expansion'] as String? ?? '';
+                        final ts = g['fecha'];
+                        String fechaStr = '';
+                        if (ts != null) {
+                          final dt = (ts as dynamic).toDate() as DateTime;
+                          const meses = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+                          fechaStr = '${dt.day} ${meses[dt.month - 1]} ${dt.year}';
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 32),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (fechaStr.isNotEmpty)
+                                Text(fechaStr,
+                                    style: const TextStyle(
+                                        color: Colors.black38, fontSize: 10, letterSpacing: 2)),
+                              const SizedBox(height: 10),
+                              Text(frase,
+                                  style: const TextStyle(
+                                    fontFamily: 'PlayfairDisplay',
+                                    color: Colors.black87,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w400,
+                                    height: 1.4,
+                                  )),
+                              if (expansion.isNotEmpty) ...[
+                                const SizedBox(height: 10),
+                                Text(
+                                  expansion.split('\n\n').first.trim(),
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      color: Colors.black45, fontSize: 13,
+                                      fontWeight: FontWeight.w300, height: 1.7),
+                                ),
+                              ],
+                              const SizedBox(height: 16),
+                              const Divider(color: Colors.black12),
+                            ],
+                          ),
+                        );
+                      }),
                     ],
                   ],
                 ),

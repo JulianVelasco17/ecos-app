@@ -138,40 +138,46 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
         .doc(fechaHoy)
         .get();
 
-    // Cola de frases: obtenemos el siguiente ID no usado
     final usuarioRef = FirebaseFirestore.instance.collection('usuarios').doc(miUid);
-    final usuarioSnap = await usuarioRef.get();
-    final usuarioDatos = usuarioSnap.data() ?? {};
 
-    List<int> cola = List<int>.from(usuarioDatos['frasesQueue'] ?? []);
-    if (cola.isEmpty) cola = BancoFrases.generarColaMezclada();
-
-    final idSeleccionado = cola.removeAt(0);
-    await usuarioRef.update({'frasesQueue': cola});
-
-    final fraseSeleccionada = BancoFrases.porId(idSeleccionado);
-    final fraseBase  = fraseSeleccionada['frase'] as String;
-    final areaFrase  = fraseSeleccionada['area']  as String? ?? 'identidad';
-
+    String fraseBase;
+    String areaFrase;
     String lectura;
+
     if (lecturaDoc.exists) {
-      lectura = lecturaDoc.data()!['texto'] as String;
+      // Usar la frase y lectura ya guardadas para hoy
+      final cached = lecturaDoc.data()!;
+      fraseBase = cached['fraseBase'] as String? ?? '';
+      areaFrase = cached['areaFrase'] as String? ?? 'identidad';
+      lectura   = cached['texto']     as String? ?? '';
     } else {
+      // Avanzar la cola y generar nueva lectura
+      final usuarioSnap  = await usuarioRef.get();
+      final usuarioDatos = usuarioSnap.data() ?? {};
+      List<int> cola = List<int>.from(usuarioDatos['frasesQueue'] ?? []);
+      if (cola.isEmpty) cola = BancoFrases.generarColaMezclada();
+      final idSeleccionado = cola.removeAt(0);
+      await usuarioRef.update({'frasesQueue': cola});
+
+      final fraseSeleccionada = BancoFrases.porId(idSeleccionado);
+      fraseBase = fraseSeleccionada['frase'] as String;
+      areaFrase = fraseSeleccionada['area']  as String? ?? 'identidad';
+
       lectura = await ClaudeService.generarAstrosDelDia(
-        nombre: widget.nombre,
+        nombre:     widget.nombre,
         signoSolar: carta.signoSolar,
         signoLunar: carta.signoLunar,
         ascendente: carta.ascendente,
-        fraseBase: fraseBase,
-        areaFrase: areaFrase,
-        planetas: carta.planetas,
+        fraseBase:  fraseBase,
+        areaFrase:  areaFrase,
+        planetas:   carta.planetas,
       );
       await FirebaseFirestore.instance
           .collection('usuarios')
           .doc(miUid)
           .collection('lecturas')
           .doc(fechaHoy)
-          .set({'texto': lectura});
+          .set({'texto': lectura, 'fraseBase': fraseBase, 'areaFrase': areaFrase});
     }
 
     // Cargamos los amigos
@@ -261,10 +267,10 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
               .replaceAll(RegExp(r'```json|```'), '')
               .trim();
           final json = jsonDecode(limpia);
-          _frase = json['frase'] as String?;
+          _frase = fraseBase;
           _desarrollo = json['parrafo'] as String?;
         } catch (_) {
-          _frase = lectura;
+          _frase = fraseBase;
         }
         if (_frase != null) {
           NotificationService.programarNotificacionDelDia(_frase!);
@@ -465,10 +471,10 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                       try {
                         final limpia = lectura.replaceAll(RegExp(r'```json|```'), '').trim();
                         final json = jsonDecode(limpia);
-                        _frase = json['frase'] as String?;
+                        _frase = debugFrase['frase'] as String?;
                         _desarrollo = json['parrafo'] as String?;
                       } catch (_) {
-                        _frase = lectura;
+                        _frase = debugFrase['frase'] as String?;
                       }
                       _cargando = false;
                     });
@@ -496,26 +502,21 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      '✦',
-                      style: TextStyle(color: Colors.black38, fontSize: 16),
-                    ),
-                    const SizedBox(height: 16),
                     Text(
                       _frase ?? '',
                       style: const TextStyle(
                         fontFamily: 'PlayfairDisplay',
                         color: Colors.black,
-                        fontSize: 29,
-                        fontWeight: FontWeight.w300,
-                        height: 1.4,
-                        letterSpacing: 0.2,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w500,
+                        height: 1.2,
+                        letterSpacing: 0.8,
                       ),
                     ),
                     const SizedBox(height: 16),
                     Container(
-                      width: 40,
-                      height: 2.5,
+                      width: 32,
+                      height: 1.5,
                       color: const Color(0xFFB8973A),
                     ),
                     if (_desarrollo != null) ...[
@@ -524,9 +525,9 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                         _desarrollo!,
                         style: const TextStyle(
                           color: Colors.black54,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w300,
-                          height: 1.75,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          height: 1.8,
                           letterSpacing: 0.2,
                         ),
                       ),
@@ -561,10 +562,10 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                     try {
                       final limpia = lectura.replaceAll(RegExp(r'```json|```'), '').trim();
                       final json = jsonDecode(limpia);
-                      nuevaFrase = json['frase'] as String?;
+                      nuevaFrase = _fraseBase;
                       nuevoDesarrollo = json['parrafo'] as String?;
                     } catch (_) {
-                      nuevaFrase = lectura;
+                      nuevaFrase = _fraseBase;
                     }
                     if (!mounted) return;
                     setState(() {

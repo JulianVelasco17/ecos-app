@@ -86,7 +86,7 @@ Eres la voz de una app de astrología.
 
 Frase base: "$fraseBase"
 
-Expande esa frase en 1-2 oraciones directas y concretas. Usa la frase tal cual o ajústala mínimamente si fluye mejor. Habla en imperativo directo ("acepta", "mira", "suelta"), no en segunda persona descriptiva ("aceptas", "miras").
+Escribe 1-2 oraciones que expandan esa frase. Habla en imperativo directo ("acepta", "mira", "suelta"), no en segunda persona descriptiva ("aceptas", "miras").
 
 Tono: $esencia
 
@@ -136,6 +136,30 @@ Eres la voz de una app de astrología. Solo conoces los signos de estas dos pers
 Escribe exactamente 2 oraciones en español sobre cómo podrían relacionarse $n1 y $n2 según sus cartas — qué tensión o complicidad natural existe entre sus formas de ser. Traduce los signos a experiencias humanas concretas, sin mencionar nombres de signos ni planetas. Tono: íntimo, directo. Sin "energía", "vibra", "universo". Sin guiones largos. Solo los primeros nombres. Sin saludos.
 ''';
 
+    return await _llamarClaude(prompt);
+  }
+
+  // Genera un caption astrológico sobre la dinámica de pareja (martes Venus)
+  static Future<String> generarCaptionAstralPareja({
+    required String nombre1,
+    required String signoSolar1,
+    required String signoLunar1,
+    required String ascendente1,
+    required String nombre2,
+    required String signoSolar2,
+    required String signoLunar2,
+    required String ascendente2,
+  }) async {
+    final n1 = nombre1.split(' ').first;
+    final n2 = nombre2.split(' ').first;
+    final prompt = '''
+Eres la voz de una app de astrología para parejas.
+
+Carta de $n1: Sol en $signoSolar1, Luna en $signoLunar1, Ascendente en $ascendente1.
+Carta de $n2: Sol en $signoSolar2, Luna en $signoLunar2, Ascendente en $ascendente2.
+
+Escribe 1 oración en español sobre cómo funciona esta pareja según sus cartas. Directo, sin rodeos. Habla de lo que hacen o sienten juntos, no de lo que "podrían" hacer. Sin mencionar signos ni planetas. Sin "energía", "vibra", "universo", "cósmico", "alma". Sin metáforas. Sin guiones.
+''';
     return await _llamarClaude(prompt);
   }
 

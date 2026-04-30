@@ -312,6 +312,7 @@ class _EnlazadaState extends State<_Enlazada> {
   String? _lectura;
   String _miNombre   = '';
   String _parejaName = '';
+  String? _miFotoUrl;
 
   @override
   void initState() {
@@ -376,6 +377,7 @@ class _EnlazadaState extends State<_Enlazada> {
         _lectura    = lectura;
         _miNombre   = miNombre;
         _parejaName = parejaName;
+        _miFotoUrl  = miDatos['fotoUrl'] as String?;
         _cargando   = false;
       });
     }
@@ -401,27 +403,38 @@ class _EnlazadaState extends State<_Enlazada> {
           ),
           const SizedBox(height: 32),
 
-          // ── Perfil pareja ───────────────────────────────────────────────
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 22,
-                backgroundColor: Colors.black12,
-                backgroundImage: enlace['fotoUrl'] != null ? NetworkImage(enlace['fotoUrl']) : null,
-                child: enlace['fotoUrl'] == null ? const Icon(Icons.person, color: Colors.black45, size: 22) : null,
-              ),
-              const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(enlace['nombre'] ?? '', style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w300, letterSpacing: 1)),
-                  Text('@${enlace['usuario'] ?? ''}', style: const TextStyle(color: Colors.black45, fontSize: 12, letterSpacing: 1)),
-                ],
-              ),
-            ],
+          // ── Avatares traslapados ────────────────────────────────────────
+          SizedBox(
+            height: 80,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                CircleAvatar(
+                  radius: 40,
+                  backgroundColor: Colors.black12,
+                  backgroundImage: _miFotoUrl != null ? NetworkImage(_miFotoUrl!) : null,
+                  child: _miFotoUrl == null ? const Icon(Icons.person, color: Colors.black38, size: 32) : null,
+                ),
+                Positioned(
+                  left: 56,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFFF3EBD6), width: 2),
+                    ),
+                    child: CircleAvatar(
+                      radius: 40,
+                      backgroundColor: Colors.black12,
+                      backgroundImage: enlace['fotoUrl'] != null ? NetworkImage(enlace['fotoUrl'] as String) : null,
+                      child: enlace['fotoUrl'] == null ? const Icon(Icons.person, color: Colors.black38, size: 32) : null,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
 
-          const SizedBox(height: 48),
+          const SizedBox(height: 40),
           const Divider(color: Colors.black12),
           const SizedBox(height: 36),
 

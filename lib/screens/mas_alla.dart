@@ -3,8 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/calculos_astrales.dart';
-import '../services/aspectos_natales.dart';
 import '../services/claude_service.dart';
+
+// ─── Imágenes decorativas — rotan cada día ────────────────────────────────────
+
+const _imagenesDecorativas = [
+  'https://res.cloudinary.com/dwemowboc/image/upload/v1777497436/monk_xlypui.png',
+  // añade más URLs aquí para que roten
+];
+
+String _imagenDelDia() {
+  final dia = DateTime.now().difference(DateTime(2025)).inDays;
+  return _imagenesDecorativas[dia % _imagenesDecorativas.length];
+}
 
 // ─── Ruta con revelación negra circular ──────────────────────────────────────
 
@@ -72,15 +83,12 @@ class PantallaMasAlla extends StatefulWidget {
 
 class _PantallaMasAllaState extends State<PantallaMasAlla> {
   bool _cargando = true;
-
-  String _signoSolar = '';
-  String _signoLunar = '';
-  String _ascendente = '';
-  List<AspectoNatal> _aspectos = [];
   String? _expansion;
+  String? _reaccion;
+  bool _guardado = false;
 
-  static const _beige   = Color(0xFFF3EBD6);
-  static const _beigeOn = Color(0xFFD6CCB8);
+  static const _beige = Color(0xFFE7D8C9);
+  static const _gold  = Color(0xFFB8973A);
 
   @override
   void initState() {
@@ -96,24 +104,21 @@ class _PantallaMasAllaState extends State<PantallaMasAlla> {
     if (!doc.exists || !mounted) return;
     final datos = doc.data()!;
 
-    final fechaTs = datos['fechaNacimiento'] as Timestamp?;
+    final fechaTs = datos['fechaNacimiento'] as dynamic;
     final horaStr = datos['horaNacimiento'] as String? ?? '12:00';
     final partes  = horaStr.split(':');
     final hora    = int.tryParse(partes[0]) ?? 12;
     final min     = int.tryParse(partes.length > 1 ? partes[1] : '0') ?? 0;
     final lat     = (datos['latitud']  as num?)?.toDouble() ?? 0.0;
     final lon     = (datos['longitud'] as num?)?.toDouble() ?? 0.0;
-    if (fechaTs == null) return;
-    final fecha = fechaTs.toDate();
+    final fecha   = (fechaTs).toDate() as DateTime;
 
-    final carta   = CalculosAstrales.calcular(
+    final carta = CalculosAstrales.calcular(
         fechaNacimiento: fecha, hora: hora, minutos: min, latitud: lat, longitud: lon);
-    final aspectos = AspectosNatales.calcular(fecha, hora, min);
-    final hoy = DateTime.now();
 
-    // Expansión íntima — cache separado
     String? expansion;
     if (widget.frase != null && widget.desarrollo != null) {
+      final hoy    = DateTime.now();
       final expKey = '${uid}_exp_${hoy.year}-${hoy.month.toString().padLeft(2,'0')}-${hoy.day.toString().padLeft(2,'0')}';
       final expDoc = await FirebaseFirestore.instance
           .collection('lecturasProfundas').doc(expKey).get();
@@ -121,10 +126,10 @@ class _PantallaMasAllaState extends State<PantallaMasAlla> {
         expansion = expDoc.data()!['expansion'] as String?;
       } else {
         expansion = await ClaudeService.generarExpansionDiaria(
-          signoSolar:    carta.signoSolar,
-          signoLunar:    carta.signoLunar,
-          ascendente:    carta.ascendente,
-          fraseBase:     widget.frase!,
+          signoSolar:     carta.signoSolar,
+          signoLunar:     carta.signoLunar,
+          ascendente:     carta.ascendente,
+          fraseBase:      widget.frase!,
           desarrolloBase: widget.desarrollo!,
         );
         await FirebaseFirestore.instance
@@ -135,152 +140,246 @@ class _PantallaMasAllaState extends State<PantallaMasAlla> {
 
     if (mounted) {
       setState(() {
-        _signoSolar = carta.signoSolar;
-        _signoLunar = carta.signoLunar;
-        _ascendente = carta.ascendente;
-        _aspectos   = aspectos;
-        _expansion  = expansion;
-        _cargando   = false;
+        _expansion = expansion;
+        _cargando  = false;
       });
     }
+  }
+
+  Future<void> _guardar() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || _guardado) return;
+
+    await FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(uid)
+        .collection('lecturasGuardadas')
+        .add({
+      'frase':      widget.frase ?? '',
+      'desarrollo': widget.desarrollo ?? '',
+      'expansion':  _expansion ?? '',
+      'fecha':      FieldValue.serverTimestamp(),
+    });
+
+    if (mounted) setState(() => _guardado = true);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: SafeArea(
-        child: _cargando
-            ? const Center(child: CircularProgressIndicator(color: Color(0x44F3EBD6), strokeWidth: 1.5))
-            : SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: const Icon(Icons.arrow_back_ios, color: Color(0x66F3EBD6), size: 18),
-                    ),
-
-                    const SizedBox(height: 48),
-
-                    // ── Lectura del día expandida ───────────────────────────
-                    if (widget.frase != null) ...[
-                      Text(
-                        widget.frase!,
-                        style: const TextStyle(
-                          color: _beige,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w300,
-                          height: 1.5,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      if (widget.desarrollo != null) ...[
-                        const SizedBox(height: 28),
-                        Text(
-                          widget.desarrollo!,
-                          style: TextStyle(
-                            color: _beige.withValues(alpha: 0.6),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w300,
-                            height: 1.85,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                      ],
-                      if (_expansion != null) ...[
-                        const SizedBox(height: 28),
-                        ..._expansion!.split('\n\n').where((p) => p.trim().isNotEmpty).map((p) =>
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 20),
-                            child: Text(
-                              p.trim(),
-                              style: TextStyle(
-                                color: _beige.withValues(alpha: 0.55),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w300,
-                                height: 1.85,
-                                letterSpacing: 0.2,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 56),
-                      Divider(color: _beige.withValues(alpha: 0.1)),
-                      const SizedBox(height: 48),
-                    ],
-
-                    // ── Tu carta natal ──────────────────────────────────────
-                    Text('TU CARTA', style: _etiqueta),
-                    const SizedBox(height: 20),
-
-                    _filaPilar('SOL',        _signoSolar, simbolosSignos[_signoSolar] ?? ''),
-                    const SizedBox(height: 14),
-                    _filaPilar('LUNA',       _signoLunar, simbolosSignos[_signoLunar] ?? ''),
-                    const SizedBox(height: 14),
-                    _filaPilar('ASCENDENTE', _ascendente, simbolosSignos[_ascendente] ?? ''),
-
-                    const SizedBox(height: 48),
-                    Divider(color: _beige.withValues(alpha: 0.1)),
-                    const SizedBox(height: 40),
-
-                    // ── Aspectos dominantes ─────────────────────────────────
-                    Text('ASPECTOS DOMINANTES', style: _etiqueta),
-                    const SizedBox(height: 8),
-                    Text('Los ángulos más exactos entre tus planetas al nacer.',
-                        style: TextStyle(color: _beige.withValues(alpha: 0.3),
-                            fontSize: 12, height: 1.6)),
-                    const SizedBox(height: 28),
-
-                    ..._aspectos.map((a) => _filaAspecto(a)),
-
-                    const SizedBox(height: 48),
-                  ],
-                ),
-              ),
-      ),
-    );
-  }
-
-  Widget _filaPilar(String etiqueta, String signo, String simbolo) {
-    return Row(children: [
-      SizedBox(width: 100,
-          child: Text(etiqueta, style: TextStyle(color: _beige.withValues(alpha: 0.3),
-              fontSize: 11, letterSpacing: 2))),
-      Text('$simbolo\uFE0E', style: TextStyle(fontSize: 16, color: _beige.withValues(alpha: 0.5))),
-      const SizedBox(width: 10),
-      Text(signo, style: const TextStyle(color: _beige, fontSize: 15,
-          fontWeight: FontWeight.w300, letterSpacing: 1)),
-    ]);
-  }
-
-  Widget _filaAspecto(AspectoNatal a) {
-    final corto = AspectosNatales.nombreCorto(a.tipo);
-    final sig   = AspectosNatales.significados[corto] ?? '';
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: Stack(
         children: [
-          Container(width: 3, height: 40, margin: const EdgeInsets.only(right: 14, top: 2),
-              color: _beige.withValues(alpha: 0.1)),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('${a.planeta1}  ·  $corto  ·  ${a.planeta2}',
-                style: const TextStyle(color: _beige, fontSize: 13,
-                    letterSpacing: 1, fontWeight: FontWeight.w300)),
-            const SizedBox(height: 4),
-            Text(sig, style: TextStyle(color: _beige.withValues(alpha: 0.35),
-                fontSize: 12, height: 1.5)),
-          ])),
-          Text('${a.orbe.toStringAsFixed(1)}°',
-              style: TextStyle(color: _beige.withValues(alpha: 0.25), fontSize: 11)),
+          SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Back
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: const Icon(Icons.arrow_back_ios, color: Color(0x55F3EBD6), size: 18),
+                  ),
+                ),
+
+                // Contenido
+                Expanded(
+                  child: _cargando
+                      ? const Center(
+                          child: CircularProgressIndicator(color: Color(0x44F3EBD6), strokeWidth: 1.5))
+                      : Padding(
+                          padding: const EdgeInsets.fromLTRB(28, 28, 28, 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              if (widget.frase != null)
+                                Text(
+                                  widget.frase!,
+                                  maxLines: 4,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontFamily: 'PlayfairDisplay',
+                                    color: _beige,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w500,
+                                    height: 1.2,
+                                    letterSpacing: 0.8,
+                                  ),
+                                ),
+
+                              const SizedBox(height: 16),
+                              Container(width: 32, height: 1.5, color: _gold),
+                              const SizedBox(height: 20),
+
+                              if (widget.desarrollo != null)
+                                Text(
+                                  widget.desarrollo!,
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: _beige.withValues(alpha: 0.6),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                    height: 1.8,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+
+                              if (_expansion != null) ...[
+                                const Spacer(),
+                                ...() {
+                                  final parrafos = _expansion!
+                                      .split('\n\n')
+                                      .where((p) => p.trim().isNotEmpty)
+                                      .toList();
+                                  return parrafos.asMap().entries.map((e) {
+                                    final isLast = e.key == parrafos.length - 1;
+                                    final texto = Text(
+                                      e.value.trim(),
+                                      maxLines: 6,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: _beige.withValues(alpha: 0.45),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w400,
+                                        height: 1.8,
+                                        letterSpacing: 0.2,
+                                      ),
+                                    );
+                                    if (!isLast) {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(bottom: 16),
+                                        child: texto,
+                                      );
+                                    }
+                                    // Último párrafo: monje a la izquierda, texto a la derecha
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 16),
+                                      child: Row(
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        children: [
+                                          Opacity(
+                                            opacity: 0.35,
+                                            child: Image.network(
+                                              _imagenDelDia(),
+                                              width: 100,
+                                              fit: BoxFit.contain,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 16),
+                                          Expanded(child: texto),
+                                        ],
+                                      ),
+                                    );
+                                  });
+                                }(),
+                              ],
+                            ],
+                          ),
+                        ),
+                ),
+
+                // Botones fijos abajo
+                Container(
+                  padding: EdgeInsets.fromLTRB(
+                      16, 12, 16, MediaQuery.of(context).padding.bottom + 16),
+                  decoration: BoxDecoration(
+                    border: Border(top: BorderSide(color: _beige.withValues(alpha: 0.07))),
+                  ),
+                  child: Row(
+                    children: [
+                      _BotonReaccion(
+                        icono: Icons.favorite_border,
+                        iconoActivo: Icons.favorite,
+                        label: 'Lo siento',
+                        activo: _reaccion == 'siento',
+                        onTap: () => setState(() =>
+                            _reaccion = _reaccion == 'siento' ? null : 'siento'),
+                      ),
+                      const SizedBox(width: 8),
+                      _BotonReaccion(
+                        icono: Icons.sentiment_neutral_outlined,
+                        iconoActivo: Icons.sentiment_neutral,
+                        label: 'No conecto',
+                        activo: _reaccion == 'noConecto',
+                        onTap: () => setState(() =>
+                            _reaccion = _reaccion == 'noConecto' ? null : 'noConecto'),
+                      ),
+                      const SizedBox(width: 8),
+                      _BotonReaccion(
+                        icono: Icons.bookmark_border,
+                        iconoActivo: Icons.bookmark,
+                        label: _guardado ? 'Guardado' : 'Guardar',
+                        activo: _guardado,
+                        onTap: _guardar,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
+}
 
-  TextStyle get _etiqueta => TextStyle(
-      color: _beigeOn.withValues(alpha: 0.35), fontSize: 10, letterSpacing: 3);
+class _BotonReaccion extends StatelessWidget {
+  final IconData icono;
+  final IconData iconoActivo;
+  final String label;
+  final bool activo;
+  final VoidCallback onTap;
+
+  const _BotonReaccion({
+    required this.icono,
+    required this.iconoActivo,
+    required this.label,
+    required this.activo,
+    required this.onTap,
+  });
+
+  static const _beige = Color(0xFFE7D8C9);
+  static const _gold  = Color(0xFFB8973A);
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: activo
+                ? _gold.withValues(alpha: 0.12)
+                : _beige.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                activo ? iconoActivo : icono,
+                size: 18,
+                color: activo ? _gold : _beige.withValues(alpha: 0.4),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  color: activo ? _gold : _beige.withValues(alpha: 0.4),
+                  fontSize: 10,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

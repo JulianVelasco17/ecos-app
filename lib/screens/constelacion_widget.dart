@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../services/claude_service.dart';
-import 'venus_suscripcion.dart';
+import 'compra_carta_astral.dart';
 
 class _Constelacion {
   final List<Offset> estrellas;
@@ -1005,7 +1005,7 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
                       child: GestureDetector(
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
-                              builder: (_) => const PantallaVenusSuscripcion()),
+                              builder: (_) => const PantallaCompraCarta()),
                         ),
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 14),
