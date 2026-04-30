@@ -71,6 +71,7 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
   @override
   void initState() {
     super.initState();
+    _verificarSesion();
 
     // Entrada inicial: título y botón
     _controladorEntrada = AnimationController(
@@ -120,6 +121,19 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
     _controladorEntrada.dispose();
     _controladorOscurecer.dispose();
     super.dispose();
+  }
+
+  Future<void> _verificarSesion() async {
+    final usuario = AuthService.usuarioActual;
+    if (usuario == null || usuario.isAnonymous) return;
+    final doc = await FirebaseFirestore.instance.collection('usuarios').doc(usuario.uid).get();
+    if (!mounted) return;
+    if (doc.exists) {
+      NotificationService.guardarTokenFCM();
+      Navigator.pushReplacement(context, MaterialPageRoute(
+        builder: (_) => PantallaHome(nombre: doc.data()?['nombre'] ?? 'viajero'),
+      ));
+    }
   }
 
   Future<void> _sumergirse() async {

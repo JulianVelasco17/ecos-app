@@ -56,7 +56,7 @@ class _PantallaRegistroState extends State<PantallaRegistro>
     super.initState();
     _camaraCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 1800),
     );
     _offsetAnim = AlwaysStoppedAnimation(Offset.zero);
   }

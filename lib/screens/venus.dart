@@ -327,7 +327,6 @@ class _Enlazada extends StatefulWidget {
 class _EnlazadaState extends State<_Enlazada> {
   bool _cargando = true;
   List<AspectoNatal> _aspectos = [];
-  String? _lectura;
   String _miNombre   = '';
   String _parejaName = '';
   String? _miFotoUrl;
@@ -393,7 +392,6 @@ class _EnlazadaState extends State<_Enlazada> {
     if (mounted) {
       setState(() {
         _aspectos   = aspectos;
-        _lectura    = lectura;
         _miNombre   = miNombre;
         _parejaName = parejaName;
         _miFotoUrl      = miDatos['fotoUrl'] as String?;
@@ -422,60 +420,55 @@ class _EnlazadaState extends State<_Enlazada> {
           ),
           const SizedBox(height: 32),
 
-          // ── Avatares traslapados ────────────────────────────────────────
-          SizedBox(
-            height: 80,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                CircleAvatar(
-                  radius: 40,
-                  backgroundColor: Colors.black12,
-                  backgroundImage: _miFotoUrl != null ? NetworkImage(_miFotoUrl!) : null,
-                  child: _miFotoUrl == null ? const Icon(Icons.person, color: Colors.black38, size: 32) : null,
-                ),
-                Positioned(
-                  left: 56,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFF3EBD6), width: 2),
-                    ),
-                    child: CircleAvatar(
-                      radius: 40,
-                      backgroundColor: Colors.black12,
-                      backgroundImage: _parejaFotoUrl != null ? NetworkImage(_parejaFotoUrl!) : null,
-                      child: _parejaFotoUrl == null ? const Icon(Icons.person, color: Colors.black38, size: 32) : null,
+          // ── Avatares centrados ──────────────────────────────────────────
+          Center(
+            child: SizedBox(
+              height: 80,
+              width: 136,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  CircleAvatar(
+                    radius: 40,
+                    backgroundColor: Colors.black12,
+                    backgroundImage: _miFotoUrl != null ? NetworkImage(_miFotoUrl!) : null,
+                    child: _miFotoUrl == null ? const Icon(Icons.person, color: Colors.black38, size: 32) : null,
+                  ),
+                  Positioned(
+                    left: 56,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: const Color(0xFFF3EBD6), width: 2),
+                      ),
+                      child: CircleAvatar(
+                        radius: 40,
+                        backgroundColor: Colors.black12,
+                        backgroundImage: _parejaFotoUrl != null ? NetworkImage(_parejaFotoUrl!) : null,
+                        child: _parejaFotoUrl == null ? const Icon(Icons.person, color: Colors.black38, size: 32) : null,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
           const SizedBox(height: 40),
           const Divider(color: Colors.black12),
-          const SizedBox(height: 36),
+          const SizedBox(height: 32),
 
           if (_cargando)
             const Center(child: CircularProgressIndicator(color: Colors.black26, strokeWidth: 1.5))
           else ...[
 
-            // ── Lectura de sinastría ────────────────────────────────────
-            const Text('HOY JUNTOS',
-                style: TextStyle(color: Colors.black26, fontSize: 10, letterSpacing: 3)),
-            const SizedBox(height: 16),
-            if (_lectura != null)
-              Text(
-                _lectura!,
-                style: const TextStyle(
-                  color: Colors.black87,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w300,
-                  height: 1.8,
-                  letterSpacing: 0.2,
-                ),
-              ),
+            // ── Actividad diaria ────────────────────────────────────────
+            VenusActividadDiaria(
+              miUid:      FirebaseAuth.instance.currentUser?.uid ?? '',
+              parejaUid:  widget.enlace['uid'] as String? ?? '',
+              miNombre:   _miNombre,
+              parejaName: _parejaName,
+            ),
 
             const SizedBox(height: 40),
             const Divider(color: Colors.black12),
@@ -521,19 +514,6 @@ class _EnlazadaState extends State<_Enlazada> {
                   ),
                 );
               }),
-
-            const SizedBox(height: 32),
-
-            // ── Actividad diaria ────────────────────────────────────────
-            const Divider(color: Colors.black12),
-            const SizedBox(height: 32),
-
-            VenusActividadDiaria(
-              miUid:      FirebaseAuth.instance.currentUser?.uid ?? '',
-              parejaUid:  widget.enlace['uid'] as String? ?? '',
-              miNombre:   _miNombre,
-              parejaName: _parejaName,
-            ),
 
             const SizedBox(height: 32),
           ],

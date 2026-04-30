@@ -211,71 +211,18 @@ Respond ONLY with this JSON, nothing else:
     required String signo,
     int? casa,
   }) async {
-    final casaLinea   = casa != null ? '\nCasa: $casa' : '';
     final prompt = '''
-Actúa como un redactor de producto especializado en astrología para apps móviles.
+Eres el redactor de una app de astrología estilo Co-Star. Escribe en español, tono directo y humano, sin misticismo ni metáforas.
 
-Tu tarea es escribir un texto en español claro, natural y directo, similar al estilo de apps reales (tipo Co–Star o The Pattern), evitando cualquier tono poético excesivo o estructuras típicas de IA.
+Escribe exactamente 1 título y 1 párrafo sobre $planeta en $signo${casa != null ? ' en casa $casa' : ''}. El párrafo explica qué representa $planeta, cómo se expresa en $signo${casa != null ? ', y qué área de vida activa la casa $casa' : ''}. Sin listas, sin subtítulos extra, sin frases correctivas ("no es… sino…").
 
----
+LÍMITE ESTRICTO: 40–55 palabras en total (título incluido). Cuenta las palabras antes de responder.
 
-ESTRUCTURA:
+Formato:
+# $planeta en $signo
+[párrafo]
 
-1. Título:
-   Ej: "$planeta en $signo"
-
-2. Primer párrafo:
-   Explica qué representa el $planeta (ej: el Sol como identidad, ego, dirección en la vida).
-   Después, describe cómo se expresa en $signo de forma clara y comprensible.
-${casa != null ? '''
-3. Segundo párrafo:
-   Explica qué significa esa posición en la casa $casa, conectándolo con áreas de vida concretas.
-''' : ''}
----
-
-TONO:
-* Claro, directo y humano
-* Explicativo pero cercano
-* Sin dramatismo ni lenguaje místico excesivo
-* Debe sentirse como texto de producto, no como ensayo ni poesía
-
----
-
-REGLAS IMPORTANTES:
-
-❌ Evitar completamente:
-* "no es…, es…"
-* "no eres…, eres…"
-* "no se trata de…, sino de…"
-* frases correctivas o comparativas
-* lenguaje rebuscado o filosófico
-* metáforas exageradas
-
-❌ No usar:
-* comillas internas ("yo soy…")
-* frases ambiguas o demasiado abstractas
-
-✅ Usar:
-* lenguaje sencillo y natural
-* ejemplos implícitos de comportamiento (cómo actúa la persona)
-* frases claras y bien construidas
-* vocabulario cotidiano
-
----
-
-ESTILO DE REFERENCIA:
-✔ "El Sol determina tu identidad y tu forma de moverte en la vida."
-✔ "Con el Sol en Aries, tiendes a actuar con iniciativa y a tomar la delantera."
-✔ "En la casa 11, esta energía se expresa en tus amistades, grupos y metas a futuro."
-
----
-
-EXTENSIÓN: 120–160 palabras.
-
-Planeta: $planeta
-Signo: $signo$casaLinea
-
-Genera el texto siguiendo estrictamente este estilo. No incluyas nada más, solo el texto.
+Solo el texto, nada más.
 ''';
     return await _llamarClaude(prompt, maxTokens: 350);
   }

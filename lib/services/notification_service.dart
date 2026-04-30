@@ -63,6 +63,13 @@ class NotificationService {
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()
         ?.requestNotificationsPermission();
+
+    // Pedir permisos FCM en iOS (necesario para obtener el token)
+    await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
   }
 
   // ── Preferencias ──────────────────────────────────────────────────────────
