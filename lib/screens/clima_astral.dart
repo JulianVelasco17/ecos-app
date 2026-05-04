@@ -45,26 +45,47 @@ class _PantallaClimaAstralState extends State<PantallaClimaAstral> {
       return PlanetaInfo(nombre: n, simbolo: _simbolos[n]!, signo: _signosLista[idx], simboloSigno: _simbolosSignos[idx], longitud: lon);
     }).toList();
 
+    // Carta natal del usuario
+    String? solar, lunar, asc;
+    Map<String, String> natales = {};
+    if (miUid != null) {
+      final userDoc = await FirebaseFirestore.instance.collection('usuarios').doc(miUid).get();
+      final ud = userDoc.data();
+      if (ud != null) {
+        solar = ud['signoSolar'] as String?;
+        lunar = ud['signoLunar'] as String?;
+        asc   = ud['ascendente'] as String?;
+        natales = (ud['planetas'] as Map?)?.cast<String, String>() ?? {};
+      }
+    }
+
     String caption;
     if (miUid != null) {
       final doc = await FirebaseFirestore.instance
-          .collection('climaAstral')
+          .collection('usuarios')
+          .doc(miUid)
+          .collection('climaPersonal')
           .doc(fechaKey)
           .get();
 
       if (doc.exists) {
         caption = doc.data()!['caption'] as String;
       } else {
-        final resumen = planetas.map((p) => '${p.nombre} en ${p.signo}').join(', ');
-        caption = await ClaudeService.generarClimaAstral(resumen);
+        final resumenTransito = planetas.map((p) => '${p.nombre} en ${p.signo} ${(p.longitud % 30).floor()}°').join(', ');
+        final resumenNatal = solar != null
+            ? 'Sol natal $solar, Luna natal $lunar, Asc $asc${natales.isNotEmpty ? ', ${natales.entries.map((e) => '${e.key} natal ${e.value}').join(', ')}' : ''}'
+            : '';
+        caption = await ClaudeService.generarClimaAstral(resumenTransito, cartaNatal: resumenNatal);
         await FirebaseFirestore.instance
-            .collection('climaAstral')
+            .collection('usuarios')
+            .doc(miUid)
+            .collection('climaPersonal')
             .doc(fechaKey)
             .set({'caption': caption, 'fecha': FieldValue.serverTimestamp()});
       }
     } else {
-      final resumen = planetas.map((p) => '${p.nombre} en ${p.signo}').join(', ');
-      caption = await ClaudeService.generarClimaAstral(resumen);
+      final resumenTransito = planetas.map((p) => '${p.nombre} en ${p.signo} ${(p.longitud % 30).floor()}°').join(', ');
+      caption = await ClaudeService.generarClimaAstral(resumenTransito);
     }
 
     if (mounted) {
@@ -108,10 +129,11 @@ class _PantallaClimaAstralState extends State<PantallaClimaAstral> {
                       'El cielo, hoy',
                       style: const TextStyle(
                         fontFamily: 'PlayfairDisplay',
-                        fontSize: 34,
-                        fontWeight: FontWeight.w300,
-                        color: Colors.black87,
+                        fontSize: 38,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFF222222),
                         height: 1.1,
+                        letterSpacing: 1.0,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -239,9 +261,9 @@ class _PantallaClimaAstralState extends State<PantallaClimaAstral> {
                         const signos = ['Aries','Tauro','Géminis','Cáncer','Leo','Virgo',
                           'Libra','Escorpio','Sagitario','Capricornio','Acuario','Piscis'];
                         const abrevs = {
-                          'Aries':'Ari','Tauro':'Tau','Géminis':'Gém','Cáncer':'Cnc',
-                          'Leo':'Leo','Virgo':'Vir','Libra':'Lib','Escorpio':'Esc',
-                          'Sagitario':'Sag','Capricornio':'Cap','Acuario':'Acu','Piscis':'Pis',
+                          'Aries':'♈','Tauro':'♉','Géminis':'♊','Cáncer':'♋',
+                          'Leo':'♌','Virgo':'♍','Libra':'♎','Escorpio':'♏',
+                          'Sagitario':'♐','Capricornio':'♑','Acuario':'♒','Piscis':'♓',
                         };
                         final signo = signos[((lon % 360) / 30).floor() % 12];
                         final grado = (lon % 30).toStringAsFixed(1);
@@ -285,43 +307,6 @@ class _PantallaClimaAstralState extends State<PantallaClimaAstral> {
 
                       const SizedBox(height: 32),
                     ],
-
-                    // ── Lista de planetas ───────────────────────────────────
-                    const Divider(color: Colors.black26),
-                    const SizedBox(height: 20),
-
-                    ..._planetas.map((p) {
-                      final lon = _longitudes[p.nombre];
-                      final grado = lon != null ? (lon % 30).floor() : null;
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 14),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 28,
-                              child: Text('${p.simbolo}︎', style: const TextStyle(fontSize: 18)),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              p.nombre,
-                              style: const TextStyle(color: Colors.black54, fontSize: 12, letterSpacing: 1.5),
-                            ),
-                            const Spacer(),
-                            if (grado != null)
-                              Text(
-                                '$grado°  ',
-                                style: const TextStyle(color: Colors.black26, fontSize: 11),
-                              ),
-                            Text(
-                              p.signo,
-                              style: const TextStyle(color: Colors.black, fontSize: 13, fontWeight: FontWeight.w300, letterSpacing: 1),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-
-                    const SizedBox(height: 40),
 
                     // ── Paywall premium ─────────────────────────────────────
                     const Divider(color: Colors.black26),
@@ -438,10 +423,6 @@ class _TarjetaEnergia extends StatelessWidget {
   final String caption;
   const _TarjetaEnergia({required this.caption});
 
-  String _frasePrincipal() {
-    final sentences = caption.split(RegExp(r'(?<=[.!?])\s+'));
-    return sentences.isNotEmpty ? sentences.first : caption;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -458,21 +439,22 @@ class _TarjetaEnergia extends StatelessWidget {
           const Text(
             'ENERGÍA DEL DÍA',
             style: TextStyle(
+              fontFamily: 'PlayfairDisplay',
               color: Color(0xFFB8973A),
-              fontSize: 9,
+              fontSize: 11,
               letterSpacing: 3,
               fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: 14),
           Text(
-            _frasePrincipal(),
+            caption,
             style: const TextStyle(
-              fontFamily: 'PlayfairDisplay',
               color: Color(0xFFF3EBD6),
-              fontSize: 18,
-              fontWeight: FontWeight.w400,
-              height: 1.5,
+              fontSize: 14,
+              fontWeight: FontWeight.w300,
+              height: 1.7,
+              letterSpacing: 0.3,
             ),
           ),
         ],

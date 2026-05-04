@@ -17,20 +17,28 @@ class PantallaHome extends StatefulWidget {
 class _PantallaHomeState extends State<PantallaHome> {
   // 0 = amigos, 1 = venus, 2 = astros (centro), 3 = clima, 4 = tú
   int _tabActual = 2;
+  late final List<Widget> _pantallas;
 
   @override
-  Widget build(BuildContext context) {
-    final pantallas = [
+  void initState() {
+    super.initState();
+    _pantallas = [
       const PantallaAmigos(),
       const PantallaVenus(),
       PantallaAstrosHoy(nombre: widget.nombre),
       const PantallaClimaAstral(),
       const PantallaPerfilPropio(),
     ];
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF3EBD6),
-      body: pantallas[_tabActual],
+      body: IndexedStack(
+        index: _tabActual,
+        children: _pantallas,
+      ),
       bottomNavigationBar: _BarraNavegacion(
         tabActual: _tabActual,
         onTap: (i) => setState(() => _tabActual = i),

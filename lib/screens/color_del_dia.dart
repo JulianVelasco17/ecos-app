@@ -398,7 +398,6 @@ class _PantallaColorDelDiaState extends State<PantallaColorDelDia> {
 
   @override
   Widget build(BuildContext context) {
-    final hex = hexDeColor(widget.color);
     final luminancia = widget.color.computeLuminance();
     final colorTexto = luminancia > 0.45 ? Colors.black54 : Colors.black87;
 
@@ -433,15 +432,6 @@ class _PantallaColorDelDiaState extends State<PantallaColorDelDia> {
                     fontSize: 13,
                     fontWeight: FontWeight.w300,
                     letterSpacing: 2,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  hex,
-                  style: TextStyle(
-                    color: colorTexto.withValues(alpha: 0.40),
-                    fontSize: 12,
-                    letterSpacing: 5,
                   ),
                 ),
               ],
@@ -533,18 +523,25 @@ class _CircleClipper extends CustomClipper<Path> {
 // ─── Blob irregular (gris, revela color al expandirse) ───
 class BlobColorDelDia extends StatelessWidget {
   final VoidCallback onTap;
+  final Color color;
+  final bool revelado;
 
-  const BlobColorDelDia({super.key, required this.onTap});
+  const BlobColorDelDia({
+    super.key,
+    required this.onTap,
+    required this.color,
+    this.revelado = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: const SizedBox(
+      child: SizedBox(
         width: 72,
         height: 72,
         child: CustomPaint(
-          painter: _BlobPainter(),
+          painter: _BlobPainter(color: revelado ? color : const Color(0xFF3A3A3A)),
         ),
       ),
     );
@@ -552,11 +549,12 @@ class BlobColorDelDia extends StatelessWidget {
 }
 
 class _BlobPainter extends CustomPainter {
-  const _BlobPainter();
+  final Color color;
+  const _BlobPainter({required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = const Color(0xFF3A3A3A);
+    final paint = Paint()..color = color;
     final cx = size.width / 2;
     final cy = size.height / 2;
 
@@ -572,5 +570,5 @@ class _BlobPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter old) => false;
+  bool shouldRepaint(_BlobPainter old) => old.color != color;
 }

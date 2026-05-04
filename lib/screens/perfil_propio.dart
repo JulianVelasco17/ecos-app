@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 import '../services/calculos_astrales.dart';
 import '../services/aspectos_natales.dart';
 import '../services/claude_service.dart';
@@ -48,14 +49,35 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
 
   Future<void> _cambiarFoto() async {
     final picker = ImagePicker();
-    final imagen = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final imagen = await picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
     if (imagen == null) return;
+
+    final cropped = await ImageCropper().cropImage(
+      sourcePath: imagen.path,
+      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: '',
+          toolbarColor: const Color(0xFFF3EBD6),
+          toolbarWidgetColor: Colors.black54,
+          backgroundColor: Colors.black,
+          activeControlsWidgetColor: Colors.black,
+          lockAspectRatio: true,
+        ),
+        IOSUiSettings(
+          title: '',
+          aspectRatioLockEnabled: true,
+          resetAspectRatioEnabled: false,
+        ),
+      ],
+    );
+    if (cropped == null) return;
 
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
     final ref = FirebaseStorage.instance.ref().child('fotos_perfil/$uid.jpg');
-    await ref.putData(await imagen.readAsBytes());
+    await ref.putData(await cropped.readAsBytes());
     final url = await ref.getDownloadURL();
 
     await FirebaseFirestore.instance.collection('usuarios').doc(uid).update({'fotoUrl': url});
@@ -226,11 +248,11 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
                               Text(
                                 _datos?['nombre'] ?? '',
                                 style: const TextStyle(
-                                  color: Colors.black87,
-                                  fontSize: 24,
+                                  color: Color(0xFF222222),
+                                  fontSize: 28,
                                   fontFamily: 'PlayfairDisplay',
                                   fontWeight: FontWeight.w400,
-                                  letterSpacing: 0.3,
+                                  letterSpacing: 1.0,
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -471,10 +493,11 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
                               Text(frase,
                                   style: const TextStyle(
                                     fontFamily: 'PlayfairDisplay',
-                                    color: Colors.black87,
-                                    fontSize: 18,
+                                    color: Color(0xFF222222),
+                                    fontSize: 36,
                                     fontWeight: FontWeight.w400,
                                     height: 1.4,
+                                    letterSpacing: 1.0,
                                   )),
                               if (expansion.isNotEmpty) ...[
                                 const SizedBox(height: 10),
@@ -511,9 +534,9 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
 
   String _signoCorto(String signo) {
     const abrevs = {
-      'Aries':'Ari','Tauro':'Tau','Géminis':'Gém','Cáncer':'Cnc',
-      'Leo':'Leo','Virgo':'Vir','Libra':'Lib','Escorpio':'Esc',
-      'Sagitario':'Sag','Capricornio':'Cap','Acuario':'Acu','Piscis':'Pis',
+      'Aries':'♈','Tauro':'♉','Géminis':'♊','Cáncer':'♋',
+      'Leo':'♌','Virgo':'♍','Libra':'♎','Escorpio':'♏',
+      'Sagitario':'♐','Capricornio':'♑','Acuario':'♒','Piscis':'♓',
     };
     return abrevs[signo] ?? signo;
   }

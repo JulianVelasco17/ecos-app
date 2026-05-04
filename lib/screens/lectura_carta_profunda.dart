@@ -126,12 +126,13 @@ class _PantallaLecturaCartaProfundaState extends State<PantallaLecturaCartaProfu
                             fontSize: 10, letterSpacing: 4)),
                     const SizedBox(height: 10),
                     Text('Lectura profunda',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontFamily: 'PlayfairDisplay',
                           color: _beige,
-                          fontSize: 30,
+                          fontSize: 36,
                           fontWeight: FontWeight.w400,
                           height: 1.2,
+                          letterSpacing: 1.0,
                         )),
                     const SizedBox(height: 8),
                     Container(width: 32, height: 1.5, color: _gold),

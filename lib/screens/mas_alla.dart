@@ -200,11 +200,11 @@ class _PantallaMasAllaState extends State<PantallaMasAlla> {
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     fontFamily: 'PlayfairDisplay',
-                                    color: _beige,
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w500,
+                                    color: Color(0xFFF3EBD6),
+                                    fontSize: 36,
+                                    fontWeight: FontWeight.w400,
                                     height: 1.2,
-                                    letterSpacing: 0.8,
+                                    letterSpacing: 1.0,
                                   ),
                                 ),
 

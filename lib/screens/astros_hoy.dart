@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/calculos_astrales.dart';
@@ -43,6 +44,7 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
   String _miAsc = '';
   Map<String, String> _miPlanetas = {};
   final _blobKey = GlobalKey();
+  bool _colorRevelado = false;
 
   String _fraseBase = '';
   String _areaFrase = 'identidad';
@@ -60,6 +62,7 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
   void initState() {
     super.initState();
     _cargarTodo();
+    _cargarColorRevelado();
   }
 
   Future<void> _refrescarCompatibilidades() async {
@@ -89,6 +92,25 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
 
     setState(() { _amigos = []; _compatibilidades = {}; });
     await _cargarTodo();
+  }
+
+  Future<void> _cargarColorRevelado() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final hoy = DateTime.now();
+    final clave = 'color_revelado_${uid}_${hoy.year}-${hoy.month}-${hoy.day}';
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) setState(() => _colorRevelado = prefs.getBool(clave) ?? false);
+  }
+
+  Future<void> _marcarColorRevelado() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final hoy = DateTime.now();
+    final clave = 'color_revelado_${uid}_${hoy.year}-${hoy.month}-${hoy.day}';
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(clave, true);
+    if (mounted) setState(() => _colorRevelado = true);
   }
 
   Future<void> _cargarTodo() async {
@@ -327,28 +349,31 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
             RepaintBoundary(
               child: BlobColorDelDia(
                 key: _blobKey,
+                color: color,
+                revelado: _colorRevelado,
                 onTap: () {
-                  HapticFeedback.mediumImpact();
-                  Future.delayed(const Duration(milliseconds: 200), () => HapticFeedback.lightImpact());
-                  Future.delayed(const Duration(milliseconds: 420), () => HapticFeedback.lightImpact());
-                  Future.delayed(const Duration(milliseconds: 600), () => HapticFeedback.mediumImpact());
-                  final renderBox =
-                      _blobKey.currentContext!.findRenderObject() as RenderBox;
-                  final pos = renderBox.localToGlobal(Offset.zero);
-                  final size = renderBox.size;
-                  final centro = Offset(
-                    pos.dx + size.width / 2,
-                    pos.dy + size.height / 2,
-                  );
-                  Navigator.push(
-                    context,
-                    CircularRevealRoute(
-                      color: color,
-                      nombre: nombre,
-                      nombreEs: nombreEs,
-                      origen: centro,
-                    ),
-                  );
+                  HapticFeedback.lightImpact();
+                  Future.delayed(const Duration(milliseconds: 150), () => HapticFeedback.lightImpact());
+                  Future.delayed(const Duration(milliseconds: 300), () => HapticFeedback.mediumImpact());
+                  Future.delayed(const Duration(milliseconds: 500), () => HapticFeedback.mediumImpact());
+                  Future.delayed(const Duration(milliseconds: 700), () => HapticFeedback.heavyImpact());
+                  Future.delayed(const Duration(milliseconds: 900), () => HapticFeedback.heavyImpact());
+                  Future.delayed(const Duration(milliseconds: 1000), () {
+                    if (!mounted) return;
+                    final renderBox = _blobKey.currentContext!.findRenderObject() as RenderBox;
+                    final pos = renderBox.localToGlobal(Offset.zero);
+                    final size = renderBox.size;
+                    final centro = Offset(pos.dx + size.width / 2, pos.dy + size.height / 2);
+                    Navigator.push(
+                      context,
+                      CircularRevealRoute(
+                        color: color,
+                        nombre: nombre,
+                        nombreEs: nombreEs,
+                        origen: centro,
+                      ),
+                    ).then((_) => _marcarColorRevelado());
+                  });
                 },
               ),
             ),
@@ -506,11 +531,11 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                       _frase ?? '',
                       style: const TextStyle(
                         fontFamily: 'PlayfairDisplay',
-                        color: Colors.black,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF222222),
+                        fontSize: 36,
+                        fontWeight: FontWeight.w400,
                         height: 1.2,
-                        letterSpacing: 0.8,
+                        letterSpacing: 1.0,
                       ),
                     ),
                     const SizedBox(height: 16),

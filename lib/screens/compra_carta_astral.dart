@@ -50,10 +50,10 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
                 'tu carta\nastral',
                 style: TextStyle(
                   fontFamily: 'PlayfairDisplay',
-                  color: Colors.black,
-                  fontSize: 34,
+                  color: Color(0xFF222222),
+                  fontSize: 42,
                   fontWeight: FontWeight.w400,
-                  letterSpacing: 1,
+                  letterSpacing: 1.0,
                   height: 1.2,
                 ),
               ),

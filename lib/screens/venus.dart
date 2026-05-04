@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -6,6 +7,7 @@ import '../services/claude_service.dart';
 import 'venus_buscar_pareja.dart';
 import 'venus_suscripcion.dart';
 import 'venus_actividad.dart';
+import 'venus_carta_reveal.dart';
 
 enum _EstadoVenus { cargando, sinSuscripcion, sinPareja, solicitudEnviada, solicitudRecibida, enlazado }
 
@@ -60,6 +62,16 @@ class _PantallaVenusState extends State<PantallaVenus> {
         _                    => _EstadoVenus.sinPareja,
       };
     });
+  }
+
+  Future<void> _cancelarDebug() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    await FirebaseFirestore.instance.collection('usuarios').doc(uid).update({
+      'venusActivo': false,
+      'venusPagador': FieldValue.delete(),
+    });
+    if (mounted) setState(() => _estado = _EstadoVenus.sinSuscripcion);
   }
 
   Future<void> _cancelarORechar() async {
@@ -134,14 +146,26 @@ class _PantallaVenusState extends State<PantallaVenus> {
     return Scaffold(
       backgroundColor: const Color(0xFFF3EBD6),
       body: SafeArea(
-        child: switch (_estado) {
-          _EstadoVenus.cargando           => const Center(child: CircularProgressIndicator(color: Colors.black12)),
-          _EstadoVenus.sinSuscripcion     => _Paywall(onSuscribirse: () async { final activado = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => const PantallaVenusSuscripcion())); if (activado == true) _cargar(); }),
-          _EstadoVenus.sinPareja          => _SinPareja(onBuscar: () async { await Navigator.push(context, MaterialPageRoute(builder: (_) => const PantallaVenusBuscarPareja())); _cargar(); }),
-          _EstadoVenus.solicitudEnviada   => _SolicitudEnviada(enlace: _enlace!, onCancelar: _cancelarORechar),
-          _EstadoVenus.solicitudRecibida  => _SolicitudRecibida(enlace: _enlace!, onAceptar: _aceptar, onRechazar: _cancelarORechar),
-          _EstadoVenus.enlazado           => _Enlazada(enlace: _enlace!, onDisolver: _disolver),
-        },
+        child: Stack(
+          children: [
+            switch (_estado) {
+              _EstadoVenus.cargando           => const Center(child: CircularProgressIndicator(color: Colors.black12)),
+              _EstadoVenus.sinSuscripcion     => _Paywall(onSuscribirse: () async { final activado = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => const PantallaVenusSuscripcion())); if (activado == true) _cargar(); }),
+              _EstadoVenus.sinPareja          => _SinPareja(onBuscar: () async { await Navigator.push(context, MaterialPageRoute(builder: (_) => const PantallaVenusBuscarPareja())); _cargar(); }),
+              _EstadoVenus.solicitudEnviada   => _SolicitudEnviada(enlace: _enlace!, onCancelar: _cancelarORechar),
+              _EstadoVenus.solicitudRecibida  => _SolicitudRecibida(enlace: _enlace!, onAceptar: _aceptar, onRechazar: _cancelarORechar),
+              _EstadoVenus.enlazado           => _Enlazada(enlace: _enlace!, onDisolver: _disolver),
+            },
+            Positioned(
+              bottom: 16,
+              right: 32,
+              child: GestureDetector(
+                onTap: _cancelarDebug,
+                child: const Text('debug: cancelar venus →', style: TextStyle(color: Colors.black26, fontSize: 11, letterSpacing: 1.5)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -331,11 +355,74 @@ class _EnlazadaState extends State<_Enlazada> {
   String _parejaName = '';
   String? _miFotoUrl;
   String? _parejaFotoUrl;
+  String? _fraseCompat;
+  String? _textoCompat;
+  String? _cierreCompat;
+  bool _regenerando = false;
+
+  // Carta no leída
+  Map<String, dynamic>? _cartaPendiente;
+  String? _cartaDocId;
+  StreamSubscription<QuerySnapshot>? _cartaSub;
 
   @override
   void initState() {
     super.initState();
     _cargarSinastria();
+    _escucharCartas();
+  }
+
+  @override
+  void dispose() {
+    _cartaSub?.cancel();
+    super.dispose();
+  }
+
+  void _escucharCartas() {
+    final miUid = FirebaseAuth.instance.currentUser?.uid;
+    if (miUid == null) return;
+    _cartaSub = FirebaseFirestore.instance
+        .collection('venus_cartas')
+        .doc(miUid)
+        .collection('cartas')
+        .where('leida', isEqualTo: false)
+        .orderBy('timestamp', descending: true)
+        .limit(1)
+        .snapshots()
+        .listen((snap) {
+      if (!mounted) return;
+      if (snap.docs.isNotEmpty) {
+        setState(() {
+          _cartaPendiente = snap.docs.first.data();
+          _cartaDocId     = snap.docs.first.id;
+        });
+      } else {
+        setState(() { _cartaPendiente = null; _cartaDocId = null; });
+      }
+    });
+  }
+
+  Future<void> _marcarCartaLeida() async {
+    final miUid = FirebaseAuth.instance.currentUser?.uid;
+    if (miUid == null || _cartaDocId == null) return;
+    await FirebaseFirestore.instance
+        .collection('venus_cartas')
+        .doc(miUid)
+        .collection('cartas')
+        .doc(_cartaDocId!)
+        .update({'leida': true});
+  }
+
+  Future<void> _regenerarCompat() async {
+    setState(() => _regenerando = true);
+    final resultado = await ClaudeService.generarFraseCompatibilidad(parejaName: _parejaName);
+    if (!mounted) return;
+    setState(() {
+      _fraseCompat  = resultado['frase'];
+      _textoCompat  = resultado['cuerpo'];
+      _cierreCompat = resultado['cierre'];
+      _regenerando  = false;
+    });
   }
 
   Future<void> _cargarSinastria() async {
@@ -389,14 +476,37 @@ class _EnlazadaState extends State<_Enlazada> {
           .set({'lectura': lectura, 'fecha': FieldValue.serverTimestamp()});
     }
 
+    // Cache diario de frase de compatibilidad
+    final compatKey = '${miUid}_${parejaUid}_compat_${hoy.year}-${hoy.month.toString().padLeft(2,'0')}-${hoy.day.toString().padLeft(2,'0')}';
+    final compatDoc = await FirebaseFirestore.instance.collection('sinastrias').doc(compatKey).get();
+
+    String fraseCompat  = '';
+    String textoCompat  = '';
+    String cierreCompat = '';
+    if (compatDoc.exists) {
+      fraseCompat  = compatDoc.data()!['frase']  as String? ?? '';
+      textoCompat  = compatDoc.data()!['cuerpo'] as String? ?? compatDoc.data()!['texto'] as String? ?? '';
+      cierreCompat = compatDoc.data()!['cierre'] as String? ?? '';
+    } else {
+      final resultado = await ClaudeService.generarFraseCompatibilidad(parejaName: parejaName);
+      fraseCompat  = resultado['frase']  ?? '';
+      textoCompat  = resultado['cuerpo'] ?? '';
+      cierreCompat = resultado['cierre'] ?? '';
+      await FirebaseFirestore.instance.collection('sinastrias').doc(compatKey)
+          .set({'frase': fraseCompat, 'cuerpo': textoCompat, 'cierre': cierreCompat, 'fecha': FieldValue.serverTimestamp()});
+    }
+
     if (mounted) {
       setState(() {
-        _aspectos   = aspectos;
-        _miNombre   = miNombre;
-        _parejaName = parejaName;
-        _miFotoUrl      = miDatos['fotoUrl'] as String?;
-        _parejaFotoUrl  = parejaDatos['fotoUrl'] as String?;
-        _cargando       = false;
+        _aspectos      = aspectos;
+        _miNombre      = miNombre;
+        _parejaName    = parejaName;
+        _miFotoUrl     = miDatos['fotoUrl'] as String?;
+        _parejaFotoUrl = parejaDatos['fotoUrl'] as String?;
+        _fraseCompat   = fraseCompat;
+        _textoCompat   = textoCompat;
+        _cierreCompat  = cierreCompat;
+        _cargando      = false;
       });
     }
   }
@@ -410,8 +520,19 @@ class _EnlazadaState extends State<_Enlazada> {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text('venus', style: TextStyle(color: Colors.black, fontSize: 32, fontWeight: FontWeight.w300, letterSpacing: 3)),
+              const Text(
+                'venus',
+                style: TextStyle(
+                  fontFamily: 'PlayfairDisplay',
+                  fontWeight: FontWeight.w400,
+                  fontSize: 44,
+                  letterSpacing: 1.2,
+                  height: 1.05,
+                  color: Color(0xFF1A1A1A),
+                ),
+              ),
               GestureDetector(
                 onTap: widget.onDisolver,
                 child: const Text('disolver', style: TextStyle(color: Colors.black26, fontSize: 11, letterSpacing: 2)),
@@ -419,6 +540,63 @@ class _EnlazadaState extends State<_Enlazada> {
             ],
           ),
           const SizedBox(height: 32),
+
+          // ── Banner carta pendiente ──────────────────────────────────────
+          if (_cartaPendiente != null) ...[
+            GestureDetector(
+              onTap: () async {
+                await _marcarCartaLeida();
+                if (!mounted) return;
+                Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (ctx, a, b) => CartaRevealScreen(
+                      remitente: _cartaPendiente!['de'] as String? ?? _parejaName,
+                      mensaje:   _cartaPendiente!['mensaje'] as String? ?? '',
+                      imagenUrl: _cartaPendiente!['imagenUrl'] as String?,
+                    ),
+                    transitionsBuilder: (ctx, anim, a, child) =>
+                        FadeTransition(opacity: anim, child: child),
+                    transitionDuration: const Duration(milliseconds: 400),
+                  ),
+                );
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'tienes una carta de amor 💌',
+                        style: TextStyle(
+                          color: Colors.black87,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w300,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                    const Text(
+                      'abrir',
+                      style: TextStyle(
+                        color: Colors.black45,
+                        fontSize: 12,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.arrow_forward_ios, size: 10, color: Colors.black38),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
 
           // ── Avatares centrados ──────────────────────────────────────────
           Center(
@@ -461,6 +639,60 @@ class _EnlazadaState extends State<_Enlazada> {
           if (_cargando)
             const Center(child: CircularProgressIndicator(color: Colors.black26, strokeWidth: 1.5))
           else ...[
+
+            // ── Frase de compatibilidad ─────────────────────────────────
+            GestureDetector(
+              onTap: _regenerando ? null : _regenerarCompat,
+              child: _regenerando
+                  ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(color: Colors.black26, strokeWidth: 1.2))
+                  : const Text('debug: regenerar →', style: TextStyle(color: Colors.black26, fontSize: 11, letterSpacing: 1.5)),
+            ),
+            const SizedBox(height: 12),
+            if (_fraseCompat != null && _fraseCompat!.isNotEmpty) ...[
+              Center(
+                child: Text(
+                  _fraseCompat!.replaceAll('tu pareja', _parejaName.split(' ').first),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'PlayfairDisplay',
+                    color: Color(0xFF222222),
+                    fontSize: 36,
+                    fontWeight: FontWeight.w400,
+                    height: 1.3,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            if (_textoCompat != null && _textoCompat!.isNotEmpty) ...[
+              Text(
+                _textoCompat!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.black54,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w300,
+                  height: 1.7,
+                ),
+              ),
+              if (_cierreCompat != null && _cierreCompat!.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Text(
+                  _cierreCompat!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.black38,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w300,
+                    height: 1.7,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 32),
+              const Divider(color: Colors.black12),
+              const SizedBox(height: 32),
+            ],
 
             // ── Actividad diaria ────────────────────────────────────────
             VenusActividadDiaria(

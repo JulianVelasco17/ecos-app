@@ -211,18 +211,71 @@ Respond ONLY with this JSON, nothing else:
     required String signo,
     int? casa,
   }) async {
+    final casaLinea = casa != null ? '\nCasa: $casa' : '';
     final prompt = '''
-Eres el redactor de una app de astrología estilo Co-Star. Escribe en español, tono directo y humano, sin misticismo ni metáforas.
+Actúa como un redactor de producto especializado en astrología para apps móviles.
 
-Escribe exactamente 1 título y 1 párrafo sobre $planeta en $signo${casa != null ? ' en casa $casa' : ''}. El párrafo explica qué representa $planeta, cómo se expresa en $signo${casa != null ? ', y qué área de vida activa la casa $casa' : ''}. Sin listas, sin subtítulos extra, sin frases correctivas ("no es… sino…").
+Tu tarea es escribir un texto en español claro, natural y directo, similar al estilo de apps reales (tipo Co–Star o The Pattern), evitando cualquier tono poético excesivo o estructuras típicas de IA.
 
-LÍMITE ESTRICTO: 40–55 palabras en total (título incluido). Cuenta las palabras antes de responder.
+---
 
-Formato:
-# $planeta en $signo
-[párrafo]
+ESTRUCTURA:
 
-Solo el texto, nada más.
+1. Título:
+   Ej: "$planeta en $signo"
+
+2. Primer párrafo:
+   Explica qué representa el $planeta (ej: el Sol como identidad, ego, dirección en la vida).
+   Después, describe cómo se expresa en $signo de forma clara y comprensible.
+${casa != null ? '''
+3. Segundo párrafo:
+   Explica qué significa esa posición en la casa $casa, conectándolo con áreas de vida concretas.
+''' : ''}
+---
+
+TONO:
+* Claro, directo y humano
+* Explicativo pero cercano
+* Sin dramatismo ni lenguaje místico excesivo
+* Debe sentirse como texto de producto, no como ensayo ni poesía
+
+---
+
+REGLAS IMPORTANTES:
+
+❌ Evitar completamente:
+* "no es…, es…"
+* "no eres…, eres…"
+* "no se trata de…, sino de…"
+* frases correctivas o comparativas
+* lenguaje rebuscado o filosófico
+* metáforas exageradas
+
+❌ No usar:
+* comillas internas ("yo soy…")
+* frases ambiguas o demasiado abstractas
+
+✅ Usar:
+* lenguaje sencillo y natural
+* ejemplos implícitos de comportamiento (cómo actúa la persona)
+* frases claras y bien construidas
+* vocabulario cotidiano
+
+---
+
+ESTILO DE REFERENCIA:
+✔ "El Sol determina tu identidad y tu forma de moverte en la vida."
+✔ "Con el Sol en Aries, tiendes a actuar con iniciativa y a tomar la delantera."
+✔ "En la casa 11, esta energía se expresa en tus amistades, grupos y metas a futuro."
+
+---
+
+EXTENSIÓN: 120–160 palabras.
+
+Planeta: $planeta
+Signo: $signo$casaLinea
+
+Genera el texto siguiendo estrictamente este estilo. No incluyas nada más, solo el texto.
 ''';
     return await _llamarClaude(prompt, maxTokens: 350);
   }
@@ -303,6 +356,230 @@ Responde SOLO con este JSON sin nada más:
   }
 
   // Genera una lectura de sinastría entre dos personas
+
+  static const _frasesVenus = [
+    'Di lo que quieres, no lo insinúes',
+    'Hoy es mejor hablar que asumir',
+    'No esperes a que tu pareja lo entienda solo',
+    'Si algo te molesta, dilo hoy',
+    'No ignores lo evidente',
+    'Hoy es buen momento para aclarar cosas',
+    'No le des tantas vueltas',
+    'No te quedes callado por comodidad',
+    'No evites lo incómodo',
+    'Hoy es mejor ser directo',
+    'No te adelantes a conclusiones',
+    'No ignores lo que ya sabes',
+    'Di lo que necesitas hoy, sin adornos',
+    'No esperes a que tu pareja adivine lo importante',
+    'Si algo te incomoda, nómbralo y listo',
+    'Aclara con tu pareja lo que está quedando ambiguo',
+    'Corta el rodeo: ve al punto',
+    'Pregunta directo a tu pareja lo que quieres saber',
+    'Lo implícito hoy confunde; hazlo explícito',
+    'Dile a tu pareja exactamente qué sí te funciona',
+    'Evita suavizar lo que sí importa',
+    'Si dudas, verifica con tu pareja',
+    'Observa cómo responde tu pareja hoy',
+    'Hoy puedes notar detalles que antes no',
+    'No todo depende de ti',
+    'Hoy es más claro de lo que parece',
+    'No todo tiene doble intención',
+    'Escucha antes de reaccionar',
+    'Hoy hay más sensibilidad de lo normal',
+    'Hoy la intención importa más que la forma',
+    'Observa cómo cambia el tono hoy',
+    'Nota qué cambia cuando bajan el ritmo',
+    'Observa cómo responde tu pareja cuando no presionas',
+    'Hoy los detalles pesan más que los planes',
+    'Fíjate en el tono de tu pareja, no solo en las palabras',
+    'Hay matices que se pierden si vas rápido',
+    'Mira qué evita tu pareja y por qué',
+    'Lo pequeño está diciendo bastante',
+    'Detecta cuándo tu pareja se abre y cuándo no',
+    'Hoy ninguno está para juegos ambiguos',
+    'Hoy hay ganas, pero también confusión',
+    'Hoy hay química, pero también diferencias',
+    'No asumas lo peor',
+    'No fuerces una conversación que no fluye',
+    'No corrijas, entiende primero',
+    'No te cierres antes de tiempo',
+    'Hoy pueden llevarse muy bien, si cooperan',
+    'Hoy hay cierta incomodidad',
+    'Algo no está del todo alineado',
+    'Hay un pequeño roce',
+    'Hoy no todo fluye igual',
+    'Algo se siente fuera de lugar',
+    'Hay una diferencia que pesa un poco',
+    'Hoy hay más sensibilidad',
+    'Algo se puede malinterpretar fácil',
+    'Propón algo en lugar de esperar',
+    'Hoy vale la pena hacer el esfuerzo',
+    'Hoy hay oportunidad de hacerlo mejor',
+    'Hoy puedes cambiar el tono de la dinámica',
+    'Hoy se vale intentar diferente',
+    'Hoy lo simple funciona mejor',
+    'Hoy puedes hacerlo más fácil',
+    'Dile a tu pareja lo que sí te gusta',
+    'Haz el primer movimiento',
+    'Hoy vale tomar iniciativa',
+    'No esperes a que pase solo',
+    'Hoy puedes cambiar la dinámica',
+    'Haz algo diferente',
+    'Toma la iniciativa sin pensarlo tanto',
+    'Hoy puedes acercarte más',
+    'Da un paso, aunque sea pequeño',
+    'Dale espacio a tu pareja sin desaparecer',
+    'No todo tiene que resolverse ahora',
+    'Hoy es buen día para bajar la guardia',
+    'No todo es tan serio como parece',
+    'No te compliques de más',
+    'No midas todo',
+    'No todo requiere respuesta inmediata',
+    'Hoy es mejor ir con calma',
+    'Dale tiempo a lo que está pasando',
+    'No todo necesita resolverse hoy',
+    'Baja el ritmo un poco',
+    'Hoy menos es más',
+    'Hoy vale la pena acercarse un poco más',
+    'Hoy se siente bien estar juntos',
+    'Haz algo simple con tu pareja hoy',
+    'Hoy es buen momento para conectar',
+    'Acércate sin pensarlo tanto',
+    'Hoy lo importante es compartir',
+    'Disfruta lo que sí está pasando',
+    'Hoy hay ganas de estar cerca',
+    'Hazle saber a tu pareja que te importa',
+    'Hoy lo pequeño cuenta más',
+    'Quédate un poco más de lo normal',
+    'Hoy es buen día para un plan juntos',
+    'No hace falta hacerlo perfecto',
+    'Hoy se trata de disfrutar',
+    'Mira a tu pareja con más atención',
+    'Hoy pueden sentirse más cerca',
+    'Aprovecha el momento con tu pareja',
+    'Hoy es buen día para bajar la guardia juntos',
+    'Haz algo que se sienta bien para ambos',
+    'Hoy hay espacio para conectar mejor',
+    'Hoy es buen día para estar juntos sin plan',
+    'Disfruta lo simple con tu pareja',
+    'Hoy hay espacio para algo bonito',
+    'Acércate sin razón específica',
+    'Hoy se trata de compartir',
+    'Haz algo que los acerque',
+    'Hoy vale la pena estar presentes',
+    'Disfruta el tiempo juntos',
+    'Hoy hay más conexión de la que parece',
+    'Haz algo pequeño por tu pareja',
+    'Hoy es buen día para una conversación tranquila',
+    'Quédate un rato más',
+    'Hoy se siente bien coincidir',
+    'Disfruta lo que sí funciona',
+    'Hoy hay oportunidad de conectar mejor',
+  ];
+
+  static Future<Map<String, String>> generarFraseCompatibilidad({
+    required String parejaName,
+  }) async {
+    final frase = _frasesVenus[Random().nextInt(_frasesVenus.length)];
+    final pareja = parejaName.split(' ').first;
+    final prompt = '''
+Eres la voz de una app de relaciones. Escribes como una voz externa que describe situaciones de pareja de forma objetiva, sin involucrarse, no como una persona ni como un horóscopo.
+
+La frase de hoy es: "$frase"
+
+Desarrolla esa idea aplicada a la dinámica entre el usuario y $pareja.
+
+ANTES DE ESCRIBIR:
+elige aleatoriamente el tono con esta probabilidad:
+- 20% tensión
+- 40% neutral
+- 40% calma / conexión
+
+elige también un tipo de situación y úsalo:
+- interacción directa (estar juntos físicamente)
+- ausencia o distancia (no verse, planes separados)
+- decisión práctica (planes, tiempos, prioridades)
+- rutina compartida (comida, descanso, tareas)
+- percepción interna (lo que notas sin que se diga)
+- momento neutro (sin conflicto ni tensión clara)
+
+evita repetir escenarios de conversación o teléfono
+
+ESTILO:
+directo, observador, preciso
+sin tono emocional exagerado
+sin intentar sonar profundo o "bonito"
+escribe como si describieras algo que ya ocurrió
+
+REGLAS:
+español mexicano natural
+usar siempre "tú"
+usar conjugaciones correctas de "tú" (ej: dices, sientes, hablas)
+prohibido voseo en cualquier forma (ej: soltás, decís, querés, tenés)
+mantener consistencia total en el registro
+
+máximo 90 palabras
+frases cortas
+sin metáforas
+sin lenguaje motivacional
+no explicar la frase, integrarla de forma natural
+prohibido usar guiones de cualquier tipo (-, –, —)
+
+evitar expresiones coloquiales (ej: "no te late", "pues", "ah", "la neta")
+evitar muletillas o palabras vagas como "rollo", "épico", "intenso", "conexión", "energía"
+evitar lenguaje abstracto o conceptual como "la pausa", "el proceso", "el respiro", "la cercanía", "lo que se siente"
+evitar lenguaje técnico como "patrones" o "dinámicas"
+evitar lenguaje formal o rígido (ej: "notará el cambio", "procederá a", "percibirá")
+
+usar lenguaje concreto y literal
+usar acciones observables (responder, hablar, ignorar, proponer, cancelar)
+
+no usar estructuras del tipo "no es X, sino Y"
+no reformular ideas para hacerlas más profundas o elegantes
+
+no centrar la escena en mensajes, chats o llamadas a menos que sea necesario
+
+cada frase debe leerse como una observación externa, clara y natural
+
+no asumir que los eventos ya ocurrieron hoy
+evitar referencias temporales específicas como "hoy", "ayer", "esta mañana", "más tarde"
+el texto debe poder leerse en cualquier momento del día
+usar formulaciones generales o continuas (ej: "a veces", "cuando pasa", "en estos casos")
+no describir eventos cerrados en el tiempo
+
+ESTRUCTURA (flexible):
+abrir con una observación o situación
+puede mostrar diferencia o coincidencia entre usuario y $pareja
+añadir una interpretación simple
+cerrar de forma natural (abierta, neutra o ligeramente incómoda según el tono)
+
+IMPORTANTE:
+la voz es externa y objetiva
+usar español natural de México, como alguien hablaría en voz baja y claro
+preferir frases simples (ej: "se da cuenta", "lo nota", "lo siente")
+el texto debe sentirse específico, real y contenido
+puede ser incómodo, neutro o tranquilo según el tono elegido
+si suena genérico o decorado, está mal
+no asumir rasgos específicos: no inventar historias ni detalles particulares
+hablar desde situaciones comunes que podrían aplicar a cualquier pareja
+
+Responde SOLO con este JSON. "cierre" debe ser exactamente una sola frase:
+{"cuerpo": "...", "cierre": "..."}
+''';
+    final raw = await _llamarClaude(prompt, maxTokens: 220);
+    try {
+      final json = jsonDecode(raw.replaceAll(RegExp(r'^```json|```$', multiLine: true), '').trim());
+      return {
+        'frase':  frase,
+        'cuerpo': json['cuerpo'] as String,
+        'cierre': json['cierre'] as String,
+      };
+    } catch (_) {
+      return {'frase': frase, 'cuerpo': raw, 'cierre': ''};
+    }
+  }
+
   static Future<String> generarSinastria({
     required String nombre1,
     required String nombre2,
@@ -569,13 +846,16 @@ Responde SOLO con este JSON:
   }
 
   // Genera el caption universal del clima astral
-  static Future<String> generarClimaAstral(String resumenPlanetas) async {
+  static Future<String> generarClimaAstral(String resumenPlanetas, {String? cartaNatal}) async {
+    final partePersonal = cartaNatal != null && cartaNatal.isNotEmpty
+        ? '\n\nCarta natal del usuario: $cartaNatal. Menciona brevemente cómo uno de los tránsitos de hoy toca su carta personal (conjunción, tensión o apoyo al signo natal).'
+        : '';
     final prompt = '''
-Eres la voz de una app de astrología. Escribe exactamente 2 oraciones en español describiendo el clima astral del día basándote en estas posiciones planetarias: $resumenPlanetas.
+Eres la voz de una app de astrología. Escribe 3-4 oraciones en español describiendo el clima astral del día basándote en estas posiciones planetarias actuales: $resumenPlanetas.$partePersonal
 
-Menciona 1 o 2 planetas y sus signos actuales de forma natural, explicando qué tono o tensión le dan al día. El mensaje es universal — válido para cualquier persona. Tono: técnico pero accesible, directo. Sin "vibra", "universo", "manifiesta". Sin guiones largos (—). Sin saludos.
+Menciona 2-3 planetas con sus signos y grados actuales de forma natural, explicando qué tono o tensión le dan al día. Tono: técnico pero accesible, directo. Sin "vibra", "universo", "manifiesta". Sin guiones largos (—). Sin saludos.
 ''';
-    return await _llamarClaude(prompt);
+    return await _llamarClaude(prompt, maxTokens: 400);
   }
 
   // Método base que llama a la API de Claude

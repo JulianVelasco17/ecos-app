@@ -7,7 +7,6 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/claude_service.dart';
 import '../services/calculos_astrales.dart';
-import '../services/notification_service.dart';
 
 // ─── Banco de preguntas (lunes) — 60 semanas ─────────────────────────────────
 const _preguntas = [
@@ -411,17 +410,9 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
           'timestamp': FieldValue.serverTimestamp(),
         });
 
-    // Push notification a la pareja
-    if (_diaSemana == 1 || _diaSemana == 3 || _diaSemana == 7) {
-      final esFoto = _diaSemana == 3 && respuesta.contains('||IMG||');
-      await NotificationService.notificarPareja(
-        parejaUid: widget.parejaUid,
-        titulo: widget.miNombre.split(' ').first,
-        cuerpo: esFoto ? 'te envió una foto' : 'te envió una carta',
-      );
-    }
+    // La notificación la dispara automáticamente la Cloud Function notificarCarta
+    // al crear el documento en venus_cartas
 
-    // Notificar a la pareja con una "carta"
     if (_diaSemana == 1 || _diaSemana == 3 || _diaSemana == 7) {
       await FirebaseFirestore.instance
           .collection('venus_cartas')

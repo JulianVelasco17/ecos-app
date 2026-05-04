@@ -6,7 +6,8 @@ import 'compra_carta_astral.dart';
 class _Constelacion {
   final List<Offset> estrellas;
   final List<(int, int)> lineas;
-  const _Constelacion(this.estrellas, this.lineas);
+  final Set<int> brillantes;
+  const _Constelacion(this.estrellas, this.lineas, [this.brillantes = const <int>{}]);
 }
 
 // Coordenadas trazadas manualmente sobre diagramas reales de cada constelación
@@ -14,56 +15,64 @@ const _constelaciones = {
 
   // Aries: gancho de 4 estrellas, curva suave
   'Aries': _Constelacion([
-    Offset(0.20, 0.62), // γ Mesarthim
+    Offset(0.08, 0.75), // γ Mesarthim
     Offset(0.36, 0.50), // β Sheratan
     Offset(0.58, 0.38), // α Hamal (más brillante)
     Offset(0.74, 0.30),
-    Offset(0.82, 0.42),
+    Offset(0.88, 0.52),
   ], [(0,1),(1,2),(2,3),(3,4)]),
 
   // Tauro: dos cuernos arriba-izq desde el cluster Híades, Aldebarán a la derecha con rama
   'Tauro': _Constelacion([
-    Offset(0.22, 0.06), // 0 — β Tau Elnath (cuerno superior grande)
-    Offset(0.05, 0.37), // 1 — ε Tau (cuerno izquierdo)
-    Offset(0.40, 0.20), // 2 — ζ Tau (estrella media superior)
-    Offset(0.44, 0.40), // 3 — γ Tau (cluster Híades 1)
-    Offset(0.48, 0.46), // 4 — δ Tau (cluster pequeño)
-    Offset(0.51, 0.53), // 5 — θ1 Tau (cluster pequeño)
-    Offset(0.56, 0.57), // 6 — cluster inferior
-    Offset(0.66, 0.62), // 7 — α Tau Aldebarán (más brillante)
-    Offset(0.83, 0.57), // 8 — rama derecha
-    Offset(0.90, 0.74), // 9 — punta rama
-  ], [(0,1),(0,2),(1,3),(2,3),(3,4),(4,5),(5,6),(6,7),(7,8),(8,9)]),
+    Offset(0.26, 0.00), // 0 — β Tau Elnath (cuerno superior grande)
+    Offset(0.05, 0.04), // 1 — ε Tau (cuerno izquierdo)
+    Offset(0.40, 0.29), // 2 — ζ Tau (estrella media superior)
+    Offset(0.24, 0.55), // 3 — γ Tau (cluster Híades 1)
+    Offset(0.40, 0.46), // 4 — δ Tau (cluster pequeño)
+    Offset(0.45, 0.38), // 5 — θ1 Tau (cluster pequeño)
+    Offset(0.38, 0.38), // 6 — cluster inferior
+    Offset(0.40, 0.30), // 7 — α Tau Aldebarán (más brillante)
+    Offset(0.79, 0.50), // 8 — rama derecha
+    Offset(0.92, 0.77), // 9 — punta rama
+  ], [(0,2),(1,3),(3,4),(4,5),(5,6),(6,7),(8,4),(8,9)], {9}),
 
   // Géminis: Cástor arriba-izq → estrella media → Pólux, rama sup-der desde Pólux,
   // dos cadenas paralelas con dos cruces horizontales, tres pies en la base
   'Géminis': _Constelacion([
-    Offset(0.14, 0.18), // 0  α Cástor (cabeza izq, la más alta)
-    Offset(0.36, 0.26), // 1  estrella intermedia superior
+    Offset(0.35, 0.07), // 0  α Cástor (cabeza izq, la más alta)
+    Offset(0.36, 0.18), // 1  estrella intermedia superior
     Offset(0.56, 0.20), // 2  β Pólux (cabeza der)
-    Offset(0.70, 0.12), // 3  rama sup-der 1
-    Offset(0.86, 0.08), // 4  rama sup-der 2 (punta)
-    Offset(0.18, 0.44), // 5  cadena izq alta
-    Offset(0.48, 0.40), // 6  cadena der alta
+    Offset(0.75, 0.16), // 3  rama sup-der 1
+    Offset(0.94, 0.08), // 4  rama sup-der 2 (punta)
+    Offset(0.16, 0.62), // 5  cadena izq alta
+    Offset(0.32, 0.56), // 6  cadena der alta
     Offset(0.16, 0.62), // 7  cadena izq baja
-    Offset(0.46, 0.58), // 8  cadena der baja
+    Offset(0.42, 0.63), // 8  cadena der baja
     Offset(0.08, 0.80), // 9  pie izq externo
-    Offset(0.24, 0.84), // 10 pie izq interno
-    Offset(0.42, 0.80), // 11 pie derecho
+    Offset(0.24, 1.00), // 10 pie izq interno
+    Offset(0.50, 1.00), // 11 pie derecho
+    Offset(0.12, 0.30), // 12 pie derecho
+    Offset(0.74, 0.08), // 13 pie derecho
+    Offset(0.72, 0.03), // 14 pie derecho
+    Offset(0.70, 0.50), // 15 pie derecho
+    Offset(0.68, 0.95), // 16 pie derecho
+    Offset(0.80, 0.82), // 17 pie derecho
+    Offset(0.85, 0.91), // 18 pie derecho
+    Offset(0.92, 0.98), // 19 pie derecho
   ], [
-    (0,1),(1,2),(2,3),(3,4),   // cadena superior: Cástor→media→Pólux→rama
-    (0,5),(5,7),(7,9),(7,10),  // cadena izquierda + dos pies
-    (2,6),(6,8),(8,11),        // cadena derecha + pie
+    (0,1),(1,2),(2,3),(3,4),(1,6),(1,12),(3,13),(13,14),(3,15),(16,15),(17,15),(17,18),(18,19),  // cadena superior: Cástor→media→Pólux→rama
+    (5,7),(7,10),  // cadena izquierda + dos pies
+    (6,8),(8,11),        // cadena derecha + pie
     (5,6),(7,8),               // cruces horizontales
   ]),
 
   // Cáncer: diagonal arriba-izq → centro, rama derecha y rama abajo
   'Cáncer': _Constelacion([
-    Offset(0.10, 0.08), // 0 — estrella superior izquierda
-    Offset(0.38, 0.28), // 1 — estrella intermedia
-    Offset(0.44, 0.46), // 2 — centro (más brillante)
-    Offset(0.84, 0.60), // 3 — estrella derecha
-    Offset(0.42, 0.76), // 4 — estrella inferior
+    Offset(0.74, 0.40), // 0 — estrella superior izquierda
+    Offset(0.52, 0.45), // 1 — estrella intermedia
+    Offset(0.34, 0.45), // 2 — centro (más brillante)
+    Offset(0.18, 0.38), // 3 — estrella derecha
+    Offset(0.06, 0.70), // 4 — estrella inferior
   ], [(0,1),(1,2),(2,3),(2,4)]),
 
   // Leo: hoz (interrogación invertida) + Denébola en la cola
@@ -92,13 +101,15 @@ const _constelaciones = {
 
   // Libra: triángulo de balanza con base
   'Libra': _Constelacion([
-    Offset(0.50, 0.24), // β Lib (arriba)
-    Offset(0.24, 0.44), // α Lib (platillo izq)
-    Offset(0.76, 0.44), // γ Lib (platillo der)
-    Offset(0.24, 0.66),
-    Offset(0.50, 0.58),
-    Offset(0.76, 0.66),
-  ], [(0,1),(0,2),(1,3),(3,4),(4,5),(2,5),(1,2)]),
+    Offset(0.52, 0.00), // β Lib (arriba)
+    Offset(0.14, 0.26), // α Lib (platillo izq)
+    Offset(0.88, 0.47), // γ Lib (platillo der)
+    Offset(0.14, 0.50),
+    Offset(1.00, 0.88),
+    Offset(0.88, 0.80),
+    Offset(0.12, 0.64),
+    Offset(0.04, 0.70),
+  ], [(0,1),(0,2),(1,3),(4,5),(2,5),(1,2),(3,6),(6,7)]),
 
   // Escorpio: β/γ arriba-der → Antares → cola curva abajo-izq → gancho
   'Escorpio': _Constelacion([
@@ -218,7 +229,8 @@ const _imagenesSigno = <String, String>{
 class ConstelacionPainter extends CustomPainter {
   final String signo;
   final double progreso;
-  ConstelacionPainter({required this.signo, required this.progreso});
+  final bool debugGrid;
+  ConstelacionPainter({required this.signo, required this.progreso, this.debugGrid = false});
 
   // Estrella tipo brújula: 4 puntas largas + 4 cortas diagonales + centro
   void _dibujarCompass(Canvas canvas, Offset c, double radio, Paint paint) {
@@ -339,14 +351,28 @@ class ConstelacionPainter extends CustomPainter {
       final t = (faseEstrellas - i / estrellas.length).clamp(0.0, 1.0);
       if (t <= 0) continue;
 
-      final tipo  = _tipo(i);
+      final esBrillante = data.brillantes.contains(i);
+      final tipo  = esBrillante ? 2 : _tipo(i);
       final radio = (tipo == 2 ? 10.0 : tipo == 1 ? 7.5 : 5.5) * t;
       final paint = Paint()..color = Colors.white.withValues(alpha: t);
 
-      // Halo suave
+      if (esBrillante) {
+        // Halo exterior muy difuso
+        canvas.drawCircle(estrellas[i], radio * 4.0,
+            Paint()
+              ..color = Colors.white.withValues(alpha: t * 0.10)
+              ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18));
+        // Halo medio
+        canvas.drawCircle(estrellas[i], radio * 2.5,
+            Paint()
+              ..color = Colors.white.withValues(alpha: t * 0.30)
+              ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10));
+      }
+
+      // Halo suave estándar
       canvas.drawCircle(estrellas[i], radio * 1.8,
           Paint()
-            ..color = Colors.white.withValues(alpha: t * 0.18)
+            ..color = Colors.white.withValues(alpha: t * (esBrillante ? 0.40 : 0.18))
             ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6));
 
       _dibujarCompass(canvas, estrellas[i], radio, paint);
@@ -354,26 +380,88 @@ class ConstelacionPainter extends CustomPainter {
       // Estrella de 8 puntas en prominentes (tipo 1 y 2)
       if (tipo >= 1) {
         final r8 = (tipo == 2 ? radio * 2.2 : radio * 1.6);
-        // Halo brillante detrás
         canvas.drawCircle(estrellas[i], r8 * 0.8,
             Paint()
-              ..color = Colors.white.withValues(alpha: t * 0.15)
+              ..color = Colors.white.withValues(alpha: t * (esBrillante ? 0.35 : 0.15))
               ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10));
         _dibujar8Puntas(canvas, estrellas[i], r8,
             Paint()..color = Colors.white.withValues(alpha: t * 0.9));
       }
 
-      // Anillo de puntos solo en la estrella principal (tipo 2)
+      // Anillo de puntos en tipo 2 y brillantes
       if (tipo == 2) {
-        _dibujarAnillo(canvas, estrellas[i], radio * 2.8,
-            Paint()..color = Colors.white.withValues(alpha: t * 0.4));
+        _dibujarAnillo(canvas, estrellas[i], radio * (esBrillante ? 3.5 : 2.8),
+            Paint()..color = Colors.white.withValues(alpha: t * (esBrillante ? 0.6 : 0.4)));
       }
+    }
+
+    if (debugGrid) _dibujarDebugGrid(canvas, size);
+  }
+
+  void _dibujarDebugGrid(Canvas canvas, Size size) {
+    final gridPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.45)
+      ..strokeWidth = 0.8;
+
+    // Líneas cada 0.1 (10 divisiones)
+    for (int i = 0; i <= 10; i++) {
+      final x = size.width * i / 10;
+      final y = size.height * i / 10;
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+
+    // Labels de coordenadas en los cruces
+    for (int xi = 0; xi <= 10; xi += 2) {
+      for (int yi = 0; yi <= 10; yi += 2) {
+        final x = size.width * xi / 10;
+        final y = size.height * yi / 10;
+        final label = '${(xi / 10).toStringAsFixed(1)},${(yi / 10).toStringAsFixed(1)}';
+        final tp = TextPainter(
+          text: TextSpan(text: label, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        // Fondo negro para legibilidad
+        canvas.drawRect(
+          Rect.fromLTWH(x + 2, y + 2, tp.width + 2, tp.height + 1),
+          Paint()..color = Colors.black.withValues(alpha: 0.6),
+        );
+        tp.paint(canvas, Offset(x + 3, y + 2));
+      }
+    }
+
+    // Índice de cada estrella
+    final data = _constelaciones[signo];
+    if (data == null) return;
+    for (int i = 0; i < data.estrellas.length; i++) {
+      final pos = Offset(data.estrellas[i].dx * size.width, data.estrellas[i].dy * size.height);
+      // Círculo con fondo sólido
+      canvas.drawCircle(pos, 13, Paint()..color = Colors.black.withValues(alpha: 0.75));
+      canvas.drawCircle(pos, 13, Paint()..color = Colors.yellowAccent..style = PaintingStyle.stroke..strokeWidth = 1.5);
+      // Número
+      final tp = TextPainter(
+        text: TextSpan(text: '$i', style: const TextStyle(color: Colors.yellowAccent, fontSize: 11, fontWeight: FontWeight.bold)),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(canvas, pos - Offset(tp.width / 2, tp.height / 2));
+      // Coordenadas debajo con fondo
+      final coords = '(${data.estrellas[i].dx.toStringAsFixed(2)}, ${data.estrellas[i].dy.toStringAsFixed(2)})';
+      final tp2 = TextPainter(
+        text: TextSpan(text: coords, style: const TextStyle(color: Colors.yellowAccent, fontSize: 9, fontWeight: FontWeight.w600)),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      final coordOffset = Offset(pos.dx - tp2.width / 2, pos.dy + 15);
+      canvas.drawRect(
+        Rect.fromLTWH(coordOffset.dx - 2, coordOffset.dy - 1, tp2.width + 4, tp2.height + 2),
+        Paint()..color = Colors.black.withValues(alpha: 0.7),
+      );
+      tp2.paint(canvas, coordOffset);
     }
   }
 
   @override
   bool shouldRepaint(ConstelacionPainter old) =>
-      old.progreso != progreso || old.signo != signo;
+      old.progreso != progreso || old.signo != signo || old.debugGrid != debugGrid;
 }
 
 // ─── Pantalla completa de constelación ───────────────────────────────────────
@@ -474,6 +562,7 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
   String? _debugSolar;
   String? _debugLunar;
   String? _debugAsc;
+  bool _debugGrid = false;
 
   String get _signoSolarActivo  => _debugSolar ?? widget.signoSolar;
   String get _signoLunarActivo  => _debugLunar ?? widget.signoLunar;
@@ -606,8 +695,27 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
               const SizedBox(height: 12),
               _debugDropdown(ctx, setModal, 'ASCENDENTE', _debugAsc   ?? widget.ascendente,  (v) { setState(() => _debugAsc   = v); }),
               const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('CUADRÍCULA', style: TextStyle(color: Colors.white54, fontSize: 11, letterSpacing: 1)),
+                  GestureDetector(
+                    onTap: () { setState(() => _debugGrid = !_debugGrid); setModal(() {}); },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _debugGrid ? Colors.yellowAccent.withValues(alpha: 0.2) : Colors.white10,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(_debugGrid ? 'ON' : 'OFF',
+                          style: TextStyle(color: _debugGrid ? Colors.yellowAccent : Colors.white38, fontSize: 11, letterSpacing: 1)),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
               GestureDetector(
-                onTap: () { setState(() { _debugSolar = null; _debugLunar = null; _debugAsc = null; }); Navigator.pop(ctx); },
+                onTap: () { setState(() { _debugSolar = null; _debugLunar = null; _debugAsc = null; _debugGrid = false; }); Navigator.pop(ctx); },
                 child: const Text('· resetear a valores reales',
                     style: TextStyle(color: Colors.white38, fontSize: 12, letterSpacing: 0.5)),
               ),
@@ -724,9 +832,9 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
                       Text(signoActivo.toUpperCase(),
                           style: const TextStyle(
                             color: Color(0xFFF3EBD6),
-                            fontSize: 40,
-                            letterSpacing: 2,
-                            fontWeight: FontWeight.w300,
+                            fontSize: 42,
+                            letterSpacing: 1.2,
+                            fontWeight: FontWeight.w400,
                             fontFamily: 'PlayfairDisplay',
                             height: 1,
                           )),
@@ -799,6 +907,7 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
                                   child: ConstelacionWidget(
                                     signo: signoActivo,
                                     duracion: const Duration(milliseconds: 2400),
+                                    debugGrid: _debugGrid,
                                   ),
                                 ),
                               ),
@@ -903,9 +1012,9 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
                 Text(signo.toUpperCase(),
                     style: const TextStyle(
                       color: Color(0xFFF3EBD6),
-                      fontSize: 36,
-                      letterSpacing: 2,
-                      fontWeight: FontWeight.w300,
+                      fontSize: 38,
+                      letterSpacing: 1.2,
+                      fontWeight: FontWeight.w400,
                       fontFamily: 'PlayfairDisplay',
                       height: 1,
                     )),
@@ -1087,10 +1196,12 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
 class ConstelacionWidget extends StatefulWidget {
   final String signo;
   final Duration duracion;
+  final bool debugGrid;
   const ConstelacionWidget({
     super.key,
     required this.signo,
     this.duracion = const Duration(milliseconds: 3000),
+    this.debugGrid = false,
   });
 
   @override
@@ -1123,7 +1234,7 @@ class _ConstelacionWidgetState extends State<ConstelacionWidget>
     return AnimatedBuilder(
       animation: _progreso,
       builder: (context, w) => CustomPaint(
-        painter: ConstelacionPainter(signo: widget.signo, progreso: _progreso.value),
+        painter: ConstelacionPainter(signo: widget.signo, progreso: _progreso.value, debugGrid: widget.debugGrid),
         child: const SizedBox.expand(),
       ),
     );

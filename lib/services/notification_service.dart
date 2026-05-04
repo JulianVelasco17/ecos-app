@@ -97,36 +97,14 @@ class NotificationService {
   // ── Programar / cancelar ──────────────────────────────────────────────────
 
   static Future<void> aplicarPreferencias(NotifPrefs prefs, {String fraseDiaria = 'tus astros te esperan'}) async {
-    await _plugin.cancelAll();
+    await _plugin.cancel(_idDiaria); // cancelar cualquier notificación diaria local previa
 
-    if (prefs.diariaActiva) {
-      await _programarDiaria(prefs.diariaHora, prefs.diariaMinutos, fraseDiaria);
-    }
     if (prefs.venusActiva) {
       await _programarVenus();
     }
     if (prefs.lunaActiva) {
       await _programarLuna();
     }
-  }
-
-  // Notificación diaria a hora fija
-  static Future<void> _programarDiaria(int hora, int minutos, String frase) async {
-    final now   = tz.TZDateTime.now(tz.local);
-    var horario = tz.TZDateTime(tz.local, now.year, now.month, now.day, hora, minutos);
-    if (horario.isBefore(now)) horario = horario.add(const Duration(days: 1));
-
-    await _plugin.zonedSchedule(
-      _idDiaria,
-      'tus astros de hoy ✦',
-      frase,
-      horario,
-      _detalles('astros_diarios', 'Lectura diaria', 'Tu lectura astrológica personal'),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.time, // se repite cada día
-    );
   }
 
   // Notificación de Venus cada martes
@@ -212,11 +190,9 @@ class NotificationService {
     );
   }
 
-  // Programar lectura diaria (compatibilidad con código anterior)
+  // Cancelar notificación diaria local (ahora la manda el servidor)
   static Future<void> programarNotificacionDelDia(String frase) async {
-    final prefs = await cargarPreferencias();
-    if (!prefs.diariaActiva) return;
-    await _programarDiaria(prefs.diariaHora, prefs.diariaMinutos, frase);
+    await _plugin.cancel(_idDiaria);
   }
 
   // ── FCM: guardar token del dispositivo en Firestore ───────────────────────
