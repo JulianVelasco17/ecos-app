@@ -352,18 +352,19 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                 color: color,
                 revelado: _colorRevelado,
                 onTap: () {
-                  HapticFeedback.lightImpact();
-                  Future.delayed(const Duration(milliseconds: 150), () => HapticFeedback.lightImpact());
-                  Future.delayed(const Duration(milliseconds: 300), () => HapticFeedback.mediumImpact());
-                  Future.delayed(const Duration(milliseconds: 500), () => HapticFeedback.mediumImpact());
-                  Future.delayed(const Duration(milliseconds: 700), () => HapticFeedback.heavyImpact());
-                  Future.delayed(const Duration(milliseconds: 900), () => HapticFeedback.heavyImpact());
-                  Future.delayed(const Duration(milliseconds: 1000), () {
+                  Future.delayed(const Duration(milliseconds: 0), () {
                     if (!mounted) return;
                     final renderBox = _blobKey.currentContext!.findRenderObject() as RenderBox;
                     final pos = renderBox.localToGlobal(Offset.zero);
                     final size = renderBox.size;
                     final centro = Offset(pos.dx + size.width / 2, pos.dy + size.height / 2);
+                    // Haptics durante la apertura del reveal
+                    HapticFeedback.lightImpact();
+                    Future.delayed(const Duration(milliseconds: 120), () => HapticFeedback.lightImpact());
+                    Future.delayed(const Duration(milliseconds: 260), () => HapticFeedback.mediumImpact());
+                    Future.delayed(const Duration(milliseconds: 420), () => HapticFeedback.mediumImpact());
+                    Future.delayed(const Duration(milliseconds: 580), () => HapticFeedback.heavyImpact());
+                    Future.delayed(const Duration(milliseconds: 750), () => HapticFeedback.heavyImpact());
                     Navigator.push(
                       context,
                       CircularRevealRoute(

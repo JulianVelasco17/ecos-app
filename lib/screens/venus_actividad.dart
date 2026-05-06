@@ -390,13 +390,13 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
     final sk = _semanaKey();
     String respuesta = texto;
 
-    // Miércoles: subir imagen si hay
-    if (_diaSemana == 3 && _imagenSeleccionada != null) {
+    // Subir imagen si hay (cualquier día)
+    if (_imagenSeleccionada != null) {
       final ref = FirebaseStorage.instance
           .ref('venus_fotos/${widget.miUid}_$sk.jpg');
       await ref.putFile(_imagenSeleccionada!);
       final url = await ref.getDownloadURL();
-      respuesta = '$texto||IMG||$url'; // texto + url separados
+      respuesta = '$texto||IMG||$url';
     }
 
     await FirebaseFirestore.instance
@@ -413,24 +413,22 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
     // La notificación la dispara automáticamente la Cloud Function notificarCarta
     // al crear el documento en venus_cartas
 
-    if (_diaSemana == 1 || _diaSemana == 3 || _diaSemana == 7) {
-      await FirebaseFirestore.instance
-          .collection('venus_cartas')
-          .doc(widget.parejaUid)
-          .collection('cartas')
-          .add({
-            'de':       widget.miNombre,
-            'deUid':    widget.miUid,
-            'mensaje':  texto,
-            'imagenUrl': (_diaSemana == 3 && respuesta.contains('||IMG||'))
-                ? respuesta.split('||IMG||')[1]
-                : null,
-            'semana':   sk,
-            'dia':      _diaSemana,
-            'leida':    false,
-            'timestamp': FieldValue.serverTimestamp(),
-          });
-    }
+    await FirebaseFirestore.instance
+        .collection('venus_cartas')
+        .doc(widget.parejaUid)
+        .collection('cartas')
+        .add({
+          'de':        widget.miNombre,
+          'deUid':     widget.miUid,
+          'mensaje':   texto,
+          'imagenUrl': respuesta.contains('||IMG||')
+              ? respuesta.split('||IMG||')[1]
+              : null,
+          'semana':    sk,
+          'dia':       _diaSemana,
+          'leida':     false,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
 
     if (mounted) {
       setState(() {

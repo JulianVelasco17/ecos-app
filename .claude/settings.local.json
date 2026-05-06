@@ -27,7 +27,8 @@
       "Bash(cmd.exe /c \"cd C:\\\\\\\\Users\\\\\\\\julia\\\\\\\\mi_primera_app && flutter analyze --no-fatal-infos 2>&1\")",
       "PowerShell(New-Item -ItemType Directory -Force -Path \"c:\\\\Users\\\\julia\\\\mi_primera_app\\\\ios\\\\Runner\")",
       "Bash(./gradlew signingReport)",
-      "Bash(gradlew.bat signingReport)"
+      "Bash(gradlew.bat signingReport)",
+      "Bash(firebase deploy *)"
     ]
   }
 }

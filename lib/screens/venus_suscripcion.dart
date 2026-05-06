@@ -3,7 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class PantallaVenusSuscripcion extends StatefulWidget {
-  const PantallaVenusSuscripcion({super.key});
+  // Cuando se pasa, la pantalla está embebida en Venus (sin flecha de regresar)
+  final VoidCallback? onSuscrito;
+  const PantallaVenusSuscripcion({super.key, this.onSuscrito});
 
   @override
   State<PantallaVenusSuscripcion> createState() => _PantallaVenusSuscripcionState();
@@ -22,14 +24,17 @@ class _PantallaVenusSuscripcionState extends State<PantallaVenusSuscripcion> {
     });
     if (!mounted) return;
     setState(() => _activando = false);
-    Navigator.pop(context, true);
+    if (widget.onSuscrito != null) {
+      widget.onSuscrito!();
+    } else {
+      Navigator.pop(context, true);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
+    final stack = Stack(
+      fit: StackFit.expand,
         children: [
           // Imagen con zoom 10%
           Transform.scale(
@@ -72,11 +77,13 @@ class _PantallaVenusSuscripcionState extends State<PantallaVenusSuscripcion> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: const Icon(Icons.arrow_back_ios, color: Colors.white54, size: 18),
-                      ),
-                      const SizedBox(width: 8),
+                      if (widget.onSuscrito == null) ...[
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: const Icon(Icons.arrow_back_ios, color: Colors.white54, size: 18),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
                       const Text(
                         'venus',
                         style: TextStyle(color: Colors.white, fontSize: 38, fontWeight: FontWeight.w400, letterSpacing: 2, fontFamily: 'PlayfairDisplay'),
@@ -214,8 +221,9 @@ class _PantallaVenusSuscripcionState extends State<PantallaVenusSuscripcion> {
             ),
           ),
         ],
-      ),
-    );
+      );
+    if (widget.onSuscrito != null) return stack;
+    return Scaffold(body: stack);
   }
 }
 

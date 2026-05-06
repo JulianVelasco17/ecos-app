@@ -150,7 +150,7 @@ class _PantallaVenusState extends State<PantallaVenus> {
           children: [
             switch (_estado) {
               _EstadoVenus.cargando           => const Center(child: CircularProgressIndicator(color: Colors.black12)),
-              _EstadoVenus.sinSuscripcion     => _Paywall(onSuscribirse: () async { final activado = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => const PantallaVenusSuscripcion())); if (activado == true) _cargar(); }),
+              _EstadoVenus.sinSuscripcion     => PantallaVenusSuscripcion(onSuscrito: _cargar),
               _EstadoVenus.sinPareja          => _SinPareja(onBuscar: () async { await Navigator.push(context, MaterialPageRoute(builder: (_) => const PantallaVenusBuscarPareja())); _cargar(); }),
               _EstadoVenus.solicitudEnviada   => _SolicitudEnviada(enlace: _enlace!, onCancelar: _cancelarORechar),
               _EstadoVenus.solicitudRecibida  => _SolicitudRecibida(enlace: _enlace!, onAceptar: _aceptar, onRechazar: _cancelarORechar),
@@ -174,40 +174,6 @@ class _PantallaVenusState extends State<PantallaVenus> {
 // ─────────────────────────────────────────
 // Vistas
 // ─────────────────────────────────────────
-
-class _Paywall extends StatelessWidget {
-  final VoidCallback onSuscribirse;
-  const _Paywall({required this.onSuscribirse});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('venus', style: TextStyle(color: Colors.black, fontSize: 32, fontWeight: FontWeight.w300, letterSpacing: 3)),
-          const SizedBox(height: 12),
-          const Text('conecta con tu pareja', style: TextStyle(color: Colors.black45, fontSize: 13, letterSpacing: 1, height: 1.8)),
-          const Spacer(),
-          const Center(child: Icon(Icons.favorite_border, color: Colors.black12, size: 48)),
-          const SizedBox(height: 24),
-          const Center(child: Text('sección premium', style: TextStyle(color: Colors.black26, fontSize: 12, letterSpacing: 3))),
-          const Spacer(),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: onSuscribirse,
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.black, foregroundColor: const Color(0xFFF3EBD6), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2))),
-              child: const Text('SUSCRIBIRSE', style: TextStyle(letterSpacing: 3, fontSize: 12)),
-            ),
-          ),
-          const SizedBox(height: 32),
-        ],
-      ),
-    );
-  }
-}
 
 class _SinPareja extends StatelessWidget {
   final VoidCallback onBuscar;
@@ -386,7 +352,6 @@ class _EnlazadaState extends State<_Enlazada> {
         .doc(miUid)
         .collection('cartas')
         .where('leida', isEqualTo: false)
-        .orderBy('timestamp', descending: true)
         .limit(1)
         .snapshots()
         .listen((snap) {

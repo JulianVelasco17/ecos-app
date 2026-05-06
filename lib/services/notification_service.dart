@@ -70,6 +70,13 @@ class NotificationService {
       badge: true,
       sound: true,
     );
+
+    // Mostrar notificaciones push aunque la app esté en primer plano (iOS)
+    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
   }
 
   // ── Preferencias ──────────────────────────────────────────────────────────

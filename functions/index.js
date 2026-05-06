@@ -1,6 +1,6 @@
 const { setGlobalOptions } = require("firebase-functions");
 const { defineSecret } = require("firebase-functions/params");
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { initializeApp } = require("firebase-admin/app");
 const { getMessaging } = require("firebase-admin/messaging");
@@ -249,6 +249,72 @@ exports.notificarCarta = onDocumentCreated(
           : `${nombreRemitente} te ha enviado una carta de amor 💌`,
       },
       data: { tipo: "venus" },
+    });
+  }
+);
+
+// ── Notificación de solicitud de amistad ──────────────────────────────────────
+exports.notificarSolicitudAmistad = onDocumentCreated(
+  "solicitudes/{solicitudId}",
+  async (event) => {
+    const data = event.data.data();
+    if (!data) return;
+
+    const destinatarioUid = data.para;
+    const remitenteUid    = data.de;
+    if (!destinatarioUid || !remitenteUid) return;
+
+    const db = getFirestore();
+    const [destinatarioDoc, remitenteDoc] = await Promise.all([
+      db.collection("usuarios").doc(destinatarioUid).get(),
+      db.collection("usuarios").doc(remitenteUid).get(),
+    ]);
+
+    const token = destinatarioDoc.data()?.fcmToken;
+    if (!token) return;
+
+    const nombreRemitente = (remitenteDoc.data()?.nombre ?? "Alguien").split(" ")[0];
+
+    await getMessaging().send({
+      token,
+      notification: {
+        title: "nueva solicitud",
+        body: `${nombreRemitente} quiere agregarte`,
+      },
+      data: { tipo: "solicitud_amistad", uid: remitenteUid },
+    });
+  }
+);
+
+// ── Notificación de solicitud Venus ──────────────────────────────────────────
+exports.notificarSolicitudVenus = onDocumentWritten(
+  "usuarios/{uid}",
+  async (event) => {
+    const antes  = event.data.before.data();
+    const despues = event.data.after.data();
+    if (!despues) return;
+
+    const enlaceAntes  = antes?.venusEnlace;
+    const enlaceDespues = despues.venusEnlace;
+
+    // Solo nos interesa cuando el estado pasa a "pendiente_recibida" por primera vez
+    const eraOtroEstado = !enlaceAntes || enlaceAntes.estado !== "pendiente_recibida";
+    const ahoraEsPendiente = enlaceDespues?.estado === "pendiente_recibida";
+    if (!eraOtroEstado || !ahoraEsPendiente) return;
+
+    const token = despues.fcmToken;
+    if (!token) return;
+
+    const remitenteUid = enlaceDespues.uid;
+    const nombreRemitente = (enlaceDespues.nombre ?? "Alguien").split(" ")[0];
+
+    await getMessaging().send({
+      token,
+      notification: {
+        title: "venus",
+        body: `${nombreRemitente} quiere conectar contigo en venus`,
+      },
+      data: { tipo: "solicitud_venus", uid: remitenteUid },
     });
   }
 );
