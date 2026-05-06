@@ -3,32 +3,52 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/calculos_planetarios.dart';
 
-List<PlanetaInfo> planetasDesdeSignos(Map<String, String> mapa) {
-  const signos = [
-    'Aries', 'Tauro', 'Géminis', 'Cáncer', 'Leo', 'Virgo',
-    'Libra', 'Escorpio', 'Sagitario', 'Capricornio', 'Acuario', 'Piscis',
-  ];
-  const simbolosPlaneta = {
-    'Sol': '☉', 'Luna': '☽', 'Mercurio': '☿', 'Venus': '♀',
-    'Marte': '♂', 'Júpiter': '♃', 'Saturno': '♄',
-    'Urano': '♅', 'Neptuno': '♆', 'Plutón': '♇',
-    'Ascendente': '↑',
-  };
-  const simbolosSignos = [
-    'ARI','TAU','GEM','CAN','LEO','VIR',
-    'LIB','ESC','SAG','CAP','ACU','PIS',
-  ];
+const _simbolosPlaneta = {
+  'Sol': '☉', 'Luna': '☽', 'Mercurio': '☿', 'Venus': '♀',
+  'Marte': '♂', 'Júpiter': '♃', 'Saturno': '♄',
+  'Urano': '♅', 'Neptuno': '♆', 'Plutón': '♇',
+  'Ascendente': '↑',
+};
+const _nombresSignos = [
+  'Aries', 'Tauro', 'Géminis', 'Cáncer', 'Leo', 'Virgo',
+  'Libra', 'Escorpio', 'Sagitario', 'Capricornio', 'Acuario', 'Piscis',
+];
+const _simbolosSignos = [
+  'ARI','TAU','GEM','CAN','LEO','VIR',
+  'LIB','ESC','SAG','CAP','ACU','PIS',
+];
 
+// Usa longitudes reales (0–360°) para posicionar los planetas con precisión
+List<PlanetaInfo> planetasDesdeLongitudes(
+  Map<String, double> longitudes,
+  double ascLon,
+) {
+  final todos = <String, double>{...longitudes, 'Ascendente': ascLon};
+  return todos.entries.map((e) {
+    final lon = e.value;
+    final signoIdx = (lon / 30).floor() % 12;
+    return PlanetaInfo(
+      nombre:       e.key,
+      simbolo:      _simbolosPlaneta[e.key] ?? '●',
+      signo:        _nombresSignos[signoIdx],
+      simboloSigno: _simbolosSignos[signoIdx],
+      longitud:     lon,
+    );
+  }).toList();
+}
+
+// Versión antigua que coloca planetas en el grado 15 del signo (solo signos disponibles)
+List<PlanetaInfo> planetasDesdeSignos(Map<String, String> mapa) {
   return mapa.entries.map((e) {
-    final idx = signos.indexOf(e.value);
+    final idx = _nombresSignos.indexOf(e.value);
     final longitud = idx >= 0 ? idx * 30.0 + 15.0 : 0.0;
     final signoIdx = idx >= 0 ? idx : 0;
     return PlanetaInfo(
-      nombre: e.key,
-      simbolo: simbolosPlaneta[e.key] ?? '●',
-      signo: e.value,
-      simboloSigno: idx >= 0 ? simbolosSignos[signoIdx] : '',
-      longitud: longitud,
+      nombre:       e.key,
+      simbolo:      _simbolosPlaneta[e.key] ?? '●',
+      signo:        e.value,
+      simboloSigno: idx >= 0 ? _simbolosSignos[signoIdx] : '',
+      longitud:     longitud,
     );
   }).toList();
 }

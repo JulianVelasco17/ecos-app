@@ -194,6 +194,11 @@ class CalculosAstrales {
     double latitud, double longitud,
   ) => _gradosASigno(_lonAscendente(fecha, horaN, minutosN, latitud, longitud));
 
+  static double calcularLongitudAscendente(
+    DateTime fecha, int horaN, int minutosN,
+    double latitud, double longitud,
+  ) => _lonAscendente(fecha, horaN, minutosN, latitud, longitud);
+
   static CartaAstral calcular({
     required DateTime fechaNacimiento,
     required int hora,

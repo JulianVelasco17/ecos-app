@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'calculos_planetarios.dart';
 
 class AspectoNatal {
@@ -33,12 +34,45 @@ class AspectosNatales {
     'en oposición con':  'Oposición',
   };
 
-  static const significados = {
-    'Conjunción': 'fusión e intensidad — ambas energías amplifican',
-    'Sextil':     'fluidez natural — oportunidades sin esfuerzo',
-    'Cuadratura': 'tensión creativa — el conflicto que hace crecer',
-    'Trígono':    'armonía — talento que fluye fácil',
-    'Oposición':  'polaridad — aprendes a través del otro extremo',
+  static const _significadosLista = {
+    'Conjunción': ['fusión e intensidad: ambas energías amplifican'],
+    'Sextil': [
+      'fluidez natural: oportunidades sin esfuerzo',
+      'afinidad espontánea: se apoyan sin pensarlo',
+      'comunicación fácil: se entienden casi sin palabras',
+      'complemento suave: cada uno potencia al otro',
+    ],
+    'Cuadratura': [
+      'tensión creativa: el conflicto que hace crecer',
+      'fricción productiva: se retan a ser mejores',
+      'choque de voluntades: difícil, pero transforma',
+      'desafío constante: la incomodidad que despierta',
+    ],
+    'Trígono': [
+      'armonía: talento que fluye fácil',
+      'sintonía profunda: se reconocen sin explicarse',
+      'gracia compartida: lo que uno siente, el otro lo entiende',
+      'flujo natural: juntos las cosas se dan solas',
+    ],
+    'Oposición': [
+      'polaridad: aprendes a través del otro extremo',
+      'espejo y atracción: lo que te falta, el otro lo tiene',
+      'tensión magnética: opuestos que se necesitan',
+      'equilibrio en construcción: cada uno completa al otro',
+    ],
+  };
+
+  static final _rng = Random();
+
+  static String significadoAleatorio(String tipo) {
+    final lista = _significadosLista[tipo];
+    if (lista == null || lista.isEmpty) return '';
+    return lista[_rng.nextInt(lista.length)];
+  }
+
+  static Map<String, String> get significados => {
+    for (final e in _significadosLista.entries)
+      e.key: e.value.first,
   };
 
   static List<AspectoNatal> calcular(DateTime fecha, int hora, int min) {

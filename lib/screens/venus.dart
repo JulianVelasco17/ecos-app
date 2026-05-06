@@ -21,25 +21,38 @@ class PantallaVenus extends StatefulWidget {
 class _PantallaVenusState extends State<PantallaVenus> {
   _EstadoVenus _estado = _EstadoVenus.cargando;
   Map<String, dynamic>? _enlace;
+  StreamSubscription<DocumentSnapshot>? _usuarioSub;
 
   @override
   void initState() {
     super.initState();
-    _cargar();
+    _escucharUsuario();
   }
 
-  Future<void> _cargar() async {
+  @override
+  void dispose() {
+    _usuarioSub?.cancel();
+    super.dispose();
+  }
+
+  void _escucharUsuario() {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    final doc = await FirebaseFirestore.instance.collection('usuarios').doc(uid).get();
-    if (!doc.exists) return;
-    final datos = doc.data()!;
+    _usuarioSub = FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(uid)
+        .snapshots()
+        .listen((doc) {
+      if (!doc.exists || !mounted) return;
+      _actualizarEstado(doc.data()!);
+    });
+  }
 
+  void _actualizarEstado(Map<String, dynamic> datos) {
     final tieneVenus = datos['venusActivo'] == true;
     final enlace = datos['venusEnlace'] as Map<String, dynamic>?;
 
-    // Sin suscripción: mostrar paywall, SALVO que tenga una solicitud recibida pendiente
     if (!tieneVenus) {
       final estadoEnlace = enlace?['estado'] as String?;
       if (estadoEnlace != 'pendiente_recibida') {
@@ -62,6 +75,14 @@ class _PantallaVenusState extends State<PantallaVenus> {
         _                    => _EstadoVenus.sinPareja,
       };
     });
+  }
+
+  Future<void> _cargar() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final doc = await FirebaseFirestore.instance.collection('usuarios').doc(uid).get();
+    if (!doc.exists || !mounted) return;
+    _actualizarEstado(doc.data()!);
   }
 
   Future<void> _cancelarDebug() async {
@@ -510,15 +531,18 @@ class _EnlazadaState extends State<_Enlazada> {
           if (_cartaPendiente != null) ...[
             GestureDetector(
               onTap: () async {
+                final remitente = _cartaPendiente!['de'] as String? ?? _parejaName;
+                final mensaje   = _cartaPendiente!['mensaje'] as String? ?? '';
+                final imagenUrl = _cartaPendiente!['imagenUrl'] as String?;
+                final nav = Navigator.of(context);
                 await _marcarCartaLeida();
                 if (!mounted) return;
-                Navigator.push(
-                  context,
+                nav.push(
                   PageRouteBuilder(
                     pageBuilder: (ctx, a, b) => CartaRevealScreen(
-                      remitente: _cartaPendiente!['de'] as String? ?? _parejaName,
-                      mensaje:   _cartaPendiente!['mensaje'] as String? ?? '',
-                      imagenUrl: _cartaPendiente!['imagenUrl'] as String?,
+                      remitente: remitente,
+                      mensaje:   mensaje,
+                      imagenUrl: imagenUrl,
                     ),
                     transitionsBuilder: (ctx, anim, a, child) =>
                         FadeTransition(opacity: anim, child: child),
@@ -672,11 +696,11 @@ class _EnlazadaState extends State<_Enlazada> {
             const SizedBox(height: 32),
 
             // ── Aspectos de sinastría ───────────────────────────────────
-            const Text('VUESTRA SINASTRÍA',
+            const Text('SU SINASTRÍA',
                 style: TextStyle(color: Colors.black26, fontSize: 10, letterSpacing: 3)),
             const SizedBox(height: 6),
             const Text(
-              'Los ángulos entre vuestras cartas natales.',
+              'Los ángulos entre sus cartas natales.',
               style: TextStyle(color: Colors.black38, fontSize: 12, height: 1.6),
             ),
             const SizedBox(height: 24),
@@ -687,7 +711,7 @@ class _EnlazadaState extends State<_Enlazada> {
             else
               ..._aspectos.map((a) {
                 final corto = AspectosNatales.nombreCorto(a.tipo);
-                final sig   = AspectosNatales.significados[corto] ?? '';
+                final sig   = AspectosNatales.significadoAleatorio(corto);
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 18),
                   child: Row(

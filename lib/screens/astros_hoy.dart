@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,6 +15,9 @@ import 'color_del_dia.dart';
 import '../services/notification_service.dart';
 import 'mas_alla.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:screenshot/screenshot.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
 import 'configuracion.dart';
 import 'afinidad.dart';
 
@@ -34,6 +38,8 @@ const _signosList = [
 class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
   final _keyMasAlla = GlobalKey();
   String? _frase;
+  bool _compartiendo = false;
+  final _screenshotCtrl = ScreenshotController();
   String? _desarrollo;
   List<Map<String, dynamic>> _amigos = [];
   Map<String, String> _compatibilidades = {};
@@ -92,6 +98,24 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
 
     setState(() { _amigos = []; _compatibilidades = {}; });
     await _cargarTodo();
+  }
+
+  Future<void> _compartirFrase() async {
+    if (_frase == null || _compartiendo) return;
+    setState(() => _compartiendo = true);
+    try {
+      final imagen = await _screenshotCtrl.captureFromLongWidget(
+        _TarjetaCompartirBeige(frase: _frase!),
+        pixelRatio: 3.0,
+        context: context,
+      );
+      final dir  = await getTemporaryDirectory();
+      final file = File('${dir.path}/ecos_frase.png');
+      await file.writeAsBytes(imagen);
+      await Share.shareXFiles([XFile(file.path)], text: 'ecos');
+    } finally {
+      if (mounted) setState(() => _compartiendo = false);
+    }
   }
 
   Future<void> _cargarColorRevelado() async {
@@ -563,48 +587,64 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
               ),
               if (!_cargando) ...[
                 const SizedBox(height: 20),
-                GestureDetector(
-                  key: _keyMasAlla,
-                  onTap: () {
-                    final box = _keyMasAlla.currentContext!
-                        .findRenderObject() as RenderBox;
-                    final origen = box.localToGlobal(
-                        box.size.center(Offset.zero));
-                    Navigator.of(context).push(
-                      MasAllaRoute(
-                        origen: origen,
-                        frase: _frase,
-                        desarrollo: _desarrollo,
-                      ),
-                    );
-                  },
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.55,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2C2C2C),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Row(
-                      children: [
-                        Text(
-                          'Trascender',
-                          style: TextStyle(
-                            color: Color(0xFFB8973A),
-                            fontSize: 13,
-                            letterSpacing: 1.5,
-                            fontWeight: FontWeight.w400,
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        key: _keyMasAlla,
+                        onTap: () {
+                          final box = _keyMasAlla.currentContext!
+                              .findRenderObject() as RenderBox;
+                          final origen = box.localToGlobal(
+                              box.size.center(Offset.zero));
+                          Navigator.of(context).push(
+                            MasAllaRoute(
+                              origen: origen,
+                              frase: _frase,
+                              desarrollo: _desarrollo,
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2C2C2C),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Row(
+                            children: [
+                              Text(
+                                'Trascender',
+                                style: TextStyle(
+                                  color: Color(0xFFB8973A),
+                                  fontSize: 13,
+                                  letterSpacing: 1.5,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              Spacer(),
+                              Text('→', style: TextStyle(color: Color(0xFFB8973A), fontSize: 14)),
+                            ],
                           ),
                         ),
-                        const Spacer(),
-                        const SizedBox(width: 8),
-                        const Text(
-                          '→',
-                          style: TextStyle(color: Color(0xFFB8973A), fontSize: 14),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 10),
+                    GestureDetector(
+                      onTap: _compartirFrase,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2C2C2C),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: _compartiendo
+                            ? const SizedBox(width: 18, height: 18,
+                                child: CircularProgressIndicator(color: Color(0xFFB8973A), strokeWidth: 1.5))
+                            : const Icon(Icons.ios_share_outlined, color: Color(0xFFB8973A), size: 18),
+                      ),
+                    ),
+                  ],
                 ),
               ],
 
@@ -906,6 +946,55 @@ class _EstrellaPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_EstrellaPainter _) => false;
+}
+
+// ─── Tarjeta beige para compartir frase ──────────────────────────────────────
+
+class _TarjetaCompartirBeige extends StatelessWidget {
+  final String frase;
+  const _TarjetaCompartirBeige({required this.frase});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1080,
+      height: 1920,
+      color: const Color(0xFFF3EBD6),
+      padding: const EdgeInsets.symmetric(horizontal: 96),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Spacer(flex: 3),
+          Text(
+            frase,
+            style: const TextStyle(
+              fontFamily: 'PlayfairDisplay',
+              color: Color(0xFF1A1A1A),
+              fontSize: 88,
+              fontWeight: FontWeight.w400,
+              height: 1.2,
+              letterSpacing: 1.0,
+            ),
+          ),
+          const SizedBox(height: 48),
+          Container(width: 64, height: 2, color: const Color(0xFFB8973A)),
+          const Spacer(flex: 4),
+          const Divider(color: Color(0x22000000), thickness: 1),
+          const SizedBox(height: 40),
+          const Text(
+            'ecos',
+            style: TextStyle(
+              color: Color(0x44000000),
+              fontSize: 32,
+              letterSpacing: 12,
+              fontWeight: FontWeight.w300,
+            ),
+          ),
+          const SizedBox(height: 96),
+        ],
+      ),
+    );
+  }
 }
 
 // ─── Secuencia animada de imágenes de carga ───────────────────────────────────

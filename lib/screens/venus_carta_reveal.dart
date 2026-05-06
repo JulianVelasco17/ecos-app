@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'constelacion_widget.dart';
 
 class CartaRevealScreen extends StatefulWidget {
   final String remitente;
@@ -79,10 +80,9 @@ class _CartaRevealScreenState extends State<CartaRevealScreen>
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     const beige = Color(0xFFF3EBD6);
-    const dark  = Color(0xFF1A1A1A);
 
     return Scaffold(
-      backgroundColor: dark,
+      backgroundColor: Colors.black,
       body: AnimatedBuilder(
         animation: _ctrl,
         builder: (context, _) {
@@ -99,11 +99,15 @@ class _CartaRevealScreenState extends State<CartaRevealScreen>
 
           // Carta vertical offset: empieza en el centro del sobre, sube
           final cartaSubeOffset = lerpDouble(0.0, -sobreH * 0.55, _cartaSubeAnim.value)!;
-          final cartaFinalOffset = lerpDouble(cartaSubeOffset, -size.height * 0.08, cartaProgress)!;
+          final cartaFinalOffset = lerpDouble(cartaSubeOffset, 0.0, cartaProgress)!;
 
-          return Stack(
+          return SizedBox(
+            width: size.width,
+            height: size.height,
+            child: Stack(
             alignment: Alignment.center,
             children: [
+              const Positioned.fill(child: CieloEstrellado()),
               // ── Sobre ─────────────────────────────────────────────────
               if (sobreVisible > 0.0)
                 Opacity(
@@ -167,23 +171,41 @@ class _CartaRevealScreenState extends State<CartaRevealScreen>
               // ── Botón cerrar (aparece al final) ────────────────────────
               if (_contenidoAparece.value > 0.5)
                 Positioned(
-                  bottom: 56,
+                  bottom: 48,
                   child: Opacity(
                     opacity: ((_contenidoAparece.value - 0.5) * 2).clamp(0.0, 1.0),
-                    child: GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
-                      child: const Text(
-                        'cerrar',
-                        style: TextStyle(
-                          color: Colors.white38,
-                          fontSize: 12,
-                          letterSpacing: 3,
+                    child: Column(
+                      children: [
+                        GestureDetector(
+                          onTap: () => Navigator.of(context).pop(),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                            color: Colors.white,
+                            child: const Text(
+                              'cerrar y disolver',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 12,
+                                letterSpacing: 3,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          'Esta acción eliminará la carta para siempre',
+                          style: TextStyle(
+                            color: Colors.white24,
+                            fontSize: 11,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
             ],
+          ),
           );
         },
       ),

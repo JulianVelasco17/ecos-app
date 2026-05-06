@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:http/http.dart' as http;
@@ -242,12 +243,51 @@ class _PantallaRegistroState extends State<PantallaRegistro>
               _selector(
                 texto: _fecha != null ? _formatFecha(_fecha!) : 'seleccionar fecha',
                 onTap: () async {
-                  final f = await showDatePicker(
-                    context: ctx, initialDate: DateTime(1995),
-                    firstDate: DateTime(1900), lastDate: DateTime.now(),
-                    builder: (_, c) => Theme(data: ThemeData.dark(), child: c!),
+                  DateTime temp = _fecha ?? DateTime(1995);
+                  await showModalBottomSheet(
+                    context: ctx,
+                    backgroundColor: const Color(0xFF111111),
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                    ),
+                    builder: (_) => SizedBox(
+                      height: 300,
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('fecha de nacimiento',
+                                    style: TextStyle(color: Color(0x88F3EBD6), fontSize: 12, letterSpacing: 1.5)),
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() { _fecha = temp; _intentoAvanzarSinFecha = false; });
+                                    Navigator.pop(ctx);
+                                  },
+                                  child: const Text('listo',
+                                      style: TextStyle(color: Color(0xFFF3EBD6), fontSize: 13, letterSpacing: 1)),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: CupertinoTheme(
+                              data: const CupertinoThemeData(brightness: Brightness.dark),
+                              child: CupertinoDatePicker(
+                                mode: CupertinoDatePickerMode.date,
+                                initialDateTime: temp,
+                                minimumDate: DateTime(1900),
+                                maximumDate: DateTime.now(),
+                                onDateTimeChanged: (d) => temp = d,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   );
-                  if (f != null) setState(() { _fecha = f; _intentoAvanzarSinFecha = false; });
                 },
               ),
               if (_intentoAvanzarSinFecha) ...[
@@ -270,11 +310,50 @@ class _PantallaRegistroState extends State<PantallaRegistro>
               _selector(
                 texto: _hora != null ? _hora!.format(ctx) : 'seleccionar hora',
                 onTap: () async {
-                  final h = await showTimePicker(
-                    context: ctx, initialTime: const TimeOfDay(hour: 12, minute: 0),
-                    builder: (_, c) => Theme(data: ThemeData.dark(), child: c!),
+                  DateTime temp = DateTime(2000, 1, 1, _hora?.hour ?? 12, _hora?.minute ?? 0);
+                  await showModalBottomSheet(
+                    context: ctx,
+                    backgroundColor: const Color(0xFF111111),
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                    ),
+                    builder: (_) => SizedBox(
+                      height: 300,
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('hora de nacimiento',
+                                    style: TextStyle(color: Color(0x88F3EBD6), fontSize: 12, letterSpacing: 1.5)),
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() { _hora = TimeOfDay(hour: temp.hour, minute: temp.minute); _intentoAvanzarSinHora = false; });
+                                    Navigator.pop(ctx);
+                                  },
+                                  child: const Text('listo',
+                                      style: TextStyle(color: Color(0xFFF3EBD6), fontSize: 13, letterSpacing: 1)),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: CupertinoTheme(
+                              data: const CupertinoThemeData(brightness: Brightness.dark),
+                              child: CupertinoDatePicker(
+                                mode: CupertinoDatePickerMode.time,
+                                initialDateTime: temp,
+                                use24hFormat: true,
+                                onDateTimeChanged: (d) => temp = d,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   );
-                  if (h != null) setState(() { _hora = h; _intentoAvanzarSinHora = false; });
                 },
               ),
               if (_intentoAvanzarSinHora) ...[

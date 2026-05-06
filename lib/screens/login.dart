@@ -77,7 +77,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
     return Scaffold(
       backgroundColor: const Color(0xFFF3EBD6),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,7 +182,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
   }
 }
 
-class _Campo extends StatelessWidget {
+class _Campo extends StatefulWidget {
   final TextEditingController controller;
   final String hint;
   final bool oculto;
@@ -196,17 +196,40 @@ class _Campo extends StatelessWidget {
   });
 
   @override
+  State<_Campo> createState() => _CampoState();
+}
+
+class _CampoState extends State<_Campo> {
+  late bool _oculto;
+
+  @override
+  void initState() {
+    super.initState();
+    _oculto = widget.oculto;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return TextField(
-      controller: controller,
-      obscureText: oculto,
-      keyboardType: teclado,
+      controller: widget.controller,
+      obscureText: _oculto,
+      keyboardType: widget.teclado,
       style: const TextStyle(color: Colors.black, fontSize: 14, letterSpacing: 0.5),
       decoration: InputDecoration(
-        hintText: hint,
+        hintText: widget.hint,
         hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
         enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.black12)),
         focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.black45)),
+        suffixIcon: widget.oculto
+            ? GestureDetector(
+                onTap: () => setState(() => _oculto = !_oculto),
+                child: Icon(
+                  _oculto ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  color: Colors.black26,
+                  size: 18,
+                ),
+              )
+            : null,
       ),
     );
   }

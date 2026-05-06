@@ -5,6 +5,7 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { initializeApp } = require("firebase-admin/app");
 const { getMessaging } = require("firebase-admin/messaging");
 const { getFirestore } = require("firebase-admin/firestore");
+const { getStorage } = require("firebase-admin/storage");
 const axios = require("axios");
 
 initializeApp();
@@ -196,7 +197,9 @@ exports.enviarNotificacionesPendientes = onSchedule(
   },
   async () => {
     const db = getFirestore();
-    const ahoraHora = new Date().getHours(); // hora actual en CDMX
+    const ahoraHora = parseInt(
+      new Date().toLocaleString("en-US", { timeZone: "America/Mexico_City", hour: "numeric", hour12: false })
+    );
 
     const pendientesSnap = await db.collection("notificacionesPendientes")
       .where("enviado", "==", false)
@@ -244,9 +247,7 @@ exports.notificarCarta = onDocumentCreated(
       token,
       notification: {
         title: "venus",
-        body: esFoto
-          ? `${nombreRemitente} te ha enviado una foto 📸`
-          : `${nombreRemitente} te ha enviado una carta de amor 💌`,
+        body: `${nombreRemitente} te ha enviado una carta de amor 💌`,
       },
       data: { tipo: "venus" },
     });
@@ -316,5 +317,46 @@ exports.notificarSolicitudVenus = onDocumentWritten(
       },
       data: { tipo: "solicitud_venus", uid: remitenteUid },
     });
+  }
+);
+
+// ── Wipe diario de imágenes de cartas leídas ──────────────────────────────────
+exports.limpiarImagenesCartas = onSchedule(
+  {
+    schedule: "0 3 * * *",
+    timeZone: "America/Mexico_City",
+    region: "us-central1",
+    timeoutSeconds: 120,
+  },
+  async () => {
+    const db     = getFirestore();
+    const bucket = getStorage().bucket();
+
+    const usuariosSnap = await db.collection("venus_cartas").get();
+
+    for (const usuarioDoc of usuariosSnap.docs) {
+      const cartasSnap = await usuarioDoc.ref
+        .collection("cartas")
+        .where("leida", "==", true)
+        .get();
+
+      for (const cartaDoc of cartasSnap.docs) {
+        const { imagenUrl } = cartaDoc.data();
+
+        if (imagenUrl) {
+          try {
+            const match = imagenUrl.match(/\/o\/(.+?)\?/);
+            if (match) {
+              const filePath = decodeURIComponent(match[1]);
+              await bucket.file(filePath).delete();
+            }
+          } catch (e) {
+            console.error(`Error borrando imagen ${imagenUrl}:`, e.message);
+          }
+        }
+
+        await cartaDoc.ref.delete();
+      }
+    }
   }
 );

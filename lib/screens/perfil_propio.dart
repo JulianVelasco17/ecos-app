@@ -23,6 +23,7 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
   Map<String, dynamic>? _datos;
   CartaAstral? _carta;
   Map<String, double> _longitudes = {};
+  double _ascLon = 0.0;
   Map<String, String> _lectura = {};
   List<Map<String, dynamic>> _guardadas = [];
   bool _cargando = true;
@@ -63,11 +64,13 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
           backgroundColor: Colors.black,
           activeControlsWidgetColor: Colors.black,
           lockAspectRatio: true,
+          cropStyle: CropStyle.circle,
         ),
         IOSUiSettings(
           title: '',
           aspectRatioLockEnabled: true,
           resetAspectRatioEnabled: false,
+          cropStyle: CropStyle.circle,
         ),
       ],
     );
@@ -110,7 +113,8 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
       latitud: latitud,
       longitud: longitud,
     );
-    final lons = CalculosAstrales.calcularLongitudes(fecha, hora, min);
+    final lons    = CalculosAstrales.calcularLongitudes(fecha, hora, min);
+    final ascLon  = CalculosAstrales.calcularLongitudAscendente(fecha, hora, min, latitud, longitud);
 
     // Lectura por ámbitos — cache permanente por uid
     final uid2 = FirebaseAuth.instance.currentUser?.uid ?? '';
@@ -173,6 +177,7 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
         _datos      = datos;
         _carta      = carta;
         _longitudes = lons;
+        _ascLon     = ascLon;
         _lectura    = lectura;
         _guardadas  = guardadas;
         _cargando   = false;
@@ -316,12 +321,7 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
                                 height: ruedaSize,
                                 child: CustomPaint(
                                   painter: RuedaZodiacalPainter(
-                                    planetasDesdeSignos({
-                                      'Sol':        _carta!.signoSolar,
-                                      'Luna':       _carta!.signoLunar,
-                                      'Ascendente': _carta!.ascendente,
-                                      ..._carta!.planetas,
-                                    }),
+                                    planetasDesdeLongitudes(_longitudes, _ascLon),
                                     seleccionado: _planetaSeleccionado,
                                   ),
                                 ),

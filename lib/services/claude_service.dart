@@ -592,7 +592,7 @@ Eres la voz de una app de astrología. Escribe una lectura de sinastría entre $
 
 Aspectos entre sus cartas natales: ${aspectos.join('; ')}.
 
-Escribe exactamente 2 oraciones en español. La primera habla de lo que los une o complementa. La segunda habla de un punto de fricción o aprendizaje mutuo. No menciones signos, planetas ni términos de astrología. Tono: íntimo, cálido, directo. Sin "energía", "vibra", "cósmico". Sin guiones largos.
+Escribe exactamente 2 oraciones en español. La primera habla de lo que los une o complementa. La segunda habla de un punto de fricción o aprendizaje mutuo. No menciones signos, planetas ni términos de astrología. Tono: íntimo, cálido, directo. Sin "energía", "vibra", "cósmico". Nunca uses guiones de ningún tipo (ni —, ni -, ni –); si necesitas separar ideas usa dos puntos (:).
 ''';
     return await _llamarClaude(prompt);
   }
