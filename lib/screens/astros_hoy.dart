@@ -45,6 +45,7 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
   Map<String, String> _compatibilidades = {};
   bool _cargando = true;
   String _miUid = '';
+  String? _miFotoUrl;
   String _miSolar = '';
   String _miLunar = '';
   String _miAsc = '';
@@ -324,6 +325,7 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
           HomeWidget.updateWidget(androidName: 'AstrosWidget');
         }
         _miUid      = miUid;
+        _miFotoUrl  = (datos['fotoUrl'] as String?) ?? FirebaseAuth.instance.currentUser?.photoURL;
         _miSolar    = carta.signoSolar;
         _miLunar    = carta.signoLunar;
         _miAsc      = carta.ascendente;
@@ -768,6 +770,7 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                                     MaterialPageRoute(
                                       builder: (_) => PantallaAfinidad(
                                         miNombre:      widget.nombre,
+                                        miFotoUrl:     _miFotoUrl,
                                         miSolar:       _miSolar,
                                         miLunar:       _miLunar,
                                         miAsc:         _miAsc,

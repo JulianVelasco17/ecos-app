@@ -209,14 +209,15 @@ class NotificationService {
     if (uid == null) return;
     final token = await FirebaseMessaging.instance.getToken();
     if (token == null) return;
-    await FirebaseFirestore.instance.collection('usuarios').doc(uid).update({
-      'fcmToken': token,
-    });
-    // Actualizar token si cambia
+    await _agregarToken(uid, token);
     FirebaseMessaging.instance.onTokenRefresh.listen((nuevoToken) {
-      FirebaseFirestore.instance.collection('usuarios').doc(uid).update({
-        'fcmToken': nuevoToken,
-      });
+      _agregarToken(uid, nuevoToken);
+    });
+  }
+
+  static Future<void> _agregarToken(String uid, String token) async {
+    await FirebaseFirestore.instance.collection('usuarios').doc(uid).update({
+      'fcmTokens': FieldValue.arrayUnion([token]),
     });
   }
 

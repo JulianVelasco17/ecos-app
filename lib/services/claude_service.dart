@@ -831,18 +831,98 @@ Carta de $n2: Sol en $signoSolar2, Luna en $signoLunar2, Ascendente en $asc2.
 Su arquetipo romántico es "$arquetipo". Este es el núcleo del reporte — todo debe estar escrito desde esta verdad:
 $descripcion
 
-Escribe exactamente 4 secciones coherentes con el arquetipo. Cada sección: 2-3 oraciones concretas e íntimas. No menciones nombres de signos ni planetas directamente — tradúcelos a experiencias humanas. No menciones el nombre del arquetipo en el texto. Tono: honesto, cálido, ligeramente poético. Sin "energía", "vibra", "universo". Sin guiones largos. Sin markdown. No hagas preguntas.
+Escribe exactamente 4 secciones coherentes con el arquetipo. Cada sección (excepto intro): 2-3 oraciones concretas e íntimas. No menciones nombres de signos ni planetas directamente — tradúcelos a experiencias humanas. No menciones el nombre del arquetipo en el texto. Tono: honesto, cálido, ligeramente poético. Sin "energía", "vibra", "universo". Sin guiones largos. Sin markdown. No hagas preguntas.
 
 Responde SOLO con este JSON:
 {
-  "intro": "2-3 oraciones sobre el vínculo general según su arquetipo.",
-  "atraccion": "2-3 oraciones sobre la atracción física y química tal como la define su arquetipo.",
+  "intro": "1-2 oraciones sobre este vínculo. Reglas: (1) No parafrasees la descripción del arquetipo ni uses sus metáforas literales. (2) Habla de tensión, deseo, crecimiento, obsesión, calma, caos, conexión o contraste — elige el ángulo más inesperado. (3) Usa 'ustedes', 'entre ustedes' o los nombres — directo y personal. (4) Sin clichés románticos, sin cursilería, sin metáforas de espejos ni luz. (5) Que suene como una verdad emocional descubierta, estilo Co-Star o The Pattern. Ejemplos: 'A $n1 y $n2 les cuesta estar juntos tanto como les cuesta no estarlo.', 'Entre ustedes, el silencio rara vez significa distancia.', 'Se provocan incluso cuando intentan protegerse.' Genera algo completamente original con esa carga.",
+  "atraccion": "2-3 oraciones sobre la atracción física y el deseo tal como los define su arquetipo.",
   "comunicacion": "2-3 oraciones sobre cómo se entienden y se hablan.",
-  "desafios": "2-3 oraciones sobre los puntos de fricción reales de este arquetipo y cómo atravesarlos.",
+  "conexion_emocional": "2-3 oraciones sobre la profundidad emocional y el mundo interior que comparten.",
   "potencial": "2-3 oraciones sobre lo que pueden construir juntos desde este arquetipo específico."
 }
 ''';
     return await _llamarClaude(prompt, maxTokens: 1000);
+  }
+
+  // Genera comparaciones de 6 planetas entre dos personas
+  static Future<Map<String, String>> generarComparacionPlanetas({
+    required String nombre1,
+    required String nombre2,
+    required String solar1,    required String solar2,
+    required String lunar1,    required String lunar2,
+    required Map<String, String> planetas1,
+    required Map<String, String> planetas2,
+  }) async {
+    final n1 = nombre1.split(' ').first;
+    final n2 = nombre2.split(' ').first;
+    final prompt = '''
+Eres la voz de una app de astrología. Compara estos 6 planetas entre $n1 y $n2. Para cada uno escribe UNA sola oración directa, concreta y sin clichés que describa cómo se complementan o contrastan en esa dimensión. Sin mencionar signos explícitamente. Tono honesto, moderno, tipo Co-Star.
+
+Sol: $n1=$solar1, $n2=$solar2
+Luna: $n1=$lunar1, $n2=$lunar2
+Mercurio: $n1=${planetas1['Mercurio'] ?? '?'}, $n2=${planetas2['Mercurio'] ?? '?'}
+Venus: $n1=${planetas1['Venus'] ?? '?'}, $n2=${planetas2['Venus'] ?? '?'}
+Marte: $n1=${planetas1['Marte'] ?? '?'}, $n2=${planetas2['Marte'] ?? '?'}
+Júpiter: $n1=${planetas1['Júpiter'] ?? '?'}, $n2=${planetas2['Júpiter'] ?? '?'}
+
+Responde SOLO con este JSON:
+{"sol":"...","luna":"...","mercurio":"...","venus":"...","marte":"...","jupiter":"..."}
+''';
+    final raw = await _llamarClaude(prompt, maxTokens: 500);
+    try {
+      final start = raw.indexOf('{');
+      final end = raw.lastIndexOf('}');
+      final json = jsonDecode(raw.substring(start, end + 1)) as Map<String, dynamic>;
+      return json.map((k, v) => MapEntry(k, v as String));
+    } catch (_) {
+      return {};
+    }
+  }
+
+  // Genera escenarios de vida futura basados en sinastría
+  static Future<Map<String, String>> generarEscenariosVida({
+    required String nombre1,
+    required String nombre2,
+    required String solar1,    required String solar2,
+    required String lunar1,    required String lunar2,
+    required String asc1,      required String asc2,
+    required Map<String, String> planetas1,
+    required Map<String, String> planetas2,
+    required String arquetipo,
+  }) async {
+    final n1 = nombre1.split(' ').first;
+    final n2 = nombre2.split(' ').first;
+    final prompt = '''
+Eres la voz de una app de astrología estilo Co-Star. Basándote en la sinastría entre $n1 y $n2, escribe 6 escenarios de vida futura concretos, visuales y originales. Cada uno: 2-3 oraciones que pinten una imagen específica de cómo serían juntos en esa situación. Tono: honesto, directo, cinematográfico. Sin clichés, sin "energía", sin "universo". Pueden ser tiernos, tensos o graciosos según lo que diga la sinastría. Usa los nombres $n1 y $n2.
+
+Sinastría:
+- Sol: $n1=$solar1, $n2=$solar2
+- Luna: $n1=$lunar1, $n2=$lunar2
+- Ascendente: $n1=$asc1, $n2=$asc2
+- Venus: $n1=${planetas1['Venus'] ?? '?'}, $n2=${planetas2['Venus'] ?? '?'}
+- Marte: $n1=${planetas1['Marte'] ?? '?'}, $n2=${planetas2['Marte'] ?? '?'}
+- Arquetipo romántico: $arquetipo
+
+Responde SOLO con este JSON:
+{
+  "en_casa": "...",
+  "en_publico": "...",
+  "en_una_pelea": "...",
+  "de_viaje": "...",
+  "con_dinero": "...",
+  "en_la_vejez": "..."
+}
+''';
+    final raw = await _llamarClaude(prompt, maxTokens: 700);
+    try {
+      final start = raw.indexOf('{');
+      final end = raw.lastIndexOf('}');
+      final json = jsonDecode(raw.substring(start, end + 1)) as Map<String, dynamic>;
+      return json.map((k, v) => MapEntry(k, v as String));
+    } catch (_) {
+      return {};
+    }
   }
 
   // Genera el caption universal del clima astral

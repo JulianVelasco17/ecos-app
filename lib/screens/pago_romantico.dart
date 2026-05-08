@@ -3,6 +3,7 @@ import 'reporte_romantico.dart';
 
 class PantallaPagoRomantico extends StatelessWidget {
   final String miNombre;
+  final String? miFotoUrl;
   final String miSolar;
   final String miLunar;
   final String miAsc;
@@ -20,6 +21,7 @@ class PantallaPagoRomantico extends StatelessWidget {
   const PantallaPagoRomantico({
     super.key,
     required this.miNombre,
+    this.miFotoUrl,
     required this.miSolar,
     required this.miLunar,
     required this.miAsc,
@@ -41,14 +43,17 @@ class PantallaPagoRomantico extends StatelessWidget {
       MaterialPageRoute(
         builder: (_) => PantallaReporteRomantico(
           miNombre:      miNombre,
+          miFotoUrl:     miFotoUrl,
           miSolar:       miSolar,
           miLunar:       miLunar,
           miAsc:         miAsc,
+          miPlanetas:    miPlanetas,
           amigoNombre:   amigoNombre,
           amigoFotoUrl:  amigoFotoUrl,
           amigoSolar:    amigoSolar,
           amigoLunar:    amigoLunar,
           amigoAsc:      amigoAsc,
+          amigoPlanetas: amigoPlanetas,
           arquetipo:     arquetipo,
           miUid:         miUid,
           amigoUid:      amigoUid,
@@ -63,24 +68,55 @@ class PantallaPagoRomantico extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.black,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+      body: Stack(
+        children: [
+          // ── GIF fondo completo con capa oscura 65% ───────────────────────
+          Positioned.fill(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                RotatedBox(
+                  quarterTurns: 1,
+                  child: Image.network(
+                    'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Ffondo2.gif?alt=media&token=ef484e31-3c7d-4873-93bf-707188cd687c',
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                const ColoredBox(color: Color(0xA6000000)),
+                // Degradado: transparente arriba → negro justo antes del $29
+                Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      stops: [0.0, 0.55, 0.75],
+                      colors: [Colors.transparent, Colors.transparent, Colors.black],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ── Contenido ────────────────────────────────────────────────────
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
               GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: const Icon(Icons.arrow_back_ios, color: Color(0x66F3EBD6), size: 18),
               ),
 
-              const Spacer(),
+              const SizedBox(height: 24),
 
               const Text(
                 'COMPATIBILIDAD\nROMÁNTICA',
                 style: TextStyle(
                   color: Color(0xFFF3EBD6),
-                  fontSize: 28,
+                  fontSize: 36,
                   fontWeight: FontWeight.w300,
                   height: 1.3,
                   letterSpacing: 2,
@@ -92,8 +128,8 @@ class PantallaPagoRomantico extends StatelessWidget {
                 'atracción, comunicación, desafíos y lo que podrían construir juntos.',
                 style: TextStyle(
                   color: const Color(0xFFF3EBD6).withValues(alpha: 0.5),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w300,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
                   height: 1.8,
                 ),
               ),
@@ -164,6 +200,8 @@ class PantallaPagoRomantico extends StatelessWidget {
             ],
           ),
         ),
+      ),
+        ],
       ),
     );
   }

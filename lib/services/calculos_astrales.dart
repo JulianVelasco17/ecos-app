@@ -326,6 +326,32 @@ int _distanciaSignos(String s1, String s2) {
 bool _armonico(String s1, String s2) =>
     _distanciasArmonicas.contains(_distanciaSignos(s1, s2));
 
+// Score continuo 0.0–1.0 según distancia entre signos
+double _scoreDistancia(String s1, String s2) {
+  const tabla = {0: 0.95, 1: 0.45, 2: 0.75, 3: 0.28, 4: 0.90, 5: 0.35, 6: 0.55};
+  return tabla[_distanciaSignos(s1, s2)]?.toDouble() ?? 0.50;
+}
+
+Map<String, double> calcularScoresSinastria({
+  required String miSolar,    required String amigoSolar,
+  required String miLunar,    required String amigoLunar,
+  required String miAsc,      required String amigoAsc,
+  required Map<String, String> miPlanetas,
+  required Map<String, String> amigoPlanetas,
+}) {
+  final miVenus = miPlanetas['Venus']    ?? 'Aries';
+  final miMarte = miPlanetas['Marte']    ?? 'Aries';
+  final suVenus = amigoPlanetas['Venus'] ?? 'Aries';
+  final suMarte = amigoPlanetas['Marte'] ?? 'Aries';
+
+  return {
+    'identidad': _scoreDistancia(miSolar, amigoSolar),
+    'emocion':   _scoreDistancia(miLunar, amigoLunar),
+    'atraccion': (_scoreDistancia(miVenus, suMarte) + _scoreDistancia(suVenus, miMarte)) / 2,
+    'presencia': _scoreDistancia(miAsc, amigoAsc),
+  };
+}
+
 const List<String> _arquetipos = [
   'Jardín Sereno',        // 0000
   'Cruz de Caminos',      // 0001

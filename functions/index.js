@@ -75,6 +75,13 @@ function seleccionarFrase(cola) {
   return FRASES.find((f) => f.id === id) ?? FRASES[Math.floor(Math.random() * FRASES.length)];
 }
 
+async function enviarATodos(tokens, notification, data) {
+  if (!tokens || tokens.length === 0) return;
+  const mensajes = tokens.map((token) => ({ token, notification, data }));
+  const resultado = await getMessaging().sendEach(mensajes);
+  return resultado;
+}
+
 async function llamarClaude(prompt, apiKey, maxTokens = 200) {
   const response = await axios.post(
     "https://api.anthropic.com/v1/messages",
@@ -145,7 +152,7 @@ exports.generarLecturasDiarias = onSchedule(
       try {
         const uid = userDoc.id;
         const datos = userDoc.data();
-        if (!datos?.fcmToken) continue;
+        if (!datos?.fcmTokens?.length && !datos?.fcmToken) continue;
 
         const lecturaRef = db.collection("usuarios").doc(uid).collection("lecturas").doc(fechaKey);
         const lecturaSnap = await lecturaRef.get();
@@ -210,14 +217,15 @@ exports.enviarNotificacionesPendientes = onSchedule(
       try {
         const { uid, fraseBase, fechaKey } = doc.data();
         const userDoc = await db.collection("usuarios").doc(uid).get();
-        const token = userDoc.data()?.fcmToken;
-        if (!token) continue;
+        const userData = userDoc.data();
+        const tokens = userData?.fcmTokens ?? (userData?.fcmToken ? [userData.fcmToken] : []);
+        if (!tokens.length) continue;
 
-        await getMessaging().send({
-          token,
-          notification: { title: "tus astros de hoy", body: fraseBase },
-          data: { tipo: "lectura_diaria", fecha: fechaKey },
-        });
+        await enviarATodos(
+          tokens,
+          { title: "tus astros de hoy", body: fraseBase },
+          { tipo: "lectura_diaria", fecha: fechaKey }
+        );
 
         await doc.ref.update({ enviado: true });
       } catch (e) {
@@ -237,20 +245,17 @@ exports.notificarCarta = onDocumentCreated(
 
     const db = getFirestore();
     const userDoc = await db.collection("usuarios").doc(uid).get();
-    const token = userDoc.data()?.fcmToken;
-    if (!token) return;
+    const userData = userDoc.data();
+    const tokens = userData?.fcmTokens ?? (userData?.fcmToken ? [userData.fcmToken] : []);
+    if (!tokens.length) return;
 
-    const esFoto = !!carta.imagenUrl;
     const nombreRemitente = (carta.de ?? "Tu pareja").split(" ")[0];
 
-    await getMessaging().send({
-      token,
-      notification: {
-        title: "venus",
-        body: `${nombreRemitente} te ha enviado una carta de amor 💌`,
-      },
-      data: { tipo: "venus" },
-    });
+    await enviarATodos(
+      tokens,
+      { title: "venus", body: `${nombreRemitente} te ha enviado una carta de amor 💌` },
+      { tipo: "venus" }
+    );
   }
 );
 
@@ -271,19 +276,17 @@ exports.notificarSolicitudAmistad = onDocumentCreated(
       db.collection("usuarios").doc(remitenteUid).get(),
     ]);
 
-    const token = destinatarioDoc.data()?.fcmToken;
-    if (!token) return;
+    const destData = destinatarioDoc.data();
+    const tokens = destData?.fcmTokens ?? (destData?.fcmToken ? [destData.fcmToken] : []);
+    if (!tokens.length) return;
 
     const nombreRemitente = (remitenteDoc.data()?.nombre ?? "Alguien").split(" ")[0];
 
-    await getMessaging().send({
-      token,
-      notification: {
-        title: "nueva solicitud",
-        body: `${nombreRemitente} quiere agregarte`,
-      },
-      data: { tipo: "solicitud_amistad", uid: remitenteUid },
-    });
+    await enviarATodos(
+      tokens,
+      { title: "nueva solicitud", body: `${nombreRemitente} quiere agregarte` },
+      { tipo: "solicitud_amistad", uid: remitenteUid }
+    );
   }
 );
 
@@ -303,20 +306,17 @@ exports.notificarSolicitudVenus = onDocumentWritten(
     const ahoraEsPendiente = enlaceDespues?.estado === "pendiente_recibida";
     if (!eraOtroEstado || !ahoraEsPendiente) return;
 
-    const token = despues.fcmToken;
-    if (!token) return;
+    const tokens = despues.fcmTokens ?? (despues.fcmToken ? [despues.fcmToken] : []);
+    if (!tokens.length) return;
 
     const remitenteUid = enlaceDespues.uid;
     const nombreRemitente = (enlaceDespues.nombre ?? "Alguien").split(" ")[0];
 
-    await getMessaging().send({
-      token,
-      notification: {
-        title: "venus",
-        body: `${nombreRemitente} quiere conectar contigo en venus`,
-      },
-      data: { tipo: "solicitud_venus", uid: remitenteUid },
-    });
+    await enviarATodos(
+      tokens,
+      { title: "venus", body: `${nombreRemitente} quiere conectar contigo en venus` },
+      { tipo: "solicitud_venus", uid: remitenteUid }
+    );
   }
 );
 

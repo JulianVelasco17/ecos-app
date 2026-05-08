@@ -132,6 +132,7 @@ class PantallaAmigos extends StatelessWidget {
                                   builder: (_) => PantallaAfinidad(
                                     miUid:        miUid,
                                     miNombre:     mi['nombre'] ?? '',
+                                    miFotoUrl:    (mi['fotoUrl'] as String?) ?? FirebaseAuth.instance.currentUser?.photoURL,
                                     miSolar:      miCarta.signoSolar,
                                     miLunar:      miCarta.signoLunar,
                                     miAsc:        miCarta.ascendente,

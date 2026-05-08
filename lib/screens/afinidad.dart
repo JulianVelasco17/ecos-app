@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'pago_romantico.dart';
 import '../services/calculos_astrales.dart';
+import '../services/claude_service.dart';
 
 // ─── Pantalla de Afinidad ─────────────────────────────────────────────────────
 
 class PantallaAfinidad extends StatelessWidget {
   final String miNombre;
+  final String? miFotoUrl;
   final String miSolar;
   final String miLunar;
   final String miAsc;
@@ -26,6 +28,7 @@ class PantallaAfinidad extends StatelessWidget {
   const PantallaAfinidad({
     super.key,
     required this.miNombre,
+    this.miFotoUrl,
     required this.miSolar,
     required this.miLunar,
     required this.miAsc,
@@ -91,7 +94,7 @@ class PantallaAfinidad extends StatelessWidget {
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF8F4),
+      backgroundColor: const Color(0xFFF3EBD6),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 36),
@@ -167,6 +170,7 @@ class PantallaAfinidad extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (_) => PantallaPagoRomantico(
                       miNombre:      miNombre,
+                      miFotoUrl:     miFotoUrl,
                       miSolar:       miSolar,
                       miLunar:       miLunar,
                       miAsc:         miAsc,
@@ -206,6 +210,90 @@ class PantallaAfinidad extends StatelessWidget {
                     ],
                   ),
                 ),
+              ),
+
+              const SizedBox(height: 40),
+              Divider(color: Colors.black.withValues(alpha: 0.07)),
+              const SizedBox(height: 28),
+
+              // ── Comparación de planetas ───────────────────────────────────
+              Text('PLANETAS',
+                  style: const TextStyle(
+                      color: Colors.black38, fontSize: 10, letterSpacing: 3)),
+              const SizedBox(height: 20),
+              FutureBuilder<Map<String, String>>(
+                future: ClaudeService.generarComparacionPlanetas(
+                  nombre1:   miNombre,
+                  nombre2:   amigoNombre,
+                  solar1:    miSolar,    solar2:    amigoSolar,
+                  lunar1:    miLunar,    lunar2:    amigoLunar,
+                  planetas1: miPlanetas, planetas2: amigoPlanetas,
+                ),
+                builder: (context, snap) {
+                  final comparaciones = snap.data ?? {};
+                  final planetas = [
+                    ('SOL',      'sol',      miSolar,                    amigoSolar),
+                    ('LUNA',     'luna',     miLunar,                    amigoLunar),
+                    ('MERCURIO', 'mercurio', miPlanetas['Mercurio'] ?? '?', amigoPlanetas['Mercurio'] ?? '?'),
+                    ('VENUS',    'venus',    miPlanetas['Venus']    ?? '?', amigoPlanetas['Venus']    ?? '?'),
+                    ('MARTE',    'marte',    miPlanetas['Marte']    ?? '?', amigoPlanetas['Marte']    ?? '?'),
+                    ('JÚPITER',  'jupiter',  miPlanetas['Júpiter']  ?? '?', amigoPlanetas['Júpiter']  ?? '?'),
+                  ];
+                  return Column(
+                    children: planetas.map((p) {
+                      final label  = p.$1;
+                      final key    = p.$2;
+                      final signo1 = p.$3;
+                      final signo2 = p.$4;
+                      final texto  = comparaciones[key];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(label,
+                                    style: TextStyle(
+                                        color: Colors.black.withValues(alpha: 0.35),
+                                        fontSize: 10, letterSpacing: 3)),
+                                const Spacer(),
+                                Text('Tú: $signo1',
+                                    style: const TextStyle(
+                                        color: Colors.black54, fontSize: 11)),
+                                Text('  ·  $primerNombre: $signo2',
+                                    style: const TextStyle(
+                                        color: Colors.black54, fontSize: 11)),
+                              ],
+                            ),
+                            if (texto != null) ...[
+                              const SizedBox(height: 12),
+                              Text(texto,
+                                  style: const TextStyle(
+                                      color: Colors.black87, fontSize: 14,
+                                      fontWeight: FontWeight.w300, height: 1.7)),
+                            ] else
+                              const Padding(
+                                padding: EdgeInsets.only(top: 12),
+                                child: SizedBox(
+                                  height: 12,
+                                  child: LinearProgressIndicator(
+                                    backgroundColor: Color(0x18000000),
+                                    color: Color(0x40000000),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
               ),
 
               const SizedBox(height: 48),

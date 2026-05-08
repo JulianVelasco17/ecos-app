@@ -19,7 +19,6 @@ class _PantallaClimaAstralState extends State<PantallaClimaAstral> {
   Map<String, double> _longitudes = {};
   String? _caption;
   bool _cargando = true;
-  bool _expandido = false;
   String? _seleccionado;
 
   @override
@@ -298,13 +297,6 @@ class _PantallaClimaAstralState extends State<PantallaClimaAstral> {
                       _TarjetaEnergia(caption: _caption!),
                       const SizedBox(height: 14),
 
-                      // ── Acordeón interpretación ────────────────────────
-                      _Acordeon(
-                        expandido: _expandido,
-                        onTap: () => setState(() => _expandido = !_expandido),
-                        caption: _caption!,
-                      ),
-
                       const SizedBox(height: 32),
                     ],
 
@@ -463,80 +455,4 @@ class _TarjetaEnergia extends StatelessWidget {
   }
 }
 
-// ─── Acordeón interpretación ──────────────────────────────────────────────────
-
-class _Acordeon extends StatelessWidget {
-  final bool expandido;
-  final VoidCallback onTap;
-  final String caption;
-
-  const _Acordeon({required this.expandido, required this.onTap, required this.caption});
-
-  String _cuerpo() {
-    final sentences = caption.split(RegExp(r'(?<=[.!?])\s+'));
-    if (sentences.length <= 1) return caption;
-    return sentences.sublist(1).join(' ');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cuerpo = _cuerpo();
-    if (cuerpo.isEmpty) return const SizedBox.shrink();
-
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F3E8),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.black26),
-      ),
-      child: Column(
-        children: [
-          GestureDetector(
-            onTap: onTap,
-            behavior: HitTestBehavior.opaque,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Row(
-                children: [
-                  const Text(
-                    'Interpretación del día',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                  const Spacer(),
-                  AnimatedRotation(
-                    turns: expandido ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 200),
-                    child: const Icon(Icons.keyboard_arrow_down, size: 18, color: Colors.black45),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          AnimatedCrossFade(
-            firstChild: const SizedBox(height: 0),
-            secondChild: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              child: Text(
-                cuerpo,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black54,
-                  height: 1.7,
-                  fontWeight: FontWeight.w300,
-                ),
-              ),
-            ),
-            crossFadeState: expandido ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-            duration: const Duration(milliseconds: 250),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
