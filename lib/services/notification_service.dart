@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -49,6 +50,7 @@ class NotificationService {
 
   static Future<void> inicializar() async {
     tz_data.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation('America/Mexico_City'));
 
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
     const ios     = DarwinInitializationSettings(
@@ -104,12 +106,17 @@ class NotificationService {
   // ── Programar / cancelar ──────────────────────────────────────────────────
 
   static Future<void> aplicarPreferencias(NotifPrefs prefs, {String fraseDiaria = 'tus astros te esperan'}) async {
-    await _plugin.cancel(_idDiaria); // cancelar cualquier notificación diaria local previa
-
-    if (prefs.venusActiva) {
+    if (!prefs.diariaActiva) {
+      await _plugin.cancel(_idDiaria);
+    }
+    if (!prefs.venusActiva) {
+      await _plugin.cancel(_idVenus);
+    } else {
       await _programarVenus();
     }
-    if (prefs.lunaActiva) {
+    if (!prefs.lunaActiva) {
+      await _plugin.cancel(_idLuna);
+    } else {
       await _programarLuna();
     }
   }
@@ -197,9 +204,28 @@ class NotificationService {
     );
   }
 
-  // Cancelar notificación diaria local (ahora la manda el servidor)
   static Future<void> programarNotificacionDelDia(String frase) async {
+    final prefs = await cargarPreferencias();
     await _plugin.cancel(_idDiaria);
+    if (!prefs.diariaActiva) return;
+
+    // Hora random entre 8am y 10pm del día siguiente (hora CDMX)
+    final rng    = Random();
+    final hora   = 8 + rng.nextInt(15); // 8..22
+    final min    = rng.nextInt(60);
+    final now    = tz.TZDateTime.now(tz.local);
+    final manana = tz.TZDateTime(tz.local, now.year, now.month, now.day + 1, hora, min);
+
+    await _plugin.zonedSchedule(
+      _idDiaria,
+      'tus astros de hoy ✦',
+      frase,
+      manana,
+      _detalles('astros_diarios', 'Lectura diaria', 'Tu lectura astrológica personal'),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+    );
   }
 
   // ── FCM: guardar token del dispositivo en Firestore ───────────────────────
@@ -230,7 +256,8 @@ class NotificationService {
   }) async {
     final parejaDoc = await FirebaseFirestore.instance
         .collection('usuarios').doc(parejaUid).get();
-    final token = parejaDoc.data()?['fcmToken'] as String?;
+    final tokens = List<String>.from(parejaDoc.data()?['fcmTokens'] as List? ?? []);
+    final token = tokens.isNotEmpty ? tokens.last : null;
     if (token == null) return;
 
     final serverKey = dotenv.env['FCM_SERVER_KEY'] ?? '';

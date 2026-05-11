@@ -270,14 +270,14 @@ ESTILO DE REFERENCIA:
 
 ---
 
-EXTENSIÓN: 120–160 palabras.
+EXTENSIÓN: 55–75 palabras. Máximo 2 oraciones por párrafo. Sin título.
 
 Planeta: $planeta
 Signo: $signo$casaLinea
 
 Genera el texto siguiendo estrictamente este estilo. No incluyas nada más, solo el texto.
 ''';
-    return await _llamarClaude(prompt, maxTokens: 350);
+    return await _llamarClaude(prompt, maxTokens: 180);
   }
 
   // Genera descripciones para Sol, Luna y Ascendente en paralelo

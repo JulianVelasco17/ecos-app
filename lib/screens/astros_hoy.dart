@@ -142,69 +142,52 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
     final miUid = FirebaseAuth.instance.currentUser?.uid;
     if (miUid == null) return;
 
-    // Cargamos los datos del usuario desde Firestore
-    final doc = await FirebaseFirestore.instance
-        .collection('usuarios')
-        .doc(miUid)
-        .get();
-
+    // ── Paso 1: un solo fetch del doc del usuario ────────────────────────────
+    final doc = await FirebaseFirestore.instance.collection('usuarios').doc(miUid).get();
     if (!doc.exists) return;
     final datos = doc.data()!;
 
-    final fecha = (datos['fechaNacimiento'] as dynamic).toDate() as DateTime;
+    final fecha     = (datos['fechaNacimiento'] as dynamic).toDate() as DateTime;
     final horaParts = (datos['horaNacimiento'] as String).split(':');
-    final hora = int.parse(horaParts[0]);
-    final minutos = int.parse(horaParts[1]);
-
-    final latitud = (datos['latitud'] as num?)?.toDouble() ?? 0.0;
-    final longitud = (datos['longitud'] as num?)?.toDouble() ?? 0.0;
+    final hora      = int.parse(horaParts[0]);
+    final minutos   = int.parse(horaParts[1]);
+    final latitud   = (datos['latitud']  as num?)?.toDouble() ?? 0.0;
+    final longitud  = (datos['longitud'] as num?)?.toDouble() ?? 0.0;
 
     final carta = CalculosAstrales.calcular(
-      fechaNacimiento: fecha,
-      hora: hora,
-      minutos: minutos,
-      latitud: latitud,
-      longitud: longitud,
+      fechaNacimiento: fecha, hora: hora, minutos: minutos,
+      latitud: latitud, longitud: longitud,
     );
 
-    // Guardar datos del usuario para el widget en background
     HomeWidget.saveWidgetData<String>('widget_uid',    miUid);
     HomeWidget.saveWidgetData<String>('widget_nombre', widget.nombre);
     HomeWidget.saveWidgetData<String>('widget_solar',  carta.signoSolar);
     HomeWidget.saveWidgetData<String>('widget_lunar',  carta.signoLunar);
     HomeWidget.saveWidgetData<String>('widget_asc',    carta.ascendente);
 
-    // Revisamos si ya hay una lectura guardada para hoy
-    final hoy = DateTime.now();
+    final hoy      = DateTime.now();
     final fechaHoy = '${hoy.year}-${hoy.month.toString().padLeft(2, '0')}-${hoy.day.toString().padLeft(2, '0')}';
 
     final lecturaDoc = await FirebaseFirestore.instance
-        .collection('usuarios')
-        .doc(miUid)
-        .collection('lecturas')
-        .doc(fechaHoy)
-        .get();
-
-    final usuarioRef = FirebaseFirestore.instance.collection('usuarios').doc(miUid);
+        .collection('usuarios').doc(miUid)
+        .collection('lecturas').doc(fechaHoy).get();
 
     String fraseBase;
     String areaFrase;
     String lectura;
 
     if (lecturaDoc.exists) {
-      // Usar la frase y lectura ya guardadas para hoy
       final cached = lecturaDoc.data()!;
       fraseBase = cached['fraseBase'] as String? ?? '';
       areaFrase = cached['areaFrase'] as String? ?? 'identidad';
       lectura   = cached['texto']     as String? ?? '';
     } else {
-      // Avanzar la cola y generar nueva lectura
-      final usuarioSnap  = await usuarioRef.get();
-      final usuarioDatos = usuarioSnap.data() ?? {};
-      List<int> cola = List<int>.from(usuarioDatos['frasesQueue'] ?? []);
+      // Reusar datos ya descargados — sin segundo fetch
+      List<int> cola = List<int>.from(datos['frasesQueue'] ?? []);
       if (cola.isEmpty) cola = BancoFrases.generarColaMezclada();
       final idSeleccionado = cola.removeAt(0);
-      await usuarioRef.update({'frasesQueue': cola});
+      await FirebaseFirestore.instance.collection('usuarios').doc(miUid)
+          .update({'frasesQueue': cola});
 
       final fraseSeleccionada = BancoFrases.porId(idSeleccionado);
       fraseBase = fraseSeleccionada['frase'] as String;
@@ -220,123 +203,116 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
         planetas:   carta.planetas,
       );
       await FirebaseFirestore.instance
-          .collection('usuarios')
-          .doc(miUid)
-          .collection('lecturas')
-          .doc(fechaHoy)
+          .collection('usuarios').doc(miUid)
+          .collection('lecturas').doc(fechaHoy)
           .set({'texto': lectura, 'fraseBase': fraseBase, 'areaFrase': areaFrase});
     }
 
-    // Cargamos los amigos
-    final amigosSnap = await FirebaseFirestore.instance
-        .collection('usuarios')
-        .doc(miUid)
-        .collection('amigos')
-        .get();
-
-    final amigos = <Map<String, dynamic>>[];
-    final compatibilidades = <String, String>{};
-
-    for (final amigoDoc in amigosSnap.docs) {
-      final amigoUid = amigoDoc['uid'] as String;
-      final amigoData = await FirebaseFirestore.instance
-          .collection('usuarios')
-          .doc(amigoUid)
-          .get();
-
-      if (!amigoData.exists) continue;
-      final ad = amigoData.data()!;
-
-      final amigoFecha = (ad['fechaNacimiento'] as dynamic).toDate() as DateTime;
-      final amigoHoraParts = ((ad['horaNacimiento'] as String?) ?? '12:00').split(':');
-      final amigoHora = int.tryParse(amigoHoraParts[0]) ?? 12;
-      final amigoMin  = int.tryParse(amigoHoraParts.length > 1 ? amigoHoraParts[1] : '0') ?? 0;
-      final amigoLat  = (ad['latitud']  as num?)?.toDouble() ?? 0.0;
-      final amigoLon  = (ad['longitud'] as num?)?.toDouble() ?? 0.0;
-      final amigoCarta = CalculosAstrales.calcular(
-        fechaNacimiento: amigoFecha, hora: amigoHora, minutos: amigoMin,
-        latitud: amigoLat, longitud: amigoLon,
-      );
-      final amigoSigno = amigoCarta.signoSolar;
-      final amigoNombre = ad['nombre'] ?? 'alguien';
-
-      amigos.add({
-        'uid':       amigoUid,
-        'nombre':    amigoNombre,
-        'username':  ad['username'] ?? '',
-        'fotoUrl':   ad['fotoUrl'],
-        'solar':     amigoCarta.signoSolar,
-        'lunar':     amigoCarta.signoLunar,
-        'asc':       amigoCarta.ascendente,
-        'planetas':  amigoCarta.planetas,
-      });
-
-      // Revisamos si ya hay compatibilidad guardada para hoy con este amigo
-      final compatibilidadDoc = await FirebaseFirestore.instance
-          .collection('usuarios')
-          .doc(miUid)
-          .collection('lecturas')
-          .doc(fechaHoy)
-          .collection('compatibilidades')
-          .doc(amigoUid)
-          .get();
-
-      String compatibilidad;
-      if (compatibilidadDoc.exists) {
-        compatibilidad = compatibilidadDoc.data()!['texto'] as String;
-      } else {
-        final tipo = Random().nextBool() ? 'solo' : 'interaccion';
-        compatibilidad = await ClaudeService.generarCompatibilidad(
-          nombre1:      widget.nombre,
-          signoSolar1:  carta.signoSolar,
-          signoLunar1:  carta.signoLunar,
-          nombre2:      amigoNombre,
-          signoSolar2:  amigoSigno,
-          signoLunar2:  amigoCarta.signoLunar,
-          tipo:         tipo,
-        );
-        await FirebaseFirestore.instance
-            .collection('usuarios')
-            .doc(miUid)
-            .collection('lecturas')
-            .doc(fechaHoy)
-            .collection('compatibilidades')
-            .doc(amigoUid)
-            .set({'texto': compatibilidad});
+    // ── Paso 2: mostrar la lectura principal de inmediato ────────────────────
+    if (!mounted) return;
+    setState(() {
+      try {
+        final limpia = lectura.replaceAll(RegExp(r'```json|```'), '').trim();
+        final json   = jsonDecode(limpia);
+        _frase      = fraseBase;
+        _desarrollo = json['parrafo'] as String?;
+      } catch (_) {
+        _frase = fraseBase;
       }
-      compatibilidades[amigoUid] = compatibilidad;
-    }
+      if (_frase != null) {
+        NotificationService.programarNotificacionDelDia(_frase!);
+        HomeWidget.saveWidgetData('widget_frase', _frase);
+        HomeWidget.updateWidget(androidName: 'AstrosWidget');
+      }
+      _miUid      = miUid;
+      _miFotoUrl  = (datos['fotoUrl'] as String?) ?? FirebaseAuth.instance.currentUser?.photoURL;
+      _miSolar    = carta.signoSolar;
+      _miLunar    = carta.signoLunar;
+      _miAsc      = carta.ascendente;
+      _miPlanetas = carta.planetas;
+      _fraseBase  = fraseBase;
+      _areaFrase  = areaFrase;
+      _cargando   = false; // ← desbloquea la UI aquí, amigos cargan aparte
+    });
 
-    if (mounted) {
-      setState(() {
-        try {
-          final limpia = lectura
-              .replaceAll(RegExp(r'```json|```'), '')
-              .trim();
-          final json = jsonDecode(limpia);
-          _frase = fraseBase;
-          _desarrollo = json['parrafo'] as String?;
-        } catch (_) {
-          _frase = fraseBase;
+    // ── Paso 3: cargar todos los amigos en paralelo ──────────────────────────
+    final amigosSnap = await FirebaseFirestore.instance
+        .collection('usuarios').doc(miUid)
+        .collection('amigos').get();
+
+    if (amigosSnap.docs.isEmpty) return;
+
+    // Fetch de todos los docs de amigos simultáneamente
+    final amigosDocs = await Future.wait(
+      amigosSnap.docs.map((d) => FirebaseFirestore.instance
+          .collection('usuarios').doc(d['uid'] as String).get()),
+    );
+
+    // Fetch de todas las compatibilidades simultáneamente
+    final resultados = await Future.wait(
+      amigosDocs.where((d) => d.exists).map((amigoData) async {
+        final amigoUid = amigoData.id;
+        final ad       = amigoData.data()!;
+
+        final amigoFecha     = (ad['fechaNacimiento'] as dynamic).toDate() as DateTime;
+        final amigoHoraParts = ((ad['horaNacimiento'] as String?) ?? '12:00').split(':');
+        final amigoHora      = int.tryParse(amigoHoraParts[0]) ?? 12;
+        final amigoMin       = int.tryParse(amigoHoraParts.length > 1 ? amigoHoraParts[1] : '0') ?? 0;
+        final amigoCarta     = CalculosAstrales.calcular(
+          fechaNacimiento: amigoFecha,
+          hora: amigoHora, minutos: amigoMin,
+          latitud:  (ad['latitud']  as num?)?.toDouble() ?? 0.0,
+          longitud: (ad['longitud'] as num?)?.toDouble() ?? 0.0,
+        );
+        final amigoNombre = ad['nombre'] as String? ?? 'alguien';
+
+        final compatDoc = await FirebaseFirestore.instance
+            .collection('usuarios').doc(miUid)
+            .collection('lecturas').doc(fechaHoy)
+            .collection('compatibilidades').doc(amigoUid).get();
+
+        String compatibilidad;
+        if (compatDoc.exists) {
+          compatibilidad = compatDoc.data()!['texto'] as String;
+        } else {
+          compatibilidad = await ClaudeService.generarCompatibilidad(
+            nombre1:     widget.nombre,
+            signoSolar1: carta.signoSolar,
+            signoLunar1: carta.signoLunar,
+            nombre2:     amigoNombre,
+            signoSolar2: amigoCarta.signoSolar,
+            signoLunar2: amigoCarta.signoLunar,
+            tipo:        Random().nextBool() ? 'solo' : 'interaccion',
+          );
+          await FirebaseFirestore.instance
+              .collection('usuarios').doc(miUid)
+              .collection('lecturas').doc(fechaHoy)
+              .collection('compatibilidades').doc(amigoUid)
+              .set({'texto': compatibilidad});
         }
-        if (_frase != null) {
-          NotificationService.programarNotificacionDelDia(_frase!);
-          HomeWidget.saveWidgetData('widget_frase', _frase);
-          HomeWidget.updateWidget(androidName: 'AstrosWidget');
-        }
-        _miUid      = miUid;
-        _miFotoUrl  = (datos['fotoUrl'] as String?) ?? FirebaseAuth.instance.currentUser?.photoURL;
-        _miSolar    = carta.signoSolar;
-        _miLunar    = carta.signoLunar;
-        _miAsc      = carta.ascendente;
-        _miPlanetas = carta.planetas;
-        _fraseBase  = fraseBase;
-        _areaFrase  = areaFrase;
-        _amigos = amigos;
-        _compatibilidades = compatibilidades;
-        _cargando = false;
-      });
-    }
+
+        return (
+          amigo: <String, dynamic>{
+            'uid':      amigoUid,
+            'nombre':   amigoNombre,
+            'username': ad['username'] ?? '',
+            'fotoUrl':  ad['fotoUrl'],
+            'solar':    amigoCarta.signoSolar,
+            'lunar':    amigoCarta.signoLunar,
+            'asc':      amigoCarta.ascendente,
+            'planetas': amigoCarta.planetas,
+          },
+          compatibilidad: compatibilidad,
+          uid: amigoUid,
+        );
+      }),
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _amigos           = resultados.map((r) => r.amigo).toList();
+      _compatibilidades = {for (final r in resultados) r.uid: r.compatibilidad};
+    });
   }
 
   Widget _buildBlob() {

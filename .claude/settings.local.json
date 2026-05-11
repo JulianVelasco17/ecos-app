@@ -28,7 +28,8 @@
       "PowerShell(New-Item -ItemType Directory -Force -Path \"c:\\\\Users\\\\julia\\\\mi_primera_app\\\\ios\\\\Runner\")",
       "Bash(./gradlew signingReport)",
       "Bash(gradlew.bat signingReport)",
-      "Bash(firebase deploy *)"
+      "Bash(firebase deploy *)",
+      "PowerShell(flutter analyze lib/main.dart lib/screens/home.dart 2>&1)"
     ]
   }
 }

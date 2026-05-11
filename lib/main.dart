@@ -14,14 +14,20 @@ import 'services/notification_service.dart';
 import 'package:home_widget/home_widget.dart';
 import 'widget_background.dart';
 
+// Shader cargado una sola vez al arranque y compartido globalmente
+FragmentShader? shaderMarble;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await NotificationService.inicializar();
   HomeWidget.registerInteractivityCallback(widgetBackground);
-  // Precaché del shader para evitar compilación en tiempo de render
-  await FragmentProgram.fromAsset('shaders/marble.frag');
+  // Cargar shader y notificaciones en paralelo para no bloquear el arranque
+  final results = await Future.wait([
+    FragmentProgram.fromAsset('shaders/marble.frag'),
+    NotificationService.inicializar().then((_) => null),
+  ]);
+  shaderMarble = (results[0] as FragmentProgram).fragmentShader();
   runApp(const MyApp());
 }
 
@@ -548,9 +554,14 @@ class _FondoMarmolState extends State<_FondoMarmol>
     _cargarShader();
   }
 
-  Future<void> _cargarShader() async {
-    final program = await FragmentProgram.fromAsset('shaders/marble.frag');
-    if (mounted) setState(() => _shader = program.fragmentShader());
+  void _cargarShader() {
+    if (shaderMarble != null) {
+      setState(() => _shader = shaderMarble);
+    } else {
+      FragmentProgram.fromAsset('shaders/marble.frag').then((p) {
+        if (mounted) setState(() => _shader = p.fragmentShader());
+      });
+    }
   }
 
   @override

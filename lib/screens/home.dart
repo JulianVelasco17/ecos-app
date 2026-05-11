@@ -17,27 +17,36 @@ class PantallaHome extends StatefulWidget {
 class _PantallaHomeState extends State<PantallaHome> {
   // 0 = amigos, 1 = venus, 2 = astros (centro), 3 = clima, 4 = tú
   int _tabActual = 2;
-  late final List<Widget> _pantallas;
+  // Pantallas construidas solo la primera vez que se visitan
+  final Map<int, Widget> _pantallasCache = {};
+
+  Widget _pantalla(int index) {
+    return _pantallasCache.putIfAbsent(index, () => switch (index) {
+      0 => const PantallaAmigos(),
+      1 => const PantallaVenus(),
+      2 => PantallaAstrosHoy(nombre: widget.nombre),
+      3 => const PantallaClimaAstral(),
+      4 => const PantallaPerfilPropio(),
+      _ => const SizedBox.shrink(),
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-    _pantallas = [
-      const PantallaAmigos(),
-      const PantallaVenus(),
-      PantallaAstrosHoy(nombre: widget.nombre),
-      const PantallaClimaAstral(),
-      const PantallaPerfilPropio(),
-    ];
+    // Pre-construir solo la pantalla inicial
+    _pantalla(2);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF3EBD6),
-      body: IndexedStack(
-        index: _tabActual,
-        children: _pantallas,
+      body: Stack(
+        children: List.generate(5, (i) => Offstage(
+          offstage: _tabActual != i,
+          child: _pantallasCache.containsKey(i) ? _pantalla(i) : const SizedBox.shrink(),
+        )),
       ),
       bottomNavigationBar: _BarraNavegacion(
         tabActual: _tabActual,

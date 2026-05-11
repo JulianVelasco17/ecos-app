@@ -957,98 +957,130 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
     );
   }
 
+  static const _simbolosSigno = {
+    'Aries': '♈', 'Tauro': '♉', 'Géminis': '♊', 'Cáncer': '♋',
+    'Leo': '♌', 'Virgo': '♍', 'Libra': '♎', 'Escorpio': '♏',
+    'Sagitario': '♐', 'Capricornio': '♑', 'Acuario': '♒', 'Piscis': '♓',
+  };
+
   Widget _paginaDescripcionSigno({
     required String titulo,
     required String signo,
     required String? descripcion,
     required bool esUltimo,
   }) {
-    final texto = _lecturaLista ? (descripcion ?? '') : null;
+    final texto   = _lecturaLista ? (descripcion ?? '') : null;
+    final simbolo = _simbolosSigno[signo] ?? '';
+
     return Stack(
       children: [
         const Positioned.fill(child: ColoredBox(color: Colors.black)),
         const Positioned.fill(child: CieloEstrellado()),
         SafeArea(
           child: SizedBox.expand(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Botón debug refrescar ────────────────────────────────────
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _descSol  = null;
-                        _descLuna = null;
-                        _descAsc  = null;
-                        _lecturaLista = false;
-                      });
-                      _generarLectura();
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(top: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white24),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── debug ────────────────────────────────────────────────
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _descSol = null; _descLuna = null;
+                          _descAsc = null; _lecturaLista = false;
+                        });
+                        _generarLectura();
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: const Text('↺ debug',
+                            style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 1)),
                       ),
-                      child: const Text('↺ debug',
-                          style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 1)),
                     ),
                   ),
-                ),
-                const Spacer(),
-                Text(titulo,
-                    style: const TextStyle(
-                      color: Color(0xFFD4AF6A),
-                      fontSize: 10,
-                      letterSpacing: 4,
-                    )),
-                const SizedBox(height: 10),
-                Text(signo.toUpperCase(),
-                    style: const TextStyle(
-                      color: Color(0xFFF3EBD6),
-                      fontSize: 38,
-                      letterSpacing: 1.2,
-                      fontWeight: FontWeight.w400,
-                      fontFamily: 'PlayfairDisplay',
-                      height: 1,
-                    )),
-                const SizedBox(height: 28),
-                texto == null
-                    ? const SizedBox(
-                        height: 2, width: 40,
-                        child: LinearProgressIndicator(
-                            color: Color(0x44F3EBD6),
-                            backgroundColor: Color(0x22F3EBD6)))
-                    : Text(
-                        texto,
-                        style: const TextStyle(
-                          color: Color(0xCCF3EBD6),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w300,
-                          height: 1.7,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                const Spacer(),
-                AnimatedBuilder(
-                  animation: _arrowAnim,
-                  builder: (_, __) => Transform.translate(
-                    offset: Offset(0, -_arrowAnim.value),
-                    child: const Center(child: Icon(
-                        Icons.keyboard_arrow_up,
-                        color: Color(0x44F3EBD6), size: 22)),
+
+                  const Spacer(flex: 2),
+
+                  // ── Símbolo grande ────────────────────────────────────────
+                  Text(simbolo,
+                      style: TextStyle(
+                        color: const Color(0xFFF3EBD6).withValues(alpha: 0.12),
+                        fontSize: 160,
+                        height: 1,
+                      )),
+
+                  const SizedBox(height: 8),
+
+                  // ── Etiqueta + nombre signo ───────────────────────────────
+                  Text(titulo,
+                      style: const TextStyle(
+                        color: Color(0xFFD4AF6A),
+                        fontSize: 10,
+                        letterSpacing: 4,
+                      )),
+                  const SizedBox(height: 8),
+                  Text(signo.toUpperCase(),
+                      style: const TextStyle(
+                        color: Color(0xFFF3EBD6),
+                        fontSize: 36,
+                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: 'PlayfairDisplay',
+                        height: 1,
+                      )),
+
+                  const SizedBox(height: 24),
+
+                  // Línea divisora
+                  Container(
+                    width: 32,
+                    height: 1,
+                    color: const Color(0xFFD4AF6A).withValues(alpha: 0.5),
                   ),
-                ),
-                const SizedBox(height: 48),
-              ],
+
+                  const SizedBox(height: 24),
+
+                  // ── Texto descripción ─────────────────────────────────────
+                  texto == null
+                      ? const SizedBox(
+                          height: 2, width: 40,
+                          child: LinearProgressIndicator(
+                              color: Color(0x44F3EBD6),
+                              backgroundColor: Color(0x22F3EBD6)))
+                      : Text(texto,
+                          style: const TextStyle(
+                            color: Color(0xCCF3EBD6),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w300,
+                            height: 1.75,
+                            letterSpacing: 0.2,
+                          )),
+
+                  const Spacer(flex: 3),
+
+                  // ── Flecha ────────────────────────────────────────────────
+                  AnimatedBuilder(
+                    animation: _arrowAnim,
+                    builder: (ctx, child) => Transform.translate(
+                      offset: Offset(0, -_arrowAnim.value),
+                      child: const Center(child: Icon(
+                          Icons.keyboard_arrow_up,
+                          color: Color(0x44F3EBD6), size: 22)),
+                    ),
+                  ),
+                  const SizedBox(height: 48),
+                ],
+              ),
             ),
-          ),
           ),
         ),
       ],

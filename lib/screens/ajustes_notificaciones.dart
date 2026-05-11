@@ -35,35 +35,6 @@ class _PantallaAjustesNotificacionesState
     if (mounted) setState(() => _guardando = false);
   }
 
-  Future<void> _elegirHora() async {
-    final actual = TimeOfDay(hour: _prefs.diariaHora, minute: _prefs.diariaMinutos);
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: actual,
-      builder: (_, child) => Theme(
-        data: ThemeData.light().copyWith(
-          colorScheme: const ColorScheme.light(
-            primary: Colors.black,
-            onPrimary: _beige,
-            surface: _beige,
-          ),
-        ),
-        child: child!,
-      ),
-    );
-    if (picked == null || !mounted) return;
-    await _guardar(_prefs.copyWith(
-      diariaHora: picked.hour,
-      diariaMinutos: picked.minute,
-    ));
-  }
-
-  String _formatHora(int h, int m) {
-    final periodo = h < 12 ? 'am' : 'pm';
-    final h12     = h == 0 ? 12 : (h > 12 ? h - 12 : h);
-    final mm      = m.toString().padLeft(2, '0');
-    return '$h12:$mm $periodo';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -122,45 +93,8 @@ class _PantallaAjustesNotificacionesState
                       activa: _prefs.diariaActiva,
                       onToggle: (v) => _guardar(_prefs.copyWith(diariaActiva: v)),
                       titulo: 'lectura diaria',
-                      descripcion: 'tu mensaje personal cada mañana',
+                      descripcion: 'tu mensaje personal en algún momento del día',
                       icono: '✦',
-                      detalle: _prefs.diariaActiva
-                          ? GestureDetector(
-                              onTap: _elegirHora,
-                              child: Container(
-                                margin: const EdgeInsets.only(top: 16),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 12),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.black12),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.access_time,
-                                        color: Colors.black38, size: 16),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      _formatHora(
-                                          _prefs.diariaHora,
-                                          _prefs.diariaMinutos),
-                                      style: const TextStyle(
-                                          color: Colors.black87,
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w300,
-                                          letterSpacing: 0.5),
-                                    ),
-                                    const Spacer(),
-                                    const Text('cambiar',
-                                        style: TextStyle(
-                                            color: Colors.black38,
-                                            fontSize: 11,
-                                            letterSpacing: 1)),
-                                  ],
-                                ),
-                              ),
-                            )
-                          : null,
                     ),
 
                     const SizedBox(height: 12),
@@ -217,7 +151,6 @@ class _SeccionNotif extends StatelessWidget {
   final String titulo;
   final String descripcion;
   final String icono;
-  final Widget? detalle;
 
   const _SeccionNotif({
     required this.activa,
@@ -225,7 +158,6 @@ class _SeccionNotif extends StatelessWidget {
     required this.titulo,
     required this.descripcion,
     required this.icono,
-    this.detalle,
   });
 
   @override
@@ -265,7 +197,6 @@ class _SeccionNotif extends StatelessWidget {
               ),
             ],
           ),
-          if (detalle case final w?) w,
         ],
       ),
     );
