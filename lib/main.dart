@@ -136,8 +136,7 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
     final doc = await FirebaseFirestore.instance.collection('usuarios').doc(usuario.uid).get();
     if (!mounted) return;
     if (doc.exists) {
-      await NotificationService.guardarTokenFCM();
-      if (!mounted) return;
+      NotificationService.guardarTokenFCM();
       Navigator.pushReplacement(context, MaterialPageRoute(
         builder: (_) => PantallaHome(nombre: doc.data()?['nombre'] ?? 'viajero'),
       ));
@@ -173,8 +172,7 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
 
     if (doc.exists) {
       final datos = doc.data()!;
-      await NotificationService.guardarTokenFCM();
-      if (!mounted) return;
+      NotificationService.guardarTokenFCM();
       Navigator.pushReplacement(context, MaterialPageRoute(
         builder: (_) => PantallaHome(nombre: datos['nombre'] ?? 'viajero'),
       ));
@@ -195,8 +193,7 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
 
     if (doc.exists) {
       final datos = doc.data()!;
-      await NotificationService.guardarTokenFCM();
-      if (!mounted) return;
+      NotificationService.guardarTokenFCM();
       Navigator.pushReplacement(context, MaterialPageRoute(
         builder: (_) => PantallaHome(nombre: datos['nombre'] ?? 'viajero'),
       ));

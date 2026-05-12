@@ -129,8 +129,16 @@ class NotificationService {
   static Future<void> guardarTokenFCM() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
-    final token = await FirebaseMessaging.instance.getToken();
+
+    // En iOS, el token APNs puede tardar unos segundos en estar disponible
+    String? token;
+    for (int i = 0; i < 5; i++) {
+      token = await FirebaseMessaging.instance.getToken();
+      if (token != null) break;
+      await Future.delayed(const Duration(seconds: 2));
+    }
     if (token == null) return;
+
     await _agregarToken(uid, token);
     FirebaseMessaging.instance.onTokenRefresh.listen((nuevoToken) {
       _agregarToken(uid, nuevoToken);
