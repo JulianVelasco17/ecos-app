@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import '../main.dart';
 import 'ajustes_notificaciones.dart';
+import 'debug_notificaciones.dart';
 
 class PantallaConfiguracion extends StatefulWidget {
   const PantallaConfiguracion({super.key});
@@ -75,7 +76,7 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
     return Scaffold(
       backgroundColor: const Color(0xFFF3EBD6),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,6 +116,16 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
                 subtitulo: 'gestiona tus alertas diarias',
                 onTap: () => Navigator.push(context,
                     MaterialPageRoute(builder: (_) => const PantallaAjustesNotificaciones())),
+              ),
+
+              const Divider(color: Colors.black12),
+
+              _Opcion(
+                icono: Icons.bug_report_outlined,
+                titulo: 'debug notificaciones',
+                subtitulo: 'prueba cada tipo de push',
+                onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const PantallaDebugNotificaciones())),
               ),
 
               const Divider(color: Colors.black12),
@@ -166,7 +177,7 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
                 ),
               ],
 
-              const Spacer(),
+              const SizedBox(height: 48),
 
               GestureDetector(
                 onTap: () => _cerrarSesion(context),

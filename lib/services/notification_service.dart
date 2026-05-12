@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'dart:math';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -7,41 +5,21 @@ import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-// IDs fijos por tipo de notificación
-const _idDiaria = 0;
-const _idVenus  = 1;
-const _idLuna   = 2;
+const _idVenus = 1;
 
 class NotifPrefs {
   final bool diariaActiva;
-  final int diariaHora;
-  final int diariaMinutos;
   final bool venusActiva;
-  final bool lunaActiva;
 
   const NotifPrefs({
-    this.diariaActiva  = true,
-    this.diariaHora    = 9,
-    this.diariaMinutos = 0,
-    this.venusActiva   = false,
-    this.lunaActiva    = false,
+    this.diariaActiva = true,
+    this.venusActiva  = false,
   });
 
-  NotifPrefs copyWith({
-    bool? diariaActiva,
-    int? diariaHora,
-    int? diariaMinutos,
-    bool? venusActiva,
-    bool? lunaActiva,
-  }) => NotifPrefs(
-    diariaActiva:   diariaActiva   ?? this.diariaActiva,
-    diariaHora:     diariaHora     ?? this.diariaHora,
-    diariaMinutos:  diariaMinutos  ?? this.diariaMinutos,
-    venusActiva:    venusActiva    ?? this.venusActiva,
-    lunaActiva:     lunaActiva     ?? this.lunaActiva,
+  NotifPrefs copyWith({bool? diariaActiva, bool? venusActiva}) => NotifPrefs(
+    diariaActiva: diariaActiva ?? this.diariaActiva,
+    venusActiva:  venusActiva  ?? this.venusActiva,
   );
 }
 
@@ -86,38 +64,24 @@ class NotificationService {
   static Future<NotifPrefs> cargarPreferencias() async {
     final p = await SharedPreferences.getInstance();
     return NotifPrefs(
-      diariaActiva:  p.getBool('notif_diaria_activa')  ?? true,
-      diariaHora:    p.getInt('notif_diaria_hora')      ?? 9,
-      diariaMinutos: p.getInt('notif_diaria_minutos')   ?? 0,
-      venusActiva:   p.getBool('notif_venus_activa')    ?? false,
-      lunaActiva:    p.getBool('notif_luna_activa')     ?? false,
+      diariaActiva: p.getBool('notif_diaria_activa') ?? true,
+      venusActiva:  p.getBool('notif_venus_activa')  ?? false,
     );
   }
 
   static Future<void> guardarPreferencias(NotifPrefs prefs) async {
     final p = await SharedPreferences.getInstance();
-    await p.setBool('notif_diaria_activa',  prefs.diariaActiva);
-    await p.setInt( 'notif_diaria_hora',    prefs.diariaHora);
-    await p.setInt( 'notif_diaria_minutos', prefs.diariaMinutos);
-    await p.setBool('notif_venus_activa',   prefs.venusActiva);
-    await p.setBool('notif_luna_activa',    prefs.lunaActiva);
+    await p.setBool('notif_diaria_activa', prefs.diariaActiva);
+    await p.setBool('notif_venus_activa',  prefs.venusActiva);
   }
 
   // ── Programar / cancelar ──────────────────────────────────────────────────
 
-  static Future<void> aplicarPreferencias(NotifPrefs prefs, {String fraseDiaria = 'tus astros te esperan'}) async {
-    if (!prefs.diariaActiva) {
-      await _plugin.cancel(_idDiaria);
-    }
+  static Future<void> aplicarPreferencias(NotifPrefs prefs) async {
     if (!prefs.venusActiva) {
       await _plugin.cancel(_idVenus);
     } else {
       await _programarVenus();
-    }
-    if (!prefs.lunaActiva) {
-      await _plugin.cancel(_idLuna);
-    } else {
-      await _programarLuna();
     }
   }
 
@@ -142,53 +106,9 @@ class NotificationService {
     );
   }
 
-  // Notificación de luna — cada 14 días (luna nueva / llena aprox.)
-  static Future<void> _programarLuna() async {
-    // Referencia de luna nueva: 29 dic 2024
-    final referencia = DateTime(2024, 12, 29);
-    final ahora = DateTime.now();
-    final diasDesde = ahora.difference(referencia).inDays;
-    final ciclo = 29.53;
-
-    // Días hasta la próxima luna nueva o llena (la que venga antes)
-    final faseActual = diasDesde % ciclo;
-    double diasHastaProxima;
-    String titulo;
-    String cuerpo;
-
-    if (faseActual < 14.77) {
-      diasHastaProxima = 14.77 - faseActual;
-      titulo = 'luna llena ○';
-      cuerpo = 'la luna llena ilumina lo que estaba oculto';
-    } else {
-      diasHastaProxima = ciclo - faseActual;
-      titulo = 'luna nueva ●';
-      cuerpo = 'la luna nueva abre un nuevo ciclo para ti';
-    }
-
-    final horario = tz.TZDateTime.now(tz.local)
-        .add(Duration(hours: (diasHastaProxima * 24).round()));
-
-    await _plugin.zonedSchedule(
-      _idLuna,
-      titulo,
-      cuerpo,
-      horario,
-      _detalles('luna', 'Fases lunares', 'Aviso de luna nueva y llena'),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-    );
-  }
-
-  // Solo para debug — dispara ahora mismo
-  static Future<void> mostrarAhora(String frase) async {
-    await _plugin.show(
-      99,
-      'tus astros de hoy ✦',
-      frase,
-      _detalles('astros_diarios', 'Lectura diaria', 'Tu lectura astrológica personal'),
-    );
+  static Future<void> mostrarAhora({String titulo = 'prueba ✦', String cuerpo = 'notificación de prueba'}) async {
+    await _plugin.show(99, titulo, cuerpo,
+        _detalles('debug', 'Debug', 'Notificación de prueba'));
   }
 
   // Helper de detalles de notificación
@@ -201,30 +121,6 @@ class NotificationService {
         priority: Priority.high,
       ),
       iOS: const DarwinNotificationDetails(),
-    );
-  }
-
-  static Future<void> programarNotificacionDelDia(String frase) async {
-    final prefs = await cargarPreferencias();
-    await _plugin.cancel(_idDiaria);
-    if (!prefs.diariaActiva) return;
-
-    // Hora random entre 8am y 10pm del día siguiente (hora CDMX)
-    final rng    = Random();
-    final hora   = 8 + rng.nextInt(15); // 8..22
-    final min    = rng.nextInt(60);
-    final now    = tz.TZDateTime.now(tz.local);
-    final manana = tz.TZDateTime(tz.local, now.year, now.month, now.day + 1, hora, min);
-
-    await _plugin.zonedSchedule(
-      _idDiaria,
-      'tus astros de hoy ✦',
-      frase,
-      manana,
-      _detalles('astros_diarios', 'Lectura diaria', 'Tu lectura astrológica personal'),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 
@@ -247,33 +143,4 @@ class NotificationService {
     });
   }
 
-  // ── FCM: enviar push a la pareja via FCM HTTP v1 ──────────────────────────
-
-  static Future<void> notificarPareja({
-    required String parejaUid,
-    required String titulo,
-    required String cuerpo,
-  }) async {
-    final parejaDoc = await FirebaseFirestore.instance
-        .collection('usuarios').doc(parejaUid).get();
-    final tokens = List<String>.from(parejaDoc.data()?['fcmTokens'] as List? ?? []);
-    final token = tokens.isNotEmpty ? tokens.last : null;
-    if (token == null) return;
-
-    final serverKey = dotenv.env['FCM_SERVER_KEY'] ?? '';
-    if (serverKey.isEmpty) return;
-
-    await http.post(
-      Uri.parse('https://fcm.googleapis.com/fcm/send'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'key=$serverKey',
-      },
-      body: jsonEncode({
-        'to': token,
-        'notification': {'title': titulo, 'body': cuerpo},
-        'data': {'tipo': 'venus'},
-      }),
-    );
-  }
 }

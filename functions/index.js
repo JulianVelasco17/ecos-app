@@ -2,6 +2,7 @@ const { setGlobalOptions } = require("firebase-functions");
 const { defineSecret } = require("firebase-functions/params");
 const { onDocumentCreated, onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { initializeApp } = require("firebase-admin/app");
 const { getMessaging } = require("firebase-admin/messaging");
 const { getFirestore } = require("firebase-admin/firestore");
@@ -358,5 +359,36 @@ exports.limpiarImagenesCartas = onSchedule(
         await cartaDoc.ref.delete();
       }
     }
+  }
+);
+
+// ── Debug: enviar notificación de prueba al usuario actual ────────────────────
+exports.enviarNotifDebug = onCall(
+  { region: "us-central1" },
+  async (request) => {
+    const uid = request.auth?.uid;
+    if (!uid) throw new HttpsError("unauthenticated", "Sin sesión");
+
+    const tipo = request.data?.tipo ?? "diaria";
+    const db = getFirestore();
+    const userDoc = await db.collection("usuarios").doc(uid).get();
+    const userData = userDoc.data();
+    const tokens = userData?.fcmTokens ?? (userData?.fcmToken ? [userData.fcmToken] : []);
+
+    if (!tokens.length) throw new HttpsError("not-found", "Sin token FCM registrado");
+
+    const mensajes = {
+      diaria:   { title: "tus astros de hoy ✦",  body: "esta es una notificación de prueba de lectura diaria" },
+      venus:    { title: "venus ♀",               body: "alguien quiere conectar contigo en venus" },
+      carta:    { title: "venus",                 body: "tu pareja te ha enviado una carta 💌" },
+    };
+
+    const notif = mensajes[tipo] ?? mensajes.diaria;
+    const resultado = await enviarATodos(tokens, notif, { tipo, debug: "true" });
+
+    const exitosos = resultado?.successCount ?? resultado?.responses?.filter(r => r.success)?.length ?? 0;
+    const fallidos = resultado?.failureCount ?? resultado?.responses?.filter(r => !r.success)?.length ?? 0;
+
+    return { tokens: tokens.length, exitosos, fallidos };
   }
 );
