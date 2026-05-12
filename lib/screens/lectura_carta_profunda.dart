@@ -115,8 +115,12 @@ class _PantallaLecturaCartaProfundaState extends State<PantallaLecturaCartaProfu
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: const Icon(Icons.arrow_back_ios,
-                          color: Color(0x55F3EBD6), size: 18),
+                      behavior: HitTestBehavior.opaque,
+                      child: const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: Icon(Icons.arrow_back_ios,
+                            color: Color(0x55F3EBD6), size: 18),
+                      ),
                     ),
                     const SizedBox(height: 48),
 

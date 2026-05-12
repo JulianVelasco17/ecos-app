@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../services/claude_service.dart';
 import 'compra_carta_astral.dart';
 
@@ -206,22 +207,6 @@ const _constelaciones = {
     (0,5),(5,6),(6,7),(7,8),(8,9),     // rama derecha + cordón
     (9,10),(10,11),(11,12),(12,13),(13,9), // pentágono
   ]),
-};
-
-// URLs de imágenes mitológicas por signo (Cloudinary)
-const _imagenesSigno = <String, String>{
-  'Aries':       'https://res.cloudinary.com/dwemowboc/image/upload/v1776884078/aries_fnkftj.png',
-  'Tauro':       'https://res.cloudinary.com/dwemowboc/image/upload/v1776889477/tauro_vkm5gj.png',
-  'Géminis':     'https://res.cloudinary.com/dwemowboc/image/upload/v1776973311/gemini_ldisgs.png',
-  'Cáncer':      'https://res.cloudinary.com/dwemowboc/image/upload/v1776976664/cancer_uthi8z.png',
-  'Leo':         'https://res.cloudinary.com/dwemowboc/image/upload/v1776973595/leo_vttg0e.png',
-  'Virgo':       'https://res.cloudinary.com/dwemowboc/image/upload/v1776974901/virgo_cnoxxy.png',
-  'Libra':       'https://res.cloudinary.com/dwemowboc/image/upload/v1776976673/libra_ixcj0y.png',
-  'Escorpio':    'https://res.cloudinary.com/dwemowboc/image/upload/v1776894705/scorpio_wfjchc.png',
-  'Sagitario':   'https://res.cloudinary.com/dwemowboc/image/upload/v1776976667/sagitario_vgnvpw.png',
-  'Capricornio': 'https://res.cloudinary.com/dwemowboc/image/upload/v1776891000/capricornio_x3ik0z.png',
-  'Acuario':     'https://res.cloudinary.com/dwemowboc/image/upload/v1776976670/acuario_gbdd3v.png',
-  'Piscis':      'https://res.cloudinary.com/dwemowboc/image/upload/v1776894271/piscis_ejokfj.png',
 };
 
 // ─── Painter ─────────────────────────────────────────────────────────────────
@@ -716,8 +701,12 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
               const SizedBox(height: 20),
               GestureDetector(
                 onTap: () { setState(() { _debugSolar = null; _debugLunar = null; _debugAsc = null; _debugGrid = false; }); Navigator.pop(ctx); },
-                child: const Text('· resetear a valores reales',
-                    style: TextStyle(color: Colors.white38, fontSize: 12, letterSpacing: 0.5)),
+                behavior: HitTestBehavior.opaque,
+                child: const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Text('· resetear a valores reales',
+                      style: TextStyle(color: Colors.white38, fontSize: 12, letterSpacing: 0.5)),
+                ),
               ),
             ],
           ),
@@ -926,11 +915,12 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
                   child: Text(
                     frase,
                     key: ValueKey('frase_$_paginaSigno'),
-                    style: TextStyle(
+                    style: GoogleFonts.manrope(
                       color: const Color(0xFFF3EBD6).withValues(alpha: 0.5),
                       fontSize: 26,
-                      letterSpacing: 0.5,
                       fontWeight: FontWeight.w300,
+                      height: 1.65,
+                      letterSpacing: -0.18,
                     ),
                   ),
                 ),
@@ -957,11 +947,61 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
     );
   }
 
-  static const _simbolosSigno = {
-    'Aries': '♈', 'Tauro': '♉', 'Géminis': '♊', 'Cáncer': '♋',
-    'Leo': '♌', 'Virgo': '♍', 'Libra': '♎', 'Escorpio': '♏',
-    'Sagitario': '♐', 'Capricornio': '♑', 'Acuario': '♒', 'Piscis': '♓',
+  static const _imagenesSigno = <String, String>{
+    'Aries':       'https://res.cloudinary.com/dwemowboc/image/upload/v1776884078/aries_fnkftj.png',
+    'Tauro':       'https://res.cloudinary.com/dwemowboc/image/upload/v1776889477/tauro_vkm5gj.png',
+    'Géminis':     'https://res.cloudinary.com/dwemowboc/image/upload/v1776973311/gemini_ldisgs.png',
+    'Cáncer':      'https://res.cloudinary.com/dwemowboc/image/upload/v1776976664/cancer_uthi8z.png',
+    'Leo':         'https://res.cloudinary.com/dwemowboc/image/upload/v1776973595/leo_vttg0e.png',
+    'Virgo':       'https://res.cloudinary.com/dwemowboc/image/upload/v1776974901/virgo_cnoxxy.png',
+    'Libra':       'https://res.cloudinary.com/dwemowboc/image/upload/v1776976673/libra_ixcj0y.png',
+    'Escorpio':    'https://res.cloudinary.com/dwemowboc/image/upload/v1776894705/scorpio_wfjchc.png',
+    'Sagitario':   'https://res.cloudinary.com/dwemowboc/image/upload/v1776976667/sagitario_vgnvpw.png',
+    'Capricornio': 'https://res.cloudinary.com/dwemowboc/image/upload/v1776891000/capricornio_x3ik0z.png',
+    'Acuario':     'https://res.cloudinary.com/dwemowboc/image/upload/v1776976670/acuario_gbdd3v.png',
+    'Piscis':      'https://res.cloudinary.com/dwemowboc/image/upload/v1776894271/piscis_ejokfj.png',
   };
+
+  static const _imagenesDescripcion = <String, String>{
+    'Aries':       'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Fariespng.png?alt=media&token=7df4a37c-1542-4e9b-98c2-1fb002865c90',
+    'Tauro':       'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Ftauruspng.png?alt=media&token=4a3c4fb2-3e33-424c-a208-bd3ea738a5a7',
+    'Géminis':     'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Fgemini%20png.png?alt=media&token=919f5978-04de-44db-8ede-b4c3e0361546',
+    'Cáncer':      'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Fcancerpng.png?alt=media&token=439425aa-2652-4fa4-bf97-6b3aef5b6fd5',
+    'Leo':         'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Fleo%20png.png?alt=media&token=e1481208-825c-4597-9eb2-9fda8f4bbcd0',
+    'Virgo':       'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Fvirgopng.png?alt=media&token=830a4506-66a2-411d-b05a-c49eabd97877',
+    'Libra':       'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Flibrapng.png?alt=media&token=d0b5e4d4-e114-4b9f-a9bb-515c182d482d',
+    'Escorpio':    'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Fescorpiopng.png?alt=media&token=31c52a92-6ff4-42b4-a2ff-90524f71c679',
+    'Sagitario':   'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Fsagitariopng.png?alt=media&token=9abe4df3-6d09-49e4-a9ba-c191a2d8f090',
+    'Capricornio': 'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Fcapricornio%20png.png?alt=media&token=1ad0f203-38ed-4079-9924-bb1eb74af8b5',
+    'Acuario':     'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Facuariopng.png?alt=media&token=92793087-8b68-4e00-941c-3f73551cbebc',
+    'Piscis':      'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Fpiscis%20png.png?alt=media&token=2989ac0f-2c48-4470-acff-90faa5b89fcc',
+  };
+
+  static const _dorado = Color(0xFFD4AF6A);
+
+  TextSpan _textoConDorados(String texto) {
+    final rng = Random();
+    final palabras = texto.split(' ');
+    final elegibles = [
+      for (int i = 0; i < palabras.length; i++)
+        if (palabras[i].replaceAll(RegExp(r'[^a-záéíóúüñA-ZÁÉÍÓÚÜÑ]'), '').length >= 4) i
+    ];
+    elegibles.shuffle(rng);
+    final cantidad = 2 + rng.nextInt(3); // 2, 3 o 4
+    final indices = elegibles.take(cantidad).toSet();
+    final spans = <TextSpan>[];
+    for (int i = 0; i < palabras.length; i++) {
+      final esDorada = indices.contains(i);
+      spans.add(TextSpan(
+        text: i == 0 ? palabras[i] : ' ${palabras[i]}',
+        style: TextStyle(
+          color: esDorada ? _dorado : const Color(0xFFF3EBD6),
+          fontWeight: esDorada ? FontWeight.w400 : FontWeight.w300,
+        ),
+      ));
+    }
+    return TextSpan(children: spans);
+  }
 
   Widget _paginaDescripcionSigno({
     required String titulo,
@@ -969,8 +1009,8 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
     required String? descripcion,
     required bool esUltimo,
   }) {
-    final texto   = _lecturaLista ? (descripcion ?? '') : null;
-    final simbolo = _simbolosSigno[signo] ?? '';
+    final texto     = _lecturaLista ? (descripcion ?? '') : null;
+    final imagenUrl = _imagenesDescripcion[signo];
 
     return Stack(
       children: [
@@ -1008,37 +1048,67 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
                     ),
                   ),
 
-                  const Spacer(flex: 2),
+                  const Spacer(),
 
-                  // ── Símbolo grande ────────────────────────────────────────
-                  Text(simbolo,
-                      style: TextStyle(
-                        color: const Color(0xFFF3EBD6).withValues(alpha: 0.12),
-                        fontSize: 160,
-                        height: 1,
-                      )),
+                  // ── Título + imagen ───────────────────────────────────────
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(titulo,
+                                style: const TextStyle(
+                                  color: Color(0xFFD4AF6A),
+                                  fontSize: 12,
+                                  letterSpacing: 4,
+                                )),
+                            const SizedBox(height: 6),
+                            Text(signo.toUpperCase(),
+                                style: const TextStyle(
+                                  color: Color(0xFFF3EBD6),
+                                  fontSize: 40,
+                                  letterSpacing: 1.2,
+                                  fontWeight: FontWeight.w400,
+                                  fontFamily: 'PlayfairDisplay',
+                                  height: 1,
+                                )),
+                          ],
+                        ),
+                      ),
+                      if (imagenUrl != null)
+                        SizedBox(
+                          width: 140,
+                          height: 0,
+                          child: OverflowBox(
+                            maxWidth: 200,
+                            maxHeight: 200,
+                            alignment: const Alignment(0, 0.3),
+                            child: Opacity(
+                              opacity: 0.28,
+                              child: ColorFiltered(
+                                colorFilter: const ColorFilter.matrix([
+                                  -1,  0,  0, 0, 255,
+                                   0, -1,  0, 0, 255,
+                                   0,  0, -1, 0, 255,
+                                   0,  0,  0, 1,   0,
+                                ]),
+                                child: Image.network(
+                                  imagenUrl,
+                                  width: 200,
+                                  height: 200,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (ctx, err, _) => const SizedBox(width: 200, height: 200),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
 
-                  const SizedBox(height: 8),
-
-                  // ── Etiqueta + nombre signo ───────────────────────────────
-                  Text(titulo,
-                      style: const TextStyle(
-                        color: Color(0xFFD4AF6A),
-                        fontSize: 10,
-                        letterSpacing: 4,
-                      )),
-                  const SizedBox(height: 8),
-                  Text(signo.toUpperCase(),
-                      style: const TextStyle(
-                        color: Color(0xFFF3EBD6),
-                        fontSize: 36,
-                        letterSpacing: 1.2,
-                        fontWeight: FontWeight.w400,
-                        fontFamily: 'PlayfairDisplay',
-                        height: 1,
-                      )),
-
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 12),
 
                   // Línea divisora
                   Container(
@@ -1047,25 +1117,40 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
                     color: const Color(0xFFD4AF6A).withValues(alpha: 0.5),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 36),
 
-                  // ── Texto descripción ─────────────────────────────────────
-                  texto == null
-                      ? const SizedBox(
-                          height: 2, width: 40,
-                          child: LinearProgressIndicator(
-                              color: Color(0x44F3EBD6),
-                              backgroundColor: Color(0x22F3EBD6)))
-                      : Text(texto,
-                          style: const TextStyle(
-                            color: Color(0xCCF3EBD6),
-                            fontSize: 15,
-                            fontWeight: FontWeight.w300,
-                            height: 1.75,
-                            letterSpacing: 0.2,
-                          )),
+                  // ── Cuadro negro con imagen encima ────────────────────────
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: const BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.zero,
+                        ),
+                        child: texto == null
+                            ? const SizedBox(
+                                height: 2, width: 40,
+                                child: LinearProgressIndicator(
+                                    color: Color(0x44F3EBD6),
+                                    backgroundColor: Color(0x22F3EBD6)))
+                            : RichText(
+                                text: TextSpan(
+                                  style: GoogleFonts.manrope(
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.w300,
+                                    height: 1.65,
+                                    letterSpacing: -0.01 * 19,
+                                  ),
+                                  children: [_textoConDorados(texto)],
+                                ),
+                              ),
+                      ),
+                    ],
+                  ),
 
-                  const Spacer(flex: 3),
+                  const Spacer(),
 
                   // ── Flecha ────────────────────────────────────────────────
                   AnimatedBuilder(
@@ -1102,18 +1187,18 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
                 const Text('PROFUNDIZA EN TU CARTA',
                     style: TextStyle(
                       color: Color(0xFFD4AF6A),
-                      fontSize: 10,
+                      fontSize: 13,
                       letterSpacing: 4,
                     )),
                 const SizedBox(height: 24),
-                const Text(
+                Text(
                   'Descubre cómo esto afecta tus relaciones, de dónde vienes y hacia dónde vas, qué necesitas y tu misión.',
-                  style: TextStyle(
-                    color: Color(0xFFF3EBD6),
+                  style: GoogleFonts.manrope(
+                    color: const Color(0xFFF3EBD6),
                     fontSize: 24,
                     fontWeight: FontWeight.w300,
-                    height: 1.5,
-                    letterSpacing: 0.3,
+                    height: 1.65,
+                    letterSpacing: -0.18,
                   ),
                 ),
                 const Spacer(),

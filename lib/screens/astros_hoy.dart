@@ -12,7 +12,6 @@ import '../services/banco_frases.dart';
 import 'buscar_amigos.dart';
 import 'notificaciones.dart';
 import 'color_del_dia.dart';
-import '../services/notification_service.dart';
 import 'mas_alla.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:screenshot/screenshot.dart';
@@ -20,11 +19,13 @@ import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'configuracion.dart';
 import 'afinidad.dart';
+import 'compra_ecos_plus.dart';
 
 class PantallaAstrosHoy extends StatefulWidget {
   final String nombre;
+  final void Function(bool)? onCargandoChanged;
 
-  const PantallaAstrosHoy({super.key, required this.nombre});
+  const PantallaAstrosHoy({super.key, required this.nombre, this.onCargandoChanged});
 
   @override
   State<PantallaAstrosHoy> createState() => _PantallaAstrosHoyState();
@@ -52,6 +53,7 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
   Map<String, String> _miPlanetas = {};
   final _blobKey = GlobalKey();
   bool _colorRevelado = false;
+  bool _ecosPlusActivo = false;
 
   String _fraseBase = '';
   String _areaFrase = 'identidad';
@@ -113,7 +115,7 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
       final dir  = await getTemporaryDirectory();
       final file = File('${dir.path}/ecos_frase.png');
       await file.writeAsBytes(imagen);
-      await Share.shareXFiles([XFile(file.path)], text: 'ecos');
+      await Share.shareXFiles([XFile(file.path)]);
     } finally {
       if (mounted) setState(() => _compartiendo = false);
     }
@@ -220,11 +222,11 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
         _frase = fraseBase;
       }
       if (_frase != null) {
-        NotificationService.programarNotificacionDelDia(_frase!);
         HomeWidget.saveWidgetData('widget_frase', _frase);
         HomeWidget.updateWidget(androidName: 'AstrosWidget');
       }
-      _miUid      = miUid;
+      _miUid           = miUid;
+      _ecosPlusActivo  = datos['ecosPlusActivo'] == true;
       _miFotoUrl  = (datos['fotoUrl'] as String?) ?? FirebaseAuth.instance.currentUser?.photoURL;
       _miSolar    = carta.signoSolar;
       _miLunar    = carta.signoLunar;
@@ -234,6 +236,7 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
       _areaFrase  = areaFrase;
       _cargando   = false; // ← desbloquea la UI aquí, amigos cargan aparte
     });
+    widget.onCargandoChanged?.call(false);
 
     // ── Paso 3: cargar todos los amigos en paralelo ──────────────────────────
     final amigosSnap = await FirebaseFirestore.instance
@@ -335,7 +338,11 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
               const SizedBox(width: 10),
               GestureDetector(
                 onTap: () => setState(() => _debugColorOffset = (_debugColorOffset + 1) % totalColores()),
-                child: const Text('›', style: TextStyle(color: Colors.black38, fontSize: 18)),
+                behavior: HitTestBehavior.opaque,
+                child: const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Text('›', style: TextStyle(color: Colors.black38, fontSize: 18)),
+                ),
               ),
               const SizedBox(width: 4),
               Text(
@@ -405,7 +412,7 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    'tus astros de hoy',
+                    'resonancias',
                     style: TextStyle(
                       color: Colors.black45,
                       fontSize: 11,
@@ -419,7 +426,11 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                           context,
                           MaterialPageRoute(builder: (_) => const PantallaConfiguracion()),
                         ),
-                        child: const Icon(Icons.tune, color: Colors.black45, size: 20),
+                        behavior: HitTestBehavior.opaque,
+                        child: const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: Icon(Icons.tune, color: Colors.black45, size: 20),
+                        ),
                       ),
                       const SizedBox(width: 16),
                       _CampanaNotificaciones(),
@@ -430,8 +441,12 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                           MaterialPageRoute(
                               builder: (_) => const PantallaBuscarAmigos()),
                         ),
-                        child: const Icon(Icons.search,
-                            color: Colors.black45, size: 20),
+                        behavior: HitTestBehavior.opaque,
+                        child: const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: Icon(Icons.search,
+                              color: Colors.black45, size: 20),
+                        ),
                       ),
                     ],
                   ),
@@ -447,9 +462,13 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                 // DEBUG — borrar antes de publicar
               GestureDetector(
                 onTap: () => setState(() => _mostrarDebug = !_mostrarDebug),
-                child: const Text(
-                  'debug ▾',
-                  style: TextStyle(color: Colors.black26, fontSize: 11, letterSpacing: 1),
+                behavior: HitTestBehavior.opaque,
+                child: const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Text(
+                    'debug ▾',
+                    style: TextStyle(color: Colors.black26, fontSize: 11, letterSpacing: 1),
+                  ),
                 ),
               ),
               if (_mostrarDebug) ...[
@@ -472,9 +491,13 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                 const SizedBox(height: 8),
                 GestureDetector(
                   onTap: () => setState(() => _mostrarLoadingDebug = !_mostrarLoadingDebug),
-                  child: Text(
-                    _mostrarLoadingDebug ? 'loading ▴' : 'loading ▾',
-                    style: const TextStyle(color: Colors.black26, fontSize: 11, letterSpacing: 1),
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Text(
+                      _mostrarLoadingDebug ? 'loading ▴' : 'loading ▾',
+                      style: const TextStyle(color: Colors.black26, fontSize: 11, letterSpacing: 1),
+                    ),
                   ),
                 ),
                 if (_mostrarLoadingDebug)
@@ -485,6 +508,7 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                 GestureDetector(
                   onTap: () async {
                     setState(() => _cargando = true);
+                    widget.onCargandoChanged?.call(true);
                     final debugCola = BancoFrases.generarColaMezclada();
                     final debugFrase = BancoFrases.porId(debugCola.first);
                     final lectura = await ClaudeService.generarAstrosDelDia(
@@ -506,10 +530,15 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                       }
                       _cargando = false;
                     });
+                    widget.onCargandoChanged?.call(false);
                   },
-                  child: const Text(
-                    'generar →',
-                    style: TextStyle(color: Colors.black45, fontSize: 11, letterSpacing: 2),
+                  behavior: HitTestBehavior.opaque,
+                  child: const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: Text(
+                      'generar →',
+                      style: TextStyle(color: Colors.black45, fontSize: 11, letterSpacing: 2),
+                    ),
                   ),
                 ),
               ],
@@ -571,6 +600,11 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                       child: GestureDetector(
                         key: _keyMasAlla,
                         onTap: () {
+                          if (!_ecosPlusActivo) {
+                            Navigator.push(context, MaterialPageRoute(
+                              builder: (_) => const PantallaCompraEcosPlus()));
+                            return;
+                          }
                           final box = _keyMasAlla.currentContext!
                               .findRenderObject() as RenderBox;
                           final origen = box.localToGlobal(
@@ -659,9 +693,13 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                     ),
                     GestureDetector(
                       onTap: _refrescarCompatibilidades,
-                      child: const Text(
-                        'debug: refrescar',
-                        style: TextStyle(color: Colors.black26, fontSize: 10, letterSpacing: 1),
+                      behavior: HitTestBehavior.opaque,
+                      child: const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: Text(
+                          'debug: refrescar',
+                          style: TextStyle(color: Colors.black26, fontSize: 10, letterSpacing: 1),
+                        ),
                       ),
                     ),
                   ],
@@ -764,11 +802,15 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                                       ),
                                     ),
                                   ),
-                                  child: const Text(
-                                    'ver perfil  →',
-                                    style: TextStyle(
-                                        color: Colors.black38, fontSize: 11,
-                                        letterSpacing: 1),
+                                  behavior: HitTestBehavior.opaque,
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(12),
+                                    child: Text(
+                                      'ver perfil  →',
+                                      style: TextStyle(
+                                          color: Colors.black38, fontSize: 11,
+                                          letterSpacing: 1),
+                                    ),
                                   ),
                                 ),
                               ],
@@ -814,7 +856,10 @@ class _CampanaNotificaciones extends StatelessWidget {
             context,
             MaterialPageRoute(builder: (_) => const PantallaNotificaciones()),
           ),
-          child: Stack(
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Stack(
             clipBehavior: Clip.none,
             children: [
               Icon(
@@ -846,6 +891,7 @@ class _CampanaNotificaciones extends StatelessWidget {
                   ),
                 ),
             ],
+          ),
           ),
         );
       },
@@ -937,13 +983,13 @@ class _TarjetaCompartirBeige extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 1080,
-      height: 1920,
+      height: 1350,
       color: const Color(0xFFF3EBD6),
       padding: const EdgeInsets.symmetric(horizontal: 96),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Spacer(flex: 3),
+          const Spacer(flex: 2),
           Text(
             frase,
             style: const TextStyle(
@@ -957,7 +1003,7 @@ class _TarjetaCompartirBeige extends StatelessWidget {
           ),
           const SizedBox(height: 48),
           Container(width: 64, height: 2, color: const Color(0xFFB8973A)),
-          const Spacer(flex: 4),
+          const Spacer(flex: 3),
           const Divider(color: Color(0x22000000), thickness: 1),
           const SizedBox(height: 40),
           const Text(

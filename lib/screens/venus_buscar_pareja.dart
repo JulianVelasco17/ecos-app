@@ -136,7 +136,11 @@ class _PantallaVenusBuscarParejaState extends State<PantallaVenusBuscarPareja> {
           ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.black26, strokeWidth: 1.5))
           : GestureDetector(
               onTap: () => _enviarInvitacion(u),
-              child: const Text('conectar', style: TextStyle(color: Colors.black45, fontSize: 12, letterSpacing: 2)),
+              behavior: HitTestBehavior.opaque,
+              child: const Padding(
+                padding: EdgeInsets.all(12),
+                child: Text('conectar', style: TextStyle(color: Colors.black45, fontSize: 12, letterSpacing: 2)),
+              ),
             ),
     );
   }

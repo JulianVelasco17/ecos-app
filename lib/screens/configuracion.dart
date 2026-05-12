@@ -4,8 +4,15 @@ import '../services/auth_service.dart';
 import '../main.dart';
 import 'ajustes_notificaciones.dart';
 
-class PantallaConfiguracion extends StatelessWidget {
+class PantallaConfiguracion extends StatefulWidget {
   const PantallaConfiguracion({super.key});
+
+  @override
+  State<PantallaConfiguracion> createState() => _PantallaConfiguracionState();
+}
+
+class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
+  bool _vinculando = false;
 
   Future<void> _cerrarSesion(BuildContext context) async {
     final confirmar = await showDialog<bool>(
@@ -36,10 +43,34 @@ class PantallaConfiguracion extends StatelessWidget {
     );
   }
 
+  Future<void> _vincular(bool esGoogle) async {
+    setState(() => _vinculando = true);
+    final ok = esGoogle
+        ? await AuthService.vincularConGoogle()
+        : await AuthService.vincularConApple();
+    if (!mounted) return;
+    setState(() => _vinculando = false);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      backgroundColor: ok ? Colors.black87 : Colors.black45,
+      content: Text(
+        ok
+            ? 'cuenta vinculada correctamente'
+            : 'no se pudo vincular, intenta de nuevo',
+        style: const TextStyle(color: Color(0xFFF3EBD6), fontSize: 12, letterSpacing: 0.5),
+      ),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     final email = user?.email ?? user?.displayName ?? 'invitado';
+
+    final proveedores = user?.providerData.map((p) => p.providerId).toSet() ?? {};
+    final esEmailPassword = proveedores.contains('password');
+    final tieneGoogle = proveedores.contains('google.com');
+    final tieneApple = proveedores.contains('apple.com');
+    final mostrarVinculacion = esEmailPassword && (!tieneGoogle || !tieneApple);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3EBD6),
@@ -49,7 +80,6 @@ class PantallaConfiguracion extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -59,7 +89,11 @@ class PantallaConfiguracion extends StatelessWidget {
                   ),
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
-                    child: const Icon(Icons.close, color: Colors.black45, size: 20),
+                    behavior: HitTestBehavior.opaque,
+                    child: const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Icon(Icons.close, color: Colors.black45, size: 20),
+                    ),
                   ),
                 ],
               ),
@@ -75,7 +109,6 @@ class PantallaConfiguracion extends StatelessWidget {
 
               const Divider(color: Colors.black12),
 
-              // Opciones futuras (placeholders)
               _Opcion(
                 icono: Icons.notifications_none,
                 titulo: 'notificaciones',
@@ -104,26 +137,96 @@ class PantallaConfiguracion extends StatelessWidget {
 
               const Divider(color: Colors.black12),
 
+              if (mostrarVinculacion) ...[
+                const SizedBox(height: 32),
+                const Text(
+                  'VINCULAR CUENTA',
+                  style: TextStyle(color: Colors.black26, fontSize: 10, letterSpacing: 3),
+                ),
+                const SizedBox(height: 16),
+                if (!tieneGoogle)
+                  _BotonVincular(
+                    icono: Icons.g_mobiledata,
+                    label: 'vincular con Google',
+                    cargando: _vinculando,
+                    onTap: () => _vincular(true),
+                  ),
+                if (!tieneGoogle && !tieneApple) const SizedBox(height: 12),
+                if (!tieneApple)
+                  _BotonVincular(
+                    icono: Icons.apple,
+                    label: 'vincular con Apple',
+                    cargando: _vinculando,
+                    onTap: () => _vincular(false),
+                  ),
+                const SizedBox(height: 8),
+                const Text(
+                  'inicia sesión más rápido en cualquier dispositivo',
+                  style: TextStyle(color: Colors.black26, fontSize: 11, letterSpacing: 0.3),
+                ),
+              ],
+
               const Spacer(),
 
-              // Cerrar sesión
               GestureDetector(
                 onTap: () => _cerrarSesion(context),
-                child: const Row(
-                  children: [
-                    Icon(Icons.logout, color: Colors.black45, size: 16),
-                    SizedBox(width: 12),
-                    Text(
-                      'cerrar sesión',
-                      style: TextStyle(color: Colors.black45, fontSize: 13, letterSpacing: 2),
-                    ),
-                  ],
+                behavior: HitTestBehavior.opaque,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Row(
+                    children: [
+                      Icon(Icons.logout, color: Colors.black45, size: 16),
+                      SizedBox(width: 12),
+                      Text(
+                        'cerrar sesión',
+                        style: TextStyle(color: Colors.black45, fontSize: 13, letterSpacing: 2),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
               const SizedBox(height: 32),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BotonVincular extends StatelessWidget {
+  final IconData icono;
+  final String label;
+  final bool cargando;
+  final VoidCallback onTap;
+
+  const _BotonVincular({required this.icono, required this.label, required this.cargando, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: cargando ? null : onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.black12),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          children: [
+            Icon(icono, color: Colors.black54, size: 18),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(label,
+                  style: const TextStyle(color: Colors.black54, fontSize: 13,
+                      fontWeight: FontWeight.w300, letterSpacing: 0.5)),
+            ),
+            if (cargando)
+              const SizedBox(width: 14, height: 14,
+                  child: CircularProgressIndicator(color: Colors.black26, strokeWidth: 1.5)),
+          ],
         ),
       ),
     );

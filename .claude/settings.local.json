@@ -29,7 +29,14 @@
       "Bash(./gradlew signingReport)",
       "Bash(gradlew.bat signingReport)",
       "Bash(firebase deploy *)",
-      "PowerShell(flutter analyze lib/main.dart lib/screens/home.dart 2>&1)"
+      "PowerShell(flutter analyze lib/main.dart lib/screens/home.dart 2>&1)",
+      "Bash(Get-ChildItem \"c:\\\\Users\\\\julia\\\\mi_primera_app\\\\lib\\\\screens\" -Filter \"*.dart\")",
+      "Bash(Select-Object Name)",
+      "Bash(/c/Users/julia/flutter/bin/flutter analyze *)",
+      "PowerShell(& flutter analyze lib/screens/ 2>&1)",
+      "PowerShell(& \"C:\\\\Users\\\\julia\\\\Flutter\\\\bin\\\\flutter.bat\" analyze lib/screens/ 2>&1)",
+      "Bash(find /mnt/c/Users/julia/Flutter -name \"flutter\" -maxdepth 3 2>/dev/null | head -5)",
+      "Read(//mnt/c/Users/julia/**)"
     ]
   }
 }

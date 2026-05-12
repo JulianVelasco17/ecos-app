@@ -168,8 +168,12 @@ class PantallaNotificaciones extends StatelessWidget {
                               // Botón rechazar
                               GestureDetector(
                                 onTap: () => _rechazar(solicitud.id),
-                                child: const Icon(Icons.close,
-                                    color: Colors.black45, size: 20),
+                                behavior: HitTestBehavior.opaque,
+                                child: const Padding(
+                                  padding: EdgeInsets.all(12),
+                                  child: Icon(Icons.close,
+                                      color: Colors.black45, size: 20),
+                                ),
                               ),
                             ],
                           ),

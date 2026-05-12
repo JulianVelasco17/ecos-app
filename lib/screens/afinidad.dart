@@ -104,7 +104,11 @@ class PantallaAfinidad extends StatelessWidget {
               // ── Back ──────────────────────────────────────────────────────────
               GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: const Icon(Icons.arrow_back_ios, color: Colors.black38, size: 18),
+                behavior: HitTestBehavior.opaque,
+                child: const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Icon(Icons.arrow_back_ios, color: Colors.black38, size: 18),
+                ),
               ),
               const SizedBox(height: 40),
 

@@ -204,7 +204,11 @@ class _PantallaMasAllaState extends State<PantallaMasAlla> {
                   padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
                   child: GestureDetector(
                     onTap: () => Navigator.pop(context),
-                    child: const Icon(Icons.arrow_back_ios, color: Color(0x55F3EBD6), size: 18),
+                    behavior: HitTestBehavior.opaque,
+                    child: const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Icon(Icons.arrow_back_ios, color: Color(0x55F3EBD6), size: 18),
+                    ),
                   ),
                 ),
 

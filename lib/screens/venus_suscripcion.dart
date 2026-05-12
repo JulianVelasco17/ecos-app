@@ -80,7 +80,11 @@ class _PantallaVenusSuscripcionState extends State<PantallaVenusSuscripcion> {
                       if (widget.onSuscrito == null) ...[
                         GestureDetector(
                           onTap: () => Navigator.pop(context),
-                          child: const Icon(Icons.arrow_back_ios, color: Colors.white54, size: 18),
+                          behavior: HitTestBehavior.opaque,
+                          child: const Padding(
+                            padding: EdgeInsets.all(12),
+                            child: Icon(Icons.arrow_back_ios, color: Colors.white54, size: 18),
+                          ),
                         ),
                         const SizedBox(width: 8),
                       ],
@@ -179,9 +183,13 @@ class _PantallaVenusSuscripcionState extends State<PantallaVenusSuscripcion> {
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.black26, strokeWidth: 1.5))
                         : GestureDetector(
                             onTap: _activarDebug,
-                            child: const Text(
-                              'debug: activar venus →',
-                              style: TextStyle(color: Colors.black26, fontSize: 11, letterSpacing: 2),
+                            behavior: HitTestBehavior.opaque,
+                            child: const Padding(
+                              padding: EdgeInsets.all(12),
+                              child: Text(
+                                'debug: activar venus →',
+                                style: TextStyle(color: Colors.black26, fontSize: 11, letterSpacing: 2),
+                              ),
                             ),
                           ),
                   ),

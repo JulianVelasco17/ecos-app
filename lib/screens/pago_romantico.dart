@@ -107,7 +107,11 @@ class PantallaPagoRomantico extends StatelessWidget {
                 children: [
               GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: const Icon(Icons.arrow_back_ios, color: Color(0x66F3EBD6), size: 18),
+                behavior: HitTestBehavior.opaque,
+                child: const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Icon(Icons.arrow_back_ios, color: Color(0x66F3EBD6), size: 18),
+                ),
               ),
 
               const SizedBox(height: 24),
@@ -184,13 +188,17 @@ class PantallaPagoRomantico extends StatelessWidget {
 
               GestureDetector(
                 onTap: () => _simularPago(context),
+                behavior: HitTestBehavior.opaque,
                 child: Center(
-                  child: Text(
-                    'debug: simular cobro',
-                    style: TextStyle(
-                      color: const Color(0xFFF3EBD6).withValues(alpha: 0.2),
-                      fontSize: 11,
-                      letterSpacing: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Text(
+                      'debug: simular cobro',
+                      style: TextStyle(
+                        color: const Color(0xFFF3EBD6).withValues(alpha: 0.2),
+                        fontSize: 11,
+                        letterSpacing: 1,
+                      ),
                     ),
                   ),
                 ),

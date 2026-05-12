@@ -84,7 +84,11 @@ class _PantallaLoginState extends State<PantallaLogin> {
             children: [
               GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: const Icon(Icons.arrow_back_ios, color: Colors.black45, size: 18),
+                behavior: HitTestBehavior.opaque,
+                child: const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Icon(Icons.arrow_back_ios, color: Colors.black45, size: 18),
+                ),
               ),
 
               const SizedBox(height: 48),
@@ -144,12 +148,16 @@ class _PantallaLoginState extends State<PantallaLogin> {
                       if (mounted) setState(() => _error = 'no encontramos esa cuenta');
                     }
                   },
-                  child: const Text(
-                    'olvidé mi contraseña',
-                    style: TextStyle(
-                      color: Colors.black38,
-                      fontSize: 12,
-                      letterSpacing: 0.5,
+                  behavior: HitTestBehavior.opaque,
+                  child: const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: Text(
+                      'olvidé mi contraseña',
+                      style: TextStyle(
+                        color: Colors.black38,
+                        fontSize: 12,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
                 ),
@@ -223,10 +231,14 @@ class _CampoState extends State<_Campo> {
         suffixIcon: widget.oculto
             ? GestureDetector(
                 onTap: () => setState(() => _oculto = !_oculto),
-                child: Icon(
-                  _oculto ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                  color: Colors.black26,
-                  size: 18,
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Icon(
+                    _oculto ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    color: Colors.black26,
+                    size: 18,
+                  ),
                 ),
               )
             : null,

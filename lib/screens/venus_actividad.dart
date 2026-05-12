@@ -516,7 +516,11 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
                 _enviado = false;
                 _miRespuesta = null;
               }),
-              child: const Text('‹', style: TextStyle(color: Colors.black38, fontSize: 18)),
+              behavior: HitTestBehavior.opaque,
+              child: const Padding(
+                padding: EdgeInsets.all(12),
+                child: Text('‹', style: TextStyle(color: Colors.black38, fontSize: 18)),
+              ),
             ),
             const SizedBox(width: 6),
             Text('$_semanaDebug', style: const TextStyle(color: Colors.black45, fontSize: 11)),
@@ -527,7 +531,11 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
                 _enviado = false;
                 _miRespuesta = null;
               }),
-              child: const Text('›', style: TextStyle(color: Colors.black38, fontSize: 18)),
+              behavior: HitTestBehavior.opaque,
+              child: const Padding(
+                padding: EdgeInsets.all(12),
+                child: Text('›', style: TextStyle(color: Colors.black38, fontSize: 18)),
+              ),
             ),
           ],
         ),

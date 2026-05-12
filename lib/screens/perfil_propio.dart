@@ -11,9 +11,11 @@ import '../services/aspectos_natales.dart';
 import '../services/claude_service.dart';
 import '../widgets/rueda_zodiacal.dart';
 import 'lectura_carta_profunda.dart';
+import 'compra_carta_astral.dart';
 
 class PantallaPerfilPropio extends StatefulWidget {
-  const PantallaPerfilPropio({super.key});
+  final void Function(bool)? onCargandoChanged;
+  const PantallaPerfilPropio({super.key, this.onCargandoChanged});
 
   @override
   State<PantallaPerfilPropio> createState() => _PantallaPerfilPropioState();
@@ -182,6 +184,7 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
         _guardadas  = guardadas;
         _cargando   = false;
       });
+      widget.onCargandoChanged?.call(false);
     }
   }
 
@@ -366,6 +369,7 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
                         return GestureDetector(
                           onTap: () => setState(() =>
                             _planetaSeleccionado = selec ? null : nombre),
+                          behavior: HitTestBehavior.opaque,
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -391,8 +395,17 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
 
                     const SizedBox(height: 32),
                     GestureDetector(
-                      onTap: () => Navigator.push(context,
-                          MaterialPageRoute(builder: (_) => const PantallaLecturaCartaProfunda())),
+                      onTap: () {
+                        final cartaActiva = _datos?['cartaActiva'] == true;
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => cartaActiva
+                                ? const PantallaLecturaCartaProfunda()
+                                : const PantallaCompraCarta(),
+                          ),
+                        );
+                      },
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
@@ -472,7 +485,6 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
 
                       ..._guardadas.map((g) {
                         final frase = g['frase'] as String? ?? '';
-                        final expansion = g['expansion'] as String? ?? '';
                         final ts = g['fecha'];
                         String fechaStr = '';
                         if (ts != null) {
@@ -481,7 +493,7 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
                           fechaStr = '${dt.day} ${meses[dt.month - 1]} ${dt.year}';
                         }
                         return Padding(
-                          padding: const EdgeInsets.only(bottom: 32),
+                          padding: const EdgeInsets.only(bottom: 20),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -489,27 +501,16 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
                                 Text(fechaStr,
                                     style: const TextStyle(
                                         color: Colors.black38, fontSize: 10, letterSpacing: 2)),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 8),
                               Text(frase,
                                   style: const TextStyle(
                                     fontFamily: 'PlayfairDisplay',
                                     color: Color(0xFF222222),
-                                    fontSize: 36,
+                                    fontSize: 20,
                                     fontWeight: FontWeight.w400,
                                     height: 1.4,
-                                    letterSpacing: 1.0,
+                                    letterSpacing: 0.5,
                                   )),
-                              if (expansion.isNotEmpty) ...[
-                                const SizedBox(height: 10),
-                                Text(
-                                  expansion.split('\n\n').first.trim(),
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                      color: Colors.black45, fontSize: 13,
-                                      fontWeight: FontWeight.w300, height: 1.7),
-                                ),
-                              ],
                               const SizedBox(height: 16),
                               const Divider(color: Colors.black12),
                             ],

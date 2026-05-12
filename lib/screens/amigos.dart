@@ -37,8 +37,12 @@ class PantallaAmigos extends StatelessWidget {
                       MaterialPageRoute(
                           builder: (_) => const PantallaBuscarAmigos()),
                     ),
-                    child: const Icon(Icons.search,
-                        color: Colors.black45, size: 20),
+                    behavior: HitTestBehavior.opaque,
+                    child: const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Icon(Icons.search,
+                          color: Colors.black45, size: 20),
+                    ),
                   ),
                 ],
               ),

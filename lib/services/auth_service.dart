@@ -56,6 +56,40 @@ class AuthService {
     }
   }
 
+  static Future<bool> vincularConGoogle() async {
+    try {
+      await GoogleSignIn.instance.initialize(
+        clientId: _iosClientId,
+        serverClientId: _serverClientId,
+      );
+      final cuenta = await GoogleSignIn.instance.authenticate();
+      final auth = cuenta.authentication;
+      final credencial = GoogleAuthProvider.credential(idToken: auth.idToken);
+      await _auth.currentUser!.linkWithCredential(credencial);
+      return true;
+    } catch (e) {
+      print('ERROR vincular Google: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> vincularConApple() async {
+    try {
+      final credencial = await SignInWithApple.getAppleIDCredential(
+        scopes: [AppleIDAuthorizationScopes.email, AppleIDAuthorizationScopes.fullName],
+      );
+      final oauthCred = OAuthProvider('apple.com').credential(
+        idToken: credencial.identityToken,
+        accessToken: credencial.authorizationCode,
+      );
+      await _auth.currentUser!.linkWithCredential(oauthCred);
+      return true;
+    } catch (e) {
+      print('ERROR vincular Apple: $e');
+      return false;
+    }
+  }
+
   // Cierra sesión
   static Future<void> cerrarSesion() async {
     await GoogleSignIn.instance.signOut();

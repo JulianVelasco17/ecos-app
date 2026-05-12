@@ -19,14 +19,22 @@ class _PantallaHomeState extends State<PantallaHome> {
   int _tabActual = 2;
   // Pantallas construidas solo la primera vez que se visitan
   final Map<int, Widget> _pantallasCache = {};
+  final Set<int> _cargando = {};
+
+  void _setCargando(int index, bool value) {
+    if (!mounted) return;
+    setState(() {
+      if (value) { _cargando.add(index); } else { _cargando.remove(index); }
+    });
+  }
 
   Widget _pantalla(int index) {
     return _pantallasCache.putIfAbsent(index, () => switch (index) {
       0 => const PantallaAmigos(),
-      1 => const PantallaVenus(),
-      2 => PantallaAstrosHoy(nombre: widget.nombre),
-      3 => const PantallaClimaAstral(),
-      4 => const PantallaPerfilPropio(),
+      1 => PantallaVenus(onCargandoChanged: (v) => _setCargando(1, v)),
+      2 => PantallaAstrosHoy(nombre: widget.nombre, onCargandoChanged: (v) => _setCargando(2, v)),
+      3 => PantallaClimaAstral(onCargandoChanged: (v) => _setCargando(3, v)),
+      4 => PantallaPerfilPropio(onCargandoChanged: (v) => _setCargando(4, v)),
       _ => const SizedBox.shrink(),
     });
   }
@@ -34,7 +42,7 @@ class _PantallaHomeState extends State<PantallaHome> {
   @override
   void initState() {
     super.initState();
-    // Pre-construir solo la pantalla inicial
+    _cargando.add(2);
     _pantalla(2);
   }
 
@@ -43,10 +51,23 @@ class _PantallaHomeState extends State<PantallaHome> {
     return Scaffold(
       backgroundColor: const Color(0xFFF3EBD6),
       body: Stack(
-        children: List.generate(5, (i) => Offstage(
-          offstage: _tabActual != i,
-          child: _pantallasCache.containsKey(i) ? _pantalla(i) : const SizedBox.shrink(),
-        )),
+        children: [
+          ...List.generate(5, (i) => Offstage(
+            offstage: _tabActual != i,
+            child: _tabActual == i || _pantallasCache.containsKey(i)
+                ? _pantalla(i)
+                : const SizedBox.shrink(),
+          )),
+          if (_cargando.isNotEmpty)
+            const Positioned(
+              top: 0, left: 0, right: 0,
+              child: LinearProgressIndicator(
+                backgroundColor: Colors.transparent,
+                color: Colors.black12,
+                minHeight: 2,
+              ),
+            ),
+        ],
       ),
       bottomNavigationBar: _BarraNavegacion(
         tabActual: _tabActual,

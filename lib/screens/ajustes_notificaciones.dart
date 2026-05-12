@@ -62,7 +62,11 @@ class _PantallaAjustesNotificacionesState
                       const SizedBox(width: 12),
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
-                        child: const Icon(Icons.close, color: Colors.black45, size: 20),
+                        behavior: HitTestBehavior.opaque,
+                        child: const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: Icon(Icons.close, color: Colors.black45, size: 20),
+                        ),
                       ),
                     ],
                   ),
@@ -105,22 +109,9 @@ class _PantallaAjustesNotificacionesState
                     _SeccionNotif(
                       activa: _prefs.venusActiva,
                       onToggle: (v) => _guardar(_prefs.copyWith(venusActiva: v)),
-                      titulo: 'martes de venus',
+                      titulo: 'venus',
                       descripcion: 'recordatorio semanal de amor y vínculos',
                       icono: '♀',
-                    ),
-
-                    const SizedBox(height: 12),
-                    const Divider(color: Colors.black12),
-                    const SizedBox(height: 12),
-
-                    // ── Fases lunares ───────────────────────────────────────
-                    _SeccionNotif(
-                      activa: _prefs.lunaActiva,
-                      onToggle: (v) => _guardar(_prefs.copyWith(lunaActiva: v)),
-                      titulo: 'fases lunares',
-                      descripcion: 'aviso en luna nueva y luna llena',
-                      icono: '○',
                     ),
 
                     const SizedBox(height: 40),

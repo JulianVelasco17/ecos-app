@@ -12,7 +12,8 @@ import 'venus_carta_reveal.dart';
 enum _EstadoVenus { cargando, sinSuscripcion, sinPareja, solicitudEnviada, solicitudRecibida, enlazado }
 
 class PantallaVenus extends StatefulWidget {
-  const PantallaVenus({super.key});
+  final void Function(bool)? onCargandoChanged;
+  const PantallaVenus({super.key, this.onCargandoChanged});
 
   @override
   State<PantallaVenus> createState() => _PantallaVenusState();
@@ -57,12 +58,14 @@ class _PantallaVenusState extends State<PantallaVenus> {
       final estadoEnlace = enlace?['estado'] as String?;
       if (estadoEnlace != 'pendiente_recibida') {
         setState(() => _estado = _EstadoVenus.sinSuscripcion);
+        widget.onCargandoChanged?.call(false);
         return;
       }
     }
 
     if (enlace == null) {
       setState(() => _estado = _EstadoVenus.sinPareja);
+      widget.onCargandoChanged?.call(false);
       return;
     }
 
@@ -75,6 +78,7 @@ class _PantallaVenusState extends State<PantallaVenus> {
         _                    => _EstadoVenus.sinPareja,
       };
     });
+    widget.onCargandoChanged?.call(false);
   }
 
   Future<void> _cargar() async {
@@ -182,7 +186,11 @@ class _PantallaVenusState extends State<PantallaVenus> {
               right: 32,
               child: GestureDetector(
                 onTap: _cancelarDebug,
-                child: const Text('debug: cancelar venus →', style: TextStyle(color: Colors.black26, fontSize: 11, letterSpacing: 1.5)),
+                behavior: HitTestBehavior.opaque,
+                child: const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Text('debug: cancelar venus →', style: TextStyle(color: Colors.black26, fontSize: 11, letterSpacing: 1.5)),
+                ),
               ),
             ),
           ],
@@ -263,7 +271,13 @@ class _SolicitudEnviada extends StatelessWidget {
           const Spacer(),
           GestureDetector(
             onTap: onCancelar,
-            child: const Center(child: Text('cancelar solicitud', style: TextStyle(color: Colors.black26, fontSize: 12, letterSpacing: 2))),
+            behavior: HitTestBehavior.opaque,
+            child: const Center(
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: Text('cancelar solicitud', style: TextStyle(color: Colors.black26, fontSize: 12, letterSpacing: 2)),
+              ),
+            ),
           ),
           const SizedBox(height: 32),
         ],
@@ -317,7 +331,13 @@ class _SolicitudRecibida extends StatelessWidget {
           const SizedBox(height: 12),
           GestureDetector(
             onTap: onRechazar,
-            child: const Center(child: Text('rechazar', style: TextStyle(color: Colors.black26, fontSize: 12, letterSpacing: 2))),
+            behavior: HitTestBehavior.opaque,
+            child: const Center(
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: Text('rechazar', style: TextStyle(color: Colors.black26, fontSize: 12, letterSpacing: 2)),
+              ),
+            ),
           ),
           const SizedBox(height: 32),
         ],
@@ -521,7 +541,11 @@ class _EnlazadaState extends State<_Enlazada> {
               ),
               GestureDetector(
                 onTap: widget.onDisolver,
-                child: const Text('disolver', style: TextStyle(color: Colors.black26, fontSize: 11, letterSpacing: 2)),
+                behavior: HitTestBehavior.opaque,
+                child: const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Text('disolver', style: TextStyle(color: Colors.black26, fontSize: 11, letterSpacing: 2)),
+                ),
               ),
             ],
           ),
@@ -632,9 +656,13 @@ class _EnlazadaState extends State<_Enlazada> {
             // ── Frase de compatibilidad ─────────────────────────────────
             GestureDetector(
               onTap: _regenerando ? null : _regenerarCompat,
-              child: _regenerando
-                  ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(color: Colors.black26, strokeWidth: 1.2))
-                  : const Text('debug: regenerar →', style: TextStyle(color: Colors.black26, fontSize: 11, letterSpacing: 1.5)),
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: _regenerando
+                    ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(color: Colors.black26, strokeWidth: 1.2))
+                    : const Text('debug: regenerar →', style: TextStyle(color: Colors.black26, fontSize: 11, letterSpacing: 1.5)),
+              ),
             ),
             const SizedBox(height: 12),
             if (_fraseCompat != null && _fraseCompat!.isNotEmpty) ...[

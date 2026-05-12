@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'lectura_carta_profunda.dart';
 
-class PantallaCompraCarta extends StatefulWidget {
-  const PantallaCompraCarta({super.key});
+class PantallaCompraEcosPlus extends StatefulWidget {
+  const PantallaCompraEcosPlus({super.key});
 
   @override
-  State<PantallaCompraCarta> createState() => _PantallaCompraCartaState();
+  State<PantallaCompraEcosPlus> createState() => _PantallaCompraEcosPlusState();
 }
 
-class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
+class _PantallaCompraEcosPlusState extends State<PantallaCompraEcosPlus> {
   bool _activando = false;
 
   Future<void> _activarDebug() async {
@@ -21,12 +20,9 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
       await FirebaseFirestore.instance
           .collection('usuarios')
           .doc(uid)
-          .set({'cartaActiva': true}, SetOptions(merge: true));
+          .set({'ecosPlusActivo': true}, SetOptions(merge: true));
       if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const PantallaLecturaCartaProfunda()),
-      );
+      Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
       setState(() => _activando = false);
@@ -57,7 +53,7 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
                     ),
                   ),
                   const Text(
-                    'tu carta\nastral',
+                    'ecos+',
                     style: TextStyle(
                       fontFamily: 'PlayfairDisplay',
                       color: Color(0xFF222222),
@@ -73,7 +69,7 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
               const SizedBox(height: 12),
 
               const Text(
-                'una lectura profunda, una sola vez',
+                'profundiza en lo que el cielo tiene para ti',
                 style: TextStyle(color: Colors.black45, fontSize: 13, letterSpacing: 0.5, height: 1.8),
               ),
 
@@ -81,31 +77,24 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
 
               const _Beneficio(
                 icono: Icons.auto_awesome_outlined,
-                titulo: 'tu big 3 en profundidad',
-                descripcion: 'Sol, Luna y Ascendente interpretados juntos como un sistema, no por separado.',
+                titulo: 'trascender',
+                descripcion: 'Expande cada lectura diaria. Reflexiones, arquetipos y el porqué detrás de tu mensaje.',
               ),
               const SizedBox(height: 24),
               const _Beneficio(
-                icono: Icons.hub_outlined,
-                titulo: 'aspectos natales',
-                descripcion: 'Las tensiones y armonías entre tus planetas que definen cómo experimentas el mundo.',
-              ),
-              const SizedBox(height: 24),
-              const _Beneficio(
-                icono: Icons.place_outlined,
-                titulo: 'lectura por ámbitos',
-                descripcion: 'Amor, amistad, suerte, familia y dinero — cada uno desde tu configuración natal.',
+                icono: Icons.wb_sunny_outlined,
+                titulo: 'navega el clima astral',
+                descripcion: 'Cómo afecta el cielo de hoy a tu carta natal — casas activadas, tránsitos personales y cómo moverte.',
               ),
 
               const SizedBox(height: 56),
 
-              // Precio
               Row(
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: const [
                   Text(
-                    '\$49',
+                    '\$79',
                     style: TextStyle(
                       color: Colors.black,
                       fontSize: 40,
@@ -114,7 +103,7 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
                   ),
                   SizedBox(width: 8),
                   Text(
-                    'MXN · pago único',
+                    'MXN · mes',
                     style: TextStyle(color: Colors.black45, fontSize: 13, letterSpacing: 0.5),
                   ),
                 ],
@@ -122,7 +111,7 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
 
               const SizedBox(height: 8),
               const Text(
-                'sin suscripción, sin cobros futuros',
+                'cancela cuando quieras',
                 style: TextStyle(color: Colors.black26, fontSize: 11, letterSpacing: 0.5),
               ),
 
@@ -143,7 +132,7 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
                   child: _activando
                       ? const SizedBox(width: 18, height: 18,
                           child: CircularProgressIndicator(color: Colors.black54, strokeWidth: 1.5))
-                      : const Text('DESBLOQUEAR MI CARTA',
+                      : const Text('SUSCRIBIRME A ECOS+',
                           style: TextStyle(letterSpacing: 3, fontSize: 12)),
                 ),
               ),

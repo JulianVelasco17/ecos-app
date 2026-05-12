@@ -742,13 +742,17 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
                         const SizedBox(height: 48),
                         GestureDetector(
                           onTap: _regenerarReporte,
+                          behavior: HitTestBehavior.opaque,
                           child: Center(
-                            child: Text(
-                              _cargando ? 'generando…' : 'debug: regenerar reporte',
-                              style: TextStyle(
-                                color: Colors.black.withValues(alpha: 0.2),
-                                fontSize: 11,
-                                letterSpacing: 1,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Text(
+                                _cargando ? 'generando…' : 'debug: regenerar reporte',
+                                style: TextStyle(
+                                  color: Colors.black.withValues(alpha: 0.2),
+                                  fontSize: 11,
+                                  letterSpacing: 1,
+                                ),
                               ),
                             ),
                           ),
@@ -772,14 +776,22 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
                 children: [
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
-                    child: const Icon(Icons.arrow_back_ios,
-                        color: Color(0x66F3EBD6), size: 18),
+                    behavior: HitTestBehavior.opaque,
+                    child: const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Icon(Icons.arrow_back_ios,
+                          color: Color(0x66F3EBD6), size: 18),
+                    ),
                   ),
                   const Spacer(),
                   GestureDetector(
                     onTap: _mostrarDebugMenu,
-                    child: const Icon(Icons.bug_report,
-                        color: Color(0x33F3EBD6), size: 18),
+                    behavior: HitTestBehavior.opaque,
+                    child: const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Icon(Icons.bug_report,
+                          color: Color(0x33F3EBD6), size: 18),
+                    ),
                   ),
                 ],
               ),

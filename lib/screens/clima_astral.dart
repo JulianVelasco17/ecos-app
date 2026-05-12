@@ -6,9 +6,11 @@ import '../services/calculos_astrales.dart';
 import '../services/claude_service.dart';
 import '../widgets/rueda_zodiacal.dart';
 import 'lectura_clima_personal.dart';
+import 'compra_ecos_plus.dart';
 
 class PantallaClimaAstral extends StatefulWidget {
-  const PantallaClimaAstral({super.key});
+  final void Function(bool)? onCargandoChanged;
+  const PantallaClimaAstral({super.key, this.onCargandoChanged});
 
   @override
   State<PantallaClimaAstral> createState() => _PantallaClimaAstralState();
@@ -20,6 +22,7 @@ class _PantallaClimaAstralState extends State<PantallaClimaAstral> {
   String? _caption;
   bool _cargando = true;
   String? _seleccionado;
+  bool _ecosPlusActivo = false;
 
   @override
   void initState() {
@@ -55,6 +58,7 @@ class _PantallaClimaAstralState extends State<PantallaClimaAstral> {
         lunar = ud['signoLunar'] as String?;
         asc   = ud['ascendente'] as String?;
         natales = (ud['planetas'] as Map?)?.cast<String, String>() ?? {};
+        _ecosPlusActivo = ud['ecosPlusActivo'] == true;
       }
     }
 
@@ -94,6 +98,7 @@ class _PantallaClimaAstralState extends State<PantallaClimaAstral> {
         _caption    = caption;
         _cargando   = false;
       });
+      widget.onCargandoChanged?.call(false);
     }
   }
 
@@ -269,6 +274,7 @@ class _PantallaClimaAstralState extends State<PantallaClimaAstral> {
                         return GestureDetector(
                           onTap: () => setState(() =>
                               _seleccionado = selec ? null : nombre),
+                          behavior: HitTestBehavior.opaque,
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -335,7 +341,9 @@ class _PantallaClimaAstralState extends State<PantallaClimaAstral> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () => Navigator.push(context,
-                            MaterialPageRoute(builder: (_) => const PantallaLecturaClimaPersonal())),
+                            MaterialPageRoute(builder: (_) => _ecosPlusActivo
+                                ? const PantallaLecturaClimaPersonal()
+                                : const PantallaCompraEcosPlus())),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.black,
                           foregroundColor: const Color(0xFFF3EBD6),
@@ -343,7 +351,7 @@ class _PantallaClimaAstralState extends State<PantallaClimaAstral> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
                           elevation: 0,
                         ),
-                        child: const Text('DESBLOQUEAR · \$3.99/mes', style: TextStyle(letterSpacing: 2, fontSize: 12)),
+                        child: const Text('DESBLOQUEAR CON ECOS+', style: TextStyle(letterSpacing: 2, fontSize: 12)),
                       ),
                     ),
 

@@ -254,6 +254,7 @@ REGLAS IMPORTANTES:
 ❌ No usar:
 * comillas internas ("yo soy…")
 * frases ambiguas o demasiado abstractas
+* guiones de ningún tipo (ni — ni - ni –)
 
 ✅ Usar:
 * lenguaje sencillo y natural
@@ -270,7 +271,7 @@ ESTILO DE REFERENCIA:
 
 ---
 
-EXTENSIÓN: 55–75 palabras. Máximo 2 oraciones por párrafo. Sin título.
+EXTENSIÓN: 40–55 palabras. Máximo 2 oraciones por párrafo. Sin título.
 
 Planeta: $planeta
 Signo: $signo$casaLinea

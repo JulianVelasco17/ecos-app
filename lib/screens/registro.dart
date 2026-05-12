@@ -266,8 +266,12 @@ class _PantallaRegistroState extends State<PantallaRegistro>
                                     setState(() { _fecha = temp; _intentoAvanzarSinFecha = false; });
                                     Navigator.pop(ctx);
                                   },
-                                  child: const Text('listo',
-                                      style: TextStyle(color: Color(0xFFF3EBD6), fontSize: 13, letterSpacing: 1)),
+                                  behavior: HitTestBehavior.opaque,
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(12),
+                                    child: Text('listo',
+                                        style: TextStyle(color: Color(0xFFF3EBD6), fontSize: 13, letterSpacing: 1)),
+                                  ),
                                 ),
                               ],
                             ),
@@ -333,8 +337,12 @@ class _PantallaRegistroState extends State<PantallaRegistro>
                                     setState(() { _hora = TimeOfDay(hour: temp.hour, minute: temp.minute); _intentoAvanzarSinHora = false; });
                                     Navigator.pop(ctx);
                                   },
-                                  child: const Text('listo',
-                                      style: TextStyle(color: Color(0xFFF3EBD6), fontSize: 13, letterSpacing: 1)),
+                                  behavior: HitTestBehavior.opaque,
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(12),
+                                    child: Text('listo',
+                                        style: TextStyle(color: Color(0xFFF3EBD6), fontSize: 13, letterSpacing: 1)),
+                                  ),
                                 ),
                               ],
                             ),
