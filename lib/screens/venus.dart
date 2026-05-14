@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../widgets/loading_images.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/aspectos_natales.dart';
@@ -174,7 +175,7 @@ class _PantallaVenusState extends State<PantallaVenus> {
         child: Stack(
           children: [
             switch (_estado) {
-              _EstadoVenus.cargando           => const Center(child: CircularProgressIndicator(color: Colors.black12)),
+              _EstadoVenus.cargando           => const LoadingImages(),
               _EstadoVenus.sinSuscripcion     => PantallaVenusSuscripcion(onSuscrito: _cargar),
               _EstadoVenus.sinPareja          => _SinPareja(onBuscar: () async { await Navigator.push(context, MaterialPageRoute(builder: (_) => const PantallaVenusBuscarPareja())); _cargar(); }),
               _EstadoVenus.solicitudEnviada   => _SolicitudEnviada(enlace: _enlace!, onCancelar: _cancelarORechar),
@@ -650,7 +651,7 @@ class _EnlazadaState extends State<_Enlazada> {
           const SizedBox(height: 32),
 
           if (_cargando)
-            const Center(child: CircularProgressIndicator(color: Colors.black26, strokeWidth: 1.5))
+            const LoadingImages()
           else ...[
 
             // ── Frase de compatibilidad ─────────────────────────────────

@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:screenshot/screenshot.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -14,7 +16,6 @@ import 'notificaciones.dart';
 import 'color_del_dia.dart';
 import 'mas_alla.dart';
 import 'package:home_widget/home_widget.dart';
-import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'configuracion.dart';
@@ -107,15 +108,18 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
     if (_frase == null || _compartiendo) return;
     setState(() => _compartiendo = true);
     try {
-      final imagen = await _screenshotCtrl.captureFromLongWidget(
-        _TarjetaCompartirBeige(frase: _frase!),
-        pixelRatio: 3.0,
-        context: context,
+      final imagen = await _screenshotCtrl.captureFromWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: _TarjetaCompartirBeige(frase: _frase!),
+        ),
+        pixelRatio: 1.0,
+        targetSize: const Size(1080, 3000),
       );
       final dir  = await getTemporaryDirectory();
       final file = File('${dir.path}/ecos_frase.png');
       await file.writeAsBytes(imagen);
-      await Share.shareXFiles([XFile(file.path)]);
+      await Share.shareXFiles([XFile(file.path)], text: _frase);
     } finally {
       if (mounted) setState(() => _compartiendo = false);
     }
@@ -144,22 +148,53 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
     final miUid = FirebaseAuth.instance.currentUser?.uid;
     if (miUid == null) return;
 
-    // ── Paso 1: un solo fetch del doc del usuario ────────────────────────────
-    final doc = await FirebaseFirestore.instance.collection('usuarios').doc(miUid).get();
-    if (!doc.exists) return;
-    final datos = doc.data()!;
+    final hoy      = DateTime.now();
+    final fechaHoy = '${hoy.year}-${hoy.month.toString().padLeft(2, '0')}-${hoy.day.toString().padLeft(2, '0')}';
+    final prefs    = await SharedPreferences.getInstance();
 
-    final fecha     = (datos['fechaNacimiento'] as dynamic).toDate() as DateTime;
-    final horaParts = (datos['horaNacimiento'] as String).split(':');
-    final hora      = int.parse(horaParts[0]);
-    final minutos   = int.parse(horaParts[1]);
-    final latitud   = (datos['latitud']  as num?)?.toDouble() ?? 0.0;
-    final longitud  = (datos['longitud'] as num?)?.toDouble() ?? 0.0;
+    // ── Paso 1: perfil del usuario — caché local por día ────────────────────
+    final clavePerf = 'perfil_${miUid}_$fechaHoy';
+    late Map<String, dynamic> datos;
+    late CartaAstral carta;
 
-    final carta = CalculosAstrales.calcular(
-      fechaNacimiento: fecha, hora: hora, minutos: minutos,
-      latitud: latitud, longitud: longitud,
-    );
+    final perfilJson = prefs.getString(clavePerf);
+    if (perfilJson != null) {
+      final p     = jsonDecode(perfilJson) as Map<String, dynamic>;
+      final fecha = DateTime.parse(p['fechaNacimiento'] as String);
+      final hora  = p['hora'] as int;
+      final min   = p['minutos'] as int;
+      carta = CalculosAstrales.calcular(
+        fechaNacimiento: fecha, hora: hora, minutos: min,
+        latitud:  (p['latitud']  as num).toDouble(),
+        longitud: (p['longitud'] as num).toDouble(),
+      );
+      datos = p;
+    } else {
+      final doc = await FirebaseFirestore.instance.collection('usuarios').doc(miUid).get();
+      if (!doc.exists) return;
+      datos = doc.data()!;
+
+      final fecha     = (datos['fechaNacimiento'] as dynamic).toDate() as DateTime;
+      final horaParts = (datos['horaNacimiento'] as String).split(':');
+      final hora      = int.parse(horaParts[0]);
+      final minutos   = int.parse(horaParts[1]);
+      final latitud   = (datos['latitud']  as num?)?.toDouble() ?? 0.0;
+      final longitud  = (datos['longitud'] as num?)?.toDouble() ?? 0.0;
+
+      carta = CalculosAstrales.calcular(
+        fechaNacimiento: fecha, hora: hora, minutos: minutos,
+        latitud: latitud, longitud: longitud,
+      );
+
+      await prefs.setString(clavePerf, jsonEncode({
+        'fechaNacimiento': fecha.toIso8601String(),
+        'hora': hora, 'minutos': minutos,
+        'latitud': latitud, 'longitud': longitud,
+        'fotoUrl':       datos['fotoUrl'] ?? '',
+        'ecosPlusActivo': datos['ecosPlusActivo'] == true,
+        'frasesQueue':   datos['frasesQueue'] ?? [],
+      }));
+    }
 
     HomeWidget.saveWidgetData<String>('widget_uid',    miUid);
     HomeWidget.saveWidgetData<String>('widget_nombre', widget.nombre);
@@ -167,50 +202,62 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
     HomeWidget.saveWidgetData<String>('widget_lunar',  carta.signoLunar);
     HomeWidget.saveWidgetData<String>('widget_asc',    carta.ascendente);
 
-    final hoy      = DateTime.now();
-    final fechaHoy = '${hoy.year}-${hoy.month.toString().padLeft(2, '0')}-${hoy.day.toString().padLeft(2, '0')}';
-
-    final lecturaDoc = await FirebaseFirestore.instance
-        .collection('usuarios').doc(miUid)
-        .collection('lecturas').doc(fechaHoy).get();
-
+    // ── Paso 2: lectura del día — caché local por día ────────────────────────
+    final claveLect = 'lectura_${miUid}_$fechaHoy';
     String fraseBase;
     String areaFrase;
     String lectura;
 
-    if (lecturaDoc.exists) {
-      final cached = lecturaDoc.data()!;
-      fraseBase = cached['fraseBase'] as String? ?? '';
-      areaFrase = cached['areaFrase'] as String? ?? 'identidad';
-      lectura   = cached['texto']     as String? ?? '';
+    final lecturaJson = prefs.getString(claveLect);
+    if (lecturaJson != null) {
+      final l = jsonDecode(lecturaJson) as Map<String, dynamic>;
+      fraseBase = l['fraseBase'] as String;
+      areaFrase = l['areaFrase'] as String;
+      lectura   = l['texto']    as String? ?? '';
     } else {
-      // Reusar datos ya descargados — sin segundo fetch
-      List<int> cola = List<int>.from(datos['frasesQueue'] ?? []);
-      if (cola.isEmpty) cola = BancoFrases.generarColaMezclada();
-      final idSeleccionado = cola.removeAt(0);
-      await FirebaseFirestore.instance.collection('usuarios').doc(miUid)
-          .update({'frasesQueue': cola});
-
-      final fraseSeleccionada = BancoFrases.porId(idSeleccionado);
-      fraseBase = fraseSeleccionada['frase'] as String;
-      areaFrase = fraseSeleccionada['area']  as String? ?? 'identidad';
-
-      lectura = await ClaudeService.generarAstrosDelDia(
-        nombre:     widget.nombre,
-        signoSolar: carta.signoSolar,
-        signoLunar: carta.signoLunar,
-        ascendente: carta.ascendente,
-        fraseBase:  fraseBase,
-        areaFrase:  areaFrase,
-        planetas:   carta.planetas,
-      );
-      await FirebaseFirestore.instance
+      final lecturaDoc = await FirebaseFirestore.instance
           .collection('usuarios').doc(miUid)
-          .collection('lecturas').doc(fechaHoy)
-          .set({'texto': lectura, 'fraseBase': fraseBase, 'areaFrase': areaFrase});
+          .collection('lecturas').doc(fechaHoy).get();
+
+      if (lecturaDoc.exists) {
+        final d = lecturaDoc.data()!;
+        fraseBase = d['fraseBase'] as String? ?? '';
+        areaFrase = d['areaFrase'] as String? ?? 'identidad';
+        lectura   = d['texto']     as String? ?? '';
+      } else {
+        List<int> cola = List<int>.from(datos['frasesQueue'] ?? []);
+        if (cola.isEmpty) cola = BancoFrases.generarColaMezclada();
+        final idSeleccionado = cola.removeAt(0);
+        await FirebaseFirestore.instance.collection('usuarios').doc(miUid)
+            .update({'frasesQueue': cola});
+
+        final fraseSeleccionada = BancoFrases.porId(idSeleccionado);
+        fraseBase = fraseSeleccionada['frase'] as String;
+        areaFrase = fraseSeleccionada['area']  as String? ?? 'identidad';
+
+        lectura = await ClaudeService.generarAstrosDelDia(
+          nombre:     widget.nombre,
+          signoSolar: carta.signoSolar,
+          signoLunar: carta.signoLunar,
+          ascendente: carta.ascendente,
+          fraseBase:  fraseBase,
+          areaFrase:  areaFrase,
+          planetas:   carta.planetas,
+        );
+        await FirebaseFirestore.instance
+            .collection('usuarios').doc(miUid)
+            .collection('lecturas').doc(fechaHoy)
+            .set({'texto': lectura, 'fraseBase': fraseBase, 'areaFrase': areaFrase});
+      }
+
+      await prefs.setString(claveLect, jsonEncode({
+        'fraseBase': fraseBase,
+        'areaFrase': areaFrase,
+        'texto': lectura,
+      }));
     }
 
-    // ── Paso 2: mostrar la lectura principal de inmediato ────────────────────
+    // ── Paso 3: mostrar la lectura principal de inmediato ────────────────────
     if (!mounted) return;
     setState(() {
       try {
@@ -225,16 +272,18 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
         HomeWidget.saveWidgetData('widget_frase', _frase);
         HomeWidget.updateWidget(androidName: 'AstrosWidget');
       }
-      _miUid           = miUid;
-      _ecosPlusActivo  = datos['ecosPlusActivo'] == true;
-      _miFotoUrl  = (datos['fotoUrl'] as String?) ?? FirebaseAuth.instance.currentUser?.photoURL;
+      _miUid          = miUid;
+      _ecosPlusActivo = datos['ecosPlusActivo'] == true;
+      _miFotoUrl      = (datos['fotoUrl'] as String?)?.isNotEmpty == true
+          ? datos['fotoUrl'] as String
+          : FirebaseAuth.instance.currentUser?.photoURL;
       _miSolar    = carta.signoSolar;
       _miLunar    = carta.signoLunar;
       _miAsc      = carta.ascendente;
       _miPlanetas = carta.planetas;
       _fraseBase  = fraseBase;
       _areaFrase  = areaFrase;
-      _cargando   = false; // ← desbloquea la UI aquí, amigos cargan aparte
+      _cargando   = false;
     });
     widget.onCargandoChanged?.call(false);
 
@@ -269,10 +318,10 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
         );
         final amigoNombre = ad['nombre'] as String? ?? 'alguien';
 
-        final compatDoc = await FirebaseFirestore.instance
+        final compatRef = FirebaseFirestore.instance
             .collection('usuarios').doc(miUid)
-            .collection('lecturas').doc(fechaHoy)
-            .collection('compatibilidades').doc(amigoUid).get();
+            .collection('compatibilidades').doc(amigoUid);
+        final compatDoc = await compatRef.get();
 
         String compatibilidad;
         if (compatDoc.exists) {
@@ -287,11 +336,7 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
             signoLunar2: amigoCarta.signoLunar,
             tipo:        Random().nextBool() ? 'solo' : 'interaccion',
           );
-          await FirebaseFirestore.instance
-              .collection('usuarios').doc(miUid)
-              .collection('lecturas').doc(fechaHoy)
-              .collection('compatibilidades').doc(amigoUid)
-              .set({'texto': compatibilidad});
+          await compatRef.set({'texto': compatibilidad});
         }
 
         return (
@@ -580,12 +625,12 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                       const SizedBox(height: 16),
                       Text(
                         _desarrollo!,
-                        style: const TextStyle(
+                        style: GoogleFonts.manrope(
                           color: Colors.black54,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          height: 1.8,
-                          letterSpacing: 0.2,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w300,
+                          height: 1.65,
+                          letterSpacing: -0.19,
                         ),
                       ),
                     ],
@@ -599,11 +644,19 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                     Expanded(
                       child: GestureDetector(
                         key: _keyMasAlla,
-                        onTap: () {
+                        onTap: () async {
                           if (!_ecosPlusActivo) {
-                            Navigator.push(context, MaterialPageRoute(
+                            await Navigator.push(context, MaterialPageRoute(
                               builder: (_) => const PantallaCompraEcosPlus()));
-                            return;
+                            if (!mounted) return;
+                            final uid = FirebaseAuth.instance.currentUser?.uid;
+                            if (uid != null) {
+                              final doc = await FirebaseFirestore.instance
+                                  .collection('usuarios').doc(uid).get();
+                              if (!mounted) return;
+                              if (doc.data()?['ecosPlusActivo'] != true) return;
+                              setState(() => _ecosPlusActivo = true);
+                            }
                           }
                           final box = _keyMasAlla.currentContext!
                               .findRenderObject() as RenderBox;
@@ -983,39 +1036,38 @@ class _TarjetaCompartirBeige extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 1080,
-      height: 1350,
       color: const Color(0xFFF3EBD6),
-      padding: const EdgeInsets.symmetric(horizontal: 96),
+      padding: const EdgeInsets.fromLTRB(96, 120, 96, 96),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const Spacer(flex: 2),
           Text(
             frase,
             style: const TextStyle(
               fontFamily: 'PlayfairDisplay',
-              color: Color(0xFF1A1A1A),
-              fontSize: 88,
+              color: Color(0xFF222222),
+              fontSize: 36,
               fontWeight: FontWeight.w400,
               height: 1.2,
               letterSpacing: 1.0,
             ),
           ),
-          const SizedBox(height: 48),
-          Container(width: 64, height: 2, color: const Color(0xFFB8973A)),
-          const Spacer(flex: 3),
+          const SizedBox(height: 56),
           const Divider(color: Color(0x22000000), thickness: 1),
-          const SizedBox(height: 40),
-          const Text(
-            'ecos',
-            style: TextStyle(
-              color: Color(0x44000000),
-              fontSize: 32,
-              letterSpacing: 12,
-              fontWeight: FontWeight.w300,
+          const SizedBox(height: 32),
+          const Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              'ecos',
+              style: TextStyle(
+                color: Color(0x44000000),
+                fontSize: 32,
+                letterSpacing: 12,
+                fontWeight: FontWeight.w300,
+              ),
             ),
           ),
-          const SizedBox(height: 96),
         ],
       ),
     );

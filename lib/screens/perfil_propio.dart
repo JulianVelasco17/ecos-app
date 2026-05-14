@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../widgets/loading_images.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -21,7 +22,8 @@ class PantallaPerfilPropio extends StatefulWidget {
   State<PantallaPerfilPropio> createState() => _PantallaPerfilPropioState();
 }
 
-class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
+class _PantallaPerfilPropioState extends State<PantallaPerfilPropio>
+    with SingleTickerProviderStateMixin {
   Map<String, dynamic>? _datos;
   CartaAstral? _carta;
   Map<String, double> _longitudes = {};
@@ -29,23 +31,27 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
   Map<String, String> _lectura = {};
   List<Map<String, dynamic>> _guardadas = [];
   bool _cargando = true;
-  final _pageCtrl  = PageController();
+  late AnimationController _slideCtrl;
   int  _paginaCarta = 0;
   String? _planetaSeleccionado;
+  double _dragStartX = 0;
 
   @override
   void initState() {
     super.initState();
     _cargar();
-    _pageCtrl.addListener(() {
-      final p = _pageCtrl.page?.round() ?? 0;
+    _slideCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 320),
+    )..addListener(() {
+      final p = (_slideCtrl.value + 0.5).floor().clamp(0, 1);
       if (p != _paginaCarta) setState(() => _paginaCarta = p);
     });
   }
 
   @override
   void dispose() {
-    _pageCtrl.dispose();
+    _slideCtrl.dispose();
     super.dispose();
   }
 
@@ -194,8 +200,7 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
       backgroundColor: const Color(0xFFF3EBD6),
       body: SafeArea(
         child: _cargando
-            ? const Center(
-                child: CircularProgressIndicator(color: Colors.black12))
+            ? const LoadingImages(pegadoDerecha: true)
             : SingleChildScrollView(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
@@ -308,33 +313,137 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
 
                     const SizedBox(height: 8),
 
-                    // PageView horizontal: rueda ↔ tabla
+                    // Rueda + chips (p0) ↔ tabla (p1) con slide animado
                     LayoutBuilder(builder: (context, constraints) {
-                      final ruedaSize = constraints.maxWidth;
-                      final alturaPageView = ruedaSize; // siempre cuadrado
-                      return SizedBox(
-                        height: alturaPageView,
-                        child: PageView(
-                          controller: _pageCtrl,
-                          children: [
-                            // Página 1: rueda
-                            RepaintBoundary(
+                      final w = constraints.maxWidth;
+                      const simPlanetas = {
+                        'Sol':        '☉︎',
+                        'Luna':       '☽︎',
+                        'Mercurio':   '☿︎',
+                        'Venus':      '♀︎',
+                        'Marte':      '♂︎',
+                        'Júpiter':    '♃︎',
+                        'Saturno':    '♄︎',
+                        'Urano':      '♅︎',
+                        'Neptuno':    '♆︎',
+                        'Plutón':     '♇︎',
+                        'Ascendente': '↑',
+                      };
+                      const signosLista = ['Aries','Tauro','Géminis','Cáncer','Leo','Virgo',
+                        'Libra','Escorpio','Sagitario','Capricornio','Acuario','Piscis'];
+                      final chipEntries = _longitudes.entries.toList();
+                      final chipW = (w - 16) / 3;
+                      final rows = <Widget>[];
+                      for (var i = 0; i < chipEntries.length; i += 3) {
+                        final rowItems = chipEntries.skip(i).take(3).toList();
+                        rows.add(Row(
+                          children: List.generate(3, (j) {
+                            if (j >= rowItems.length) {
+                              return SizedBox(width: chipW + (j < 2 ? 8 : 0));
+                            }
+                            final e = rowItems[j];
+                            final nombre       = e.key;
+                            final lon          = e.value;
+                            final grado        = (lon % 30).floor();
+                            final signo        = signosLista[((lon % 360) / 30).floor() % 12];
+                            final simPlan      = simPlanetas[nombre] ?? '·';
+                            final selec        = _planetaSeleccionado == nombre;
+                            return _ChipPlaneta(
+                              width: chipW,
+                              margin: EdgeInsets.only(right: j < 2 ? 8 : 0),
+                              simbolo: simPlan,
+                              nombre: nombre,
+                              grado: grado,
+                              signo: signo,
+                              seleccionado: selec,
+                              onTap: () => setState(() =>
+                                  _planetaSeleccionado = selec ? null : nombre),
+                            );
+                          }),
+                        ));
+                        if (i + 3 < chipEntries.length) rows.add(const SizedBox(height: 8));
+                      }
+                      final chipsWidget = Column(children: rows);
+
+                      // Altura estimada para cada página
+                      final totalPlanetas = 3 + (_carta?.planetas.length ?? 8);
+                      final tableH  = totalPlanetas * 43.0 + 96.0;
+                      final chipsH  = 272.0;
+                      final wheelH  = w + 12.0 + chipsH;
+
+                      return AnimatedBuilder(
+                        animation: _slideCtrl,
+                        builder: (context, _) {
+                          final p = _slideCtrl.value;
+                          final height = wheelH + (tableH - wheelH) * p;
+                          return GestureDetector(
+                            onHorizontalDragStart: (d) =>
+                                _dragStartX = d.localPosition.dx,
+                            onHorizontalDragUpdate: (d) {
+                              final delta =
+                                  (d.localPosition.dx - _dragStartX) / w;
+                              _slideCtrl.value =
+                                  (_slideCtrl.value - delta).clamp(0.0, 1.0);
+                              _dragStartX = d.localPosition.dx;
+                            },
+                            onHorizontalDragEnd: (d) {
+                              final vel = d.primaryVelocity ?? 0;
+                              if (vel < -200 ||
+                                  (_slideCtrl.value >= 0.4 && vel >= -200)) {
+                                _slideCtrl.animateTo(1.0,
+                                    curve: Curves.easeOut);
+                              } else {
+                                _slideCtrl.animateTo(0.0,
+                                    curve: Curves.easeOut);
+                              }
+                            },
+                            child: ClipRect(
                               child: SizedBox(
-                                width:  ruedaSize,
-                                height: ruedaSize,
-                                child: CustomPaint(
-                                  painter: RuedaZodiacalPainter(
-                                    planetasDesdeLongitudes(_longitudes, _ascLon),
-                                    seleccionado: _planetaSeleccionado,
-                                  ),
+                                height: height,
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    // Página 0: rueda + chips
+                                    Positioned(
+                                      left: -p * w,
+                                      top: 0,
+                                      width: w,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          RepaintBoundary(
+                                            child: SizedBox(
+                                              width: w,
+                                              height: w,
+                                              child: CustomPaint(
+                                                painter: RuedaZodiacalPainter(
+                                                  planetasDesdeLongitudes(
+                                                      _longitudes, _ascLon),
+                                                  seleccionado:
+                                                      _planetaSeleccionado,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          chipsWidget,
+                                        ],
+                                      ),
+                                    ),
+                                    // Página 1: tabla
+                                    Positioned(
+                                      left: (1 - p) * w,
+                                      top: 0,
+                                      width: w,
+                                      child: _TablaNatal(carta: _carta!),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
-
-                            // Página 2: tabla scrolleable
-                            SingleChildScrollView(child: _TablaNatal(carta: _carta!)),
-                          ],
-                        ),
+                          );
+                        },
                       );
                     }),
 
@@ -352,45 +461,6 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio> {
                           borderRadius: BorderRadius.circular(3),
                         ),
                       )),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Chips de planetas
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _longitudes.entries.map((e) {
-                        final nombre   = e.key;
-                        final lon      = e.value;
-                        final gradoEnSigno = lon % 30;
-                        final signoAbrev = _signoCorto(_gradosASigno(lon));
-                        final selec    = _planetaSeleccionado == nombre;
-                        return GestureDetector(
-                          onTap: () => setState(() =>
-                            _planetaSeleccionado = selec ? null : nombre),
-                          behavior: HitTestBehavior.opaque,
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: selec ? Colors.black : Colors.transparent,
-                              border: Border.all(
-                                color: selec ? Colors.black : Colors.black26,
-                              ),
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                            child: Text(
-                              '$nombre  $signoAbrev ${gradoEnSigno.floor()}°',
-                              style: TextStyle(
-                                color: selec ? const Color(0xFFF3EBD6) : Colors.black54,
-                                fontSize: 10,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
                     ),
 
                     const SizedBox(height: 32),
@@ -564,142 +634,231 @@ class _TablaNatal extends StatelessWidget {
     'Marte':      '♂',
     'Júpiter':    '♃',
     'Saturno':    '♄',
+    'Urano':      '♅',
+    'Neptuno':    '♆',
+    'Plutón':     '♇',
   };
 
-  static const _gold = Color(0xFFB8973A);
-  static const _bg   = Color(0xFF1C1C1C);
+  static const _acento = Color(0xFFB8973A);
 
   @override
   Widget build(BuildContext context) {
-    // Construir lista planeta → signo en orden fijo
     final entradas = <(String, String)>[
       ('Ascendente', carta.ascendente),
+      ...carta.planetas.entries
+          .where((e) => e.key != 'Sol' && e.key != 'Luna')
+          .map((e) => (e.key, e.value)),
       ('Sol',        carta.signoSolar),
       ('Luna',       carta.signoLunar),
-      ...carta.planetas.entries.map((e) => (e.key, e.value)),
     ];
 
-    // Agrupar por signo manteniendo orden de primera aparición
     final Map<String, List<String>> porSigno = {};
     for (final e in entradas) {
       porSigno.putIfAbsent(e.$2, () => []).add(e.$1);
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: _bg,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Cabecera
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Tu carta natal',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w300,
-                        letterSpacing: 0.3)),
-                Text('Posiciones planetarias',
-                    style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.35),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Tabla principal ──────────────────────────────────────────────
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Títulos de columnas
+              Row(
+                children: [
+                  SizedBox(
+                    width: 100,
+                    child: Text('SIGNS',
+                        style: TextStyle(
+                            color: _acento, fontSize: 9, letterSpacing: 2)),
+                  ),
+                  Text('PLANET / POINT',
+                      style: TextStyle(
+                          color: _acento, fontSize: 9, letterSpacing: 2)),
+                ],
+              ),
+
+              const SizedBox(height: 8),
+              const Divider(color: Colors.black12, height: 1),
+
+              // Filas agrupadas por signo
+              ...porSigno.entries.map((entry) {
+                final signo    = entry.key;
+                final planetas = entry.value;
+                return Column(
+                  children: planetas.asMap().entries.map((pe) {
+                    final idx     = pe.key;
+                    final planeta = pe.value;
+                    final simPlan = _simbolosPlaneta[planeta] ?? '●';
+                    final casa    = planeta == 'Ascendente' ? 1 : carta.casas[planeta];
+                    return Container(
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Colors.black12),
+                        ),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      child: Row(
+                        children: [
+                          // Signo — solo en primera fila del grupo
+                          SizedBox(
+                            width: 100,
+                            child: idx == 0
+                                ? Text(signo,
+                                    style: const TextStyle(
+                                        color: Colors.black87,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w300,
+                                        letterSpacing: 0.3))
+                                : const SizedBox.shrink(),
+                          ),
+                          // Planeta
+                          Expanded(
+                            child: Row(children: [
+                              Text('$simPlan ',
+                                  style: TextStyle(
+                                      color: Colors.black.withValues(alpha: 0.35),
+                                      fontSize: 13)),
+                              Text(planeta.toUpperCase(),
+                                  style: const TextStyle(
+                                      color: Colors.black54,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: 1.5)),
+                            ]),
+                          ),
+                          // Casa
+                          SizedBox(
+                            width: 28,
+                            child: casa != null
+                                ? Text('$casa',
+                                    textAlign: TextAlign.right,
+                                    style: TextStyle(
+                                        color: Colors.black.withValues(alpha: 0.35),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500))
+                                : const SizedBox.shrink(),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                );
+              }),
+
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+
+        // ── Label "HOUSES" vertical ──────────────────────────────────────
+        Container(
+          width: 22,
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: RotatedBox(
+            quarterTurns: 1,
+            child: Text('CASAS',
+                style: TextStyle(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    fontSize: 8,
+                    letterSpacing: 3)),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ChipPlaneta extends StatefulWidget {
+  final double width;
+  final EdgeInsets margin;
+  final String simbolo;
+  final String nombre;
+  final int grado;
+  final String signo;
+  final bool seleccionado;
+  final VoidCallback onTap;
+  const _ChipPlaneta({
+    required this.width,
+    required this.margin,
+    required this.simbolo,
+    required this.nombre,
+    required this.grado,
+    required this.signo,
+    required this.seleccionado,
+    required this.onTap,
+  });
+  @override
+  State<_ChipPlaneta> createState() => _ChipPlanetaState();
+}
+
+class _ChipPlanetaState extends State<_ChipPlaneta> {
+  bool _pressed = false;
+
+  void _handleTap() async {
+    setState(() => _pressed = true);
+    await Future.delayed(const Duration(milliseconds: 120));
+    if (mounted) setState(() => _pressed = false);
+    widget.onTap();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final selec = widget.seleccionado;
+    return GestureDetector(
+      onTap: _handleTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedScale(
+        scale: _pressed ? 0.92 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: widget.width,
+          margin: widget.margin,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          decoration: BoxDecoration(
+            color: selec ? Colors.black : const Color(0xFFFAF6EE),
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: selec ? [] : [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 6, offset: const Offset(0, 2)),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(widget.simbolo,
+                      style: TextStyle(fontSize: 13, color: selec ? const Color(0xFFF3EBD6) : Colors.black87)),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: Text(
+                      '${widget.nombre}  ${widget.grado}°',
+                      style: TextStyle(
                         fontSize: 11,
-                        letterSpacing: 0.5)),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Fila de títulos
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text('SIGNO',
-                      style: TextStyle(
-                          color: _gold, fontSize: 10, letterSpacing: 2)),
-                ),
-                Expanded(
-                  child: Text('PLANETA / PUNTO',
-                      style: TextStyle(
-                          color: _gold, fontSize: 10, letterSpacing: 2)),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 12),
-          Divider(color: Colors.white.withValues(alpha: 0.08), height: 1),
-
-          // Filas agrupadas
-          ...porSigno.entries.map((entry) {
-            final signo    = entry.key;
-            final planetas = entry.value;
-            final simboloSigno = simbolosSignos[signo] ?? '';
-            return Column(
-              children: planetas.asMap().entries.map((pe) {
-                final idx     = pe.key;
-                final planeta = pe.value;
-                final simPlan = _simbolosPlaneta[planeta] ?? '●';
-                return Container(
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.06)),
+                        fontWeight: FontWeight.w600,
+                        color: selec ? const Color(0xFFF3EBD6) : Colors.black87,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 20, vertical: 10),
-                  child: Row(
-                    children: [
-                      // Columna signo — solo en primera fila del grupo
-                      Expanded(
-                        child: idx == 0
-                            ? Row(children: [
-                                Text('$simboloSigno ',
-                                    style: const TextStyle(
-                                        color: Colors.white54,
-                                        fontSize: 16)),
-                                Text(signo,
-                                    style: const TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w300,
-                                        letterSpacing: 0.3)),
-                              ])
-                            : const SizedBox.shrink(),
-                      ),
-                      // Columna planeta
-                      Expanded(
-                        child: Row(children: [
-                          Text('$simPlan ',
-                              style: const TextStyle(
-                                  color: Colors.white38, fontSize: 15)),
-                          Text(planeta.toUpperCase(),
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w300,
-                                  letterSpacing: 1.5)),
-                        ]),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            );
-          }),
-
-          const SizedBox(height: 8),
-        ],
+                ],
+              ),
+              const SizedBox(height: 3),
+              Text(
+                'En ${widget.signo}',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: selec ? const Color(0xFFF3EBD6).withValues(alpha: 0.7) : Colors.black38,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

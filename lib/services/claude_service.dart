@@ -760,16 +760,27 @@ Eres la voz de una app de astrología. Esta persona tiene Sol en $signoSolar, Lu
 
 Hoy los planetas están así: $planetasHoy.
 
-Escribe una lectura que explique cómo el clima astral de hoy afecta personalmente a esta persona. Organízala en 3 secciones. No menciones nombres de signos ni planetas directamente — tradúcelo a experiencias concretas. Tono: íntimo, directo, útil. Sin "energía", "vibra", "universo". Sin markdown. No hagas preguntas.
+Escribe una lectura que explique cómo el clima astral de hoy afecta personalmente a esta persona. No menciones nombres de signos ni planetas directamente — tradúcelo a experiencias concretas. Tono: íntimo, directo, útil. Sin "energía", "vibra", "universo". Sin markdown. No hagas preguntas.
+
+Además, selecciona exactamente 4 aspectos de esta lista que sean más relevantes para esta persona hoy, según la interacción entre su carta natal y los planetas actuales. Asigna a cada uno un valor del 1 al 100 que represente la intensidad con la que esa persona siente ese aspecto hoy.
+
+Lista de aspectos: claridad mental, ruido mental, enfoque, dispersión, intuición, sensibilidad, paciencia, impulsividad, necesidad de espacio, apertura emocional, energía social, deseo de compañía, conexión emocional, cansancio emocional, motivación, estabilidad, inquietud, calma interna, tensión interna, confianza, vulnerabilidad, sobreanálisis, espontaneidad, descanso, productividad, creatividad, deseo de movimiento, presencia, nostalgia, deseo de control, flexibilidad, claridad emocional, deseo de aislamiento, receptividad, tolerancia emocional, necesidad de descanso, iniciativa, deseo de cercanía, energía física, conexión contigo mismo.
 
 Responde SOLO con este JSON:
 {
-  "activado": "1-2 oraciones sobre qué área de su vida está más activada hoy.",
-  "navegar": "1-2 oraciones sobre cómo aprovechar o navegar este clima específicamente.",
-  "cuidar": "1 oración sobre qué cuidar o evitar hoy."
+  "activado": "2-3 oraciones sobre qué área de su vida está más activada hoy.",
+  "navegar": "2-3 oraciones sobre cómo aprovechar o navegar este clima específicamente.",
+  "cuidar": "1-2 oraciones sobre qué cuidar o evitar hoy.",
+  "frase": "Una frase corta (máx 8 palabras) que capture la esencia del día. Directa, sin explicación.",
+  "aspectos": [
+    {"nombre": "nombre del aspecto", "valor": 0},
+    {"nombre": "nombre del aspecto", "valor": 0},
+    {"nombre": "nombre del aspecto", "valor": 0},
+    {"nombre": "nombre del aspecto", "valor": 0}
+  ]
 }
 ''';
-    return await _llamarClaude(prompt, maxTokens: 500);
+    return await _llamarClaude(prompt, maxTokens: 700);
   }
 
   // Descripciones internas de cada arquetipo para guiar a Claude
@@ -932,9 +943,9 @@ Responde SOLO con este JSON:
         ? '\n\nCarta natal del usuario: $cartaNatal. Menciona brevemente cómo uno de los tránsitos de hoy toca su carta personal (conjunción, tensión o apoyo al signo natal).'
         : '';
     final prompt = '''
-Eres la voz de una app de astrología. Escribe 3-4 oraciones en español describiendo el clima astral del día basándote en estas posiciones planetarias actuales: $resumenPlanetas.$partePersonal
+Eres la voz de una app de astrología. Escribe 2-3 oraciones cortas en español describiendo el clima astral del día basándote en estas posiciones planetarias actuales: $resumenPlanetas.$partePersonal
 
-Menciona 2-3 planetas con sus signos y grados actuales de forma natural, explicando qué tono o tensión le dan al día. Tono: técnico pero accesible, directo. Sin "vibra", "universo", "manifiesta". Sin guiones largos (—). Sin saludos.
+Menciona 2-3 planetas con sus signos (sin grados) explicando qué tono o tensión le dan al día. Tono: técnico pero accesible, directo. Sin "vibra", "universo", "manifiesta". Sin guiones largos (—). Sin saludos. Sin números de grado.
 ''';
     return await _llamarClaude(prompt, maxTokens: 400);
   }

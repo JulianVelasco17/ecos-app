@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'astros_hoy.dart';
 import 'amigos.dart';
 import 'perfil_propio.dart';
@@ -7,8 +8,9 @@ import 'clima_astral.dart';
 
 class PantallaHome extends StatefulWidget {
   final String nombre;
+  final int paginaInicial;
 
-  const PantallaHome({super.key, required this.nombre});
+  const PantallaHome({super.key, required this.nombre, this.paginaInicial = 2});
 
   @override
   State<PantallaHome> createState() => _PantallaHomeState();
@@ -16,10 +18,14 @@ class PantallaHome extends StatefulWidget {
 
 class _PantallaHomeState extends State<PantallaHome> {
   // 0 = amigos, 1 = venus, 2 = astros (centro), 3 = clima, 4 = tú
-  int _tabActual = 2;
-  // Pantallas construidas solo la primera vez que se visitan
+  late int _tabActual;
   final Map<int, Widget> _pantallasCache = {};
   final Set<int> _cargando = {};
+
+  // Barra lateral de scroll
+  double _scrollProgress = 0.0;
+  double _barOpacity = 0.0;
+  Timer? _hideTimer;
 
   void _setCargando(int index, bool value) {
     if (!mounted) return;
@@ -42,36 +48,64 @@ class _PantallaHomeState extends State<PantallaHome> {
   @override
   void initState() {
     super.initState();
-    _cargando.add(2);
-    _pantalla(2);
+    _tabActual = widget.paginaInicial;
+    _cargando.add(_tabActual);
+    _pantalla(_tabActual);
+  }
+
+  @override
+  void dispose() {
+    _hideTimer?.cancel();
+    super.dispose();
+  }
+
+  void _onScroll(ScrollNotification n) {
+    final max = n.metrics.maxScrollExtent;
+    if (max <= 0) return;
+    final progress = (n.metrics.pixels / max).clamp(0.0, 1.0);
+    _hideTimer?.cancel();
+    setState(() {
+      _scrollProgress = progress;
+      _barOpacity = 1.0;
+    });
+    _hideTimer = Timer(const Duration(milliseconds: 1200), () {
+      if (mounted) setState(() => _barOpacity = 0.0);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF3EBD6),
-      body: Stack(
-        children: [
-          ...List.generate(5, (i) => Offstage(
-            offstage: _tabActual != i,
-            child: _tabActual == i || _pantallasCache.containsKey(i)
-                ? _pantalla(i)
-                : const SizedBox.shrink(),
-          )),
-          if (_cargando.isNotEmpty)
-            const Positioned(
-              top: 0, left: 0, right: 0,
-              child: LinearProgressIndicator(
-                backgroundColor: Colors.transparent,
-                color: Colors.black12,
-                minHeight: 2,
+      body: NotificationListener<ScrollNotification>(
+        onNotification: (n) { _onScroll(n); return false; },
+        child: Stack(
+          children: [
+            ...List.generate(5, (i) => Offstage(
+              offstage: _tabActual != i,
+              child: _tabActual == i || _pantallasCache.containsKey(i)
+                  ? _pantalla(i)
+                  : const SizedBox.shrink(),
+            )),
+            if (_cargando.isNotEmpty)
+              const Positioned(
+                top: 0, left: 0, right: 0,
+                child: LinearProgressIndicator(
+                  backgroundColor: Colors.transparent,
+                  color: Colors.black12,
+                  minHeight: 2,
+                ),
               ),
-            ),
-        ],
+            _BarraLateral(progress: _scrollProgress, opacity: _barOpacity),
+          ],
+        ),
       ),
       bottomNavigationBar: _BarraNavegacion(
         tabActual: _tabActual,
-        onTap: (i) => setState(() => _tabActual = i),
+        onTap: (i) => setState(() {
+          _tabActual = i;
+          _scrollProgress = 0.0;
+        }),
       ),
     );
   }
@@ -296,6 +330,51 @@ class _BotonNav extends StatelessWidget {
             icono,
             size: 22,
             color: activo ? Colors.black : Colors.black26,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BarraLateral extends StatelessWidget {
+  final double progress;
+  final double opacity;
+  const _BarraLateral({required this.progress, required this.opacity});
+
+  @override
+  Widget build(BuildContext context) {
+    final screenH = MediaQuery.of(context).size.height;
+    const barH = 40.0;
+    const navH = 88.0;
+    final totalH = screenH - navH;
+    final top = progress * (totalH - barH);
+
+    return Positioned(
+      right: 0,
+      top: 0,
+      height: totalH,
+      child: AnimatedOpacity(
+        opacity: opacity,
+        duration: const Duration(milliseconds: 400),
+        child: SizedBox(
+          width: 3,
+          child: Stack(
+            children: [
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 120),
+                curve: Curves.easeOut,
+                top: top,
+                child: Container(
+                  width: 3,
+                  height: barH,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.22),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

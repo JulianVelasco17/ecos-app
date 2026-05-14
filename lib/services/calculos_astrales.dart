@@ -253,6 +253,9 @@ class CalculosAstrales {
       'Marte':    _lonPlaneta('Marte',    T),
       'Júpiter':  _lonPlaneta('Júpiter',  T),
       'Saturno':  _lonPlaneta('Saturno',  T),
+      'Urano':    _lonPlaneta('Urano',    T),
+      'Neptuno':  _lonPlaneta('Neptuno',  T),
+      'Plutón':   _lonPlaneta('Plutón',   T),
     };
     return lones.map((p, lon) {
       final casa = ((lon - ascLon + 360) % 360 / 30).floor() + 1;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../widgets/loading_images.dart';
 import '../services/calculos_astrales.dart';
 import 'afinidad.dart';
 import 'buscar_amigos.dart';
@@ -59,9 +60,7 @@ class PantallaAmigos extends StatelessWidget {
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: Colors.black12),
-                    );
+                    return const LoadingImages();
                   }
 
                   final docs = snapshot.data!.docs;

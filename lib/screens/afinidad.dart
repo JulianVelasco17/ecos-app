@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'pago_romantico.dart';
 import '../services/calculos_astrales.dart';
 import '../services/claude_service.dart';
@@ -226,13 +227,24 @@ class PantallaAfinidad extends StatelessWidget {
                       color: Colors.black38, fontSize: 10, letterSpacing: 3)),
               const SizedBox(height: 20),
               FutureBuilder<Map<String, String>>(
-                future: ClaudeService.generarComparacionPlanetas(
-                  nombre1:   miNombre,
-                  nombre2:   amigoNombre,
-                  solar1:    miSolar,    solar2:    amigoSolar,
-                  lunar1:    miLunar,    lunar2:    amigoLunar,
-                  planetas1: miPlanetas, planetas2: amigoPlanetas,
-                ),
+                future: () async {
+                  final ids = [miUid, amigoUid]..sort();
+                  final cacheKey = '${ids[0]}_${ids[1]}';
+                  final cacheRef = FirebaseFirestore.instance
+                      .collection('afinidades').doc(cacheKey);
+                  final cacheDoc = await cacheRef.get();
+                  if (cacheDoc.exists) {
+                    return Map<String, String>.from(cacheDoc.data()!);
+                  }
+                  final resultado = await ClaudeService.generarComparacionPlanetas(
+                    nombre1:   miNombre,   nombre2:   amigoNombre,
+                    solar1:    miSolar,    solar2:    amigoSolar,
+                    lunar1:    miLunar,    lunar2:    amigoLunar,
+                    planetas1: miPlanetas, planetas2: amigoPlanetas,
+                  );
+                  await cacheRef.set(resultado);
+                  return resultado;
+                }(),
                 builder: (context, snap) {
                   final comparaciones = snap.data ?? {};
                   final planetas = [

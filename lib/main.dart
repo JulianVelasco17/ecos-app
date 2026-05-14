@@ -6,11 +6,14 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'screens/registro.dart';
 import 'screens/home.dart';
 import 'screens/login.dart';
 import 'services/auth_service.dart';
 import 'services/notification_service.dart';
+import 'services/ouroboros_service.dart';
+import 'services/clima_astral_service.dart';
 import 'package:home_widget/home_widget.dart';
 import 'widget_background.dart';
 
@@ -28,6 +31,9 @@ void main() async {
     NotificationService.inicializar().then((_) => null),
   ]);
   shaderMarble = (results[0] as FragmentProgram).fragmentShader();
+  // Precargar video ouroboros de forma independiente
+  OuroborosService.instance.precargar();
+  ClimaAstralService.instance.precargar();
   runApp(const MyApp());
 }
 
@@ -79,6 +85,9 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
   void initState() {
     super.initState();
     _verificarSesion();
+    FirebaseMessaging.onMessageOpenedApp.listen((msg) {
+      _navegarSegunNotif(msg.data);
+    });
 
     // Entrada inicial: título y botón
     _controladorEntrada = AnimationController(
@@ -130,15 +139,41 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
     super.dispose();
   }
 
+  int? _paginaDesdeDatos(Map<String, dynamic> data) {
+    switch (data['tipo'] ?? '') {
+      case 'venus':
+      case 'solicitud_venus': return 1;
+      case 'lectura_diaria':  return 2;
+      default: return null;
+    }
+  }
+
+  void _navegarSegunNotif(Map<String, dynamic> data) {
+    if (!mounted) return;
+    final pagina = _paginaDesdeDatos(data);
+    if (pagina != null) {
+      Navigator.pushReplacement(context, MaterialPageRoute(
+        builder: (_) => PantallaHome(nombre: '', paginaInicial: pagina),
+      ));
+    }
+  }
+
   Future<void> _verificarSesion() async {
     final usuario = AuthService.usuarioActual;
     if (usuario == null || usuario.isAnonymous) return;
-    final doc = await FirebaseFirestore.instance.collection('usuarios').doc(usuario.uid).get();
+    final results = await Future.wait([
+      FirebaseFirestore.instance.collection('usuarios').doc(usuario.uid).get(),
+      FirebaseMessaging.instance.getInitialMessage(),
+    ]);
     if (!mounted) return;
+    final doc = results[0] as dynamic;
+    final msg = results[1] as RemoteMessage?;
     if (doc.exists) {
       NotificationService.guardarTokenFCM();
+      final nombre = doc.data()?['nombre'] ?? 'viajero';
+      final pagina = msg != null ? (_paginaDesdeDatos(msg.data) ?? 2) : 2;
       Navigator.pushReplacement(context, MaterialPageRoute(
-        builder: (_) => PantallaHome(nombre: doc.data()?['nombre'] ?? 'viajero'),
+        builder: (_) => PantallaHome(nombre: nombre, paginaInicial: pagina),
       ));
     }
   }
