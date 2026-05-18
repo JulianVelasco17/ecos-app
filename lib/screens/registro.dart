@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
 import '../services/calculos_astrales.dart';
 import 'constelacion_widget.dart';
@@ -129,7 +130,7 @@ class _PantallaRegistroState extends State<PantallaRegistro>
     });
   }
 
-  void _irAConstelacion() {
+  Future<void> _irAConstelacion() async {
     if (_fecha == null || _hora == null) return;
     final hora    = _hora!.hour;
     final minutos = _hora!.minute;
@@ -141,6 +142,25 @@ class _PantallaRegistroState extends State<PantallaRegistro>
       longitud: _lon ?? 0.0,
     );
     final nombre = _nombreCtrl.text.trim().isNotEmpty ? _nombreCtrl.text.trim() : 'viajero';
+
+    // Guardar perfil en Firestore con uid anónimo para que la carta astral funcione
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      await FirebaseFirestore.instance.collection('usuarios').doc(uid).set({
+        'nombre':           nombre,
+        'usuario':          _usuarioCtrl.text.toLowerCase().replaceAll(' ', ''),
+        'fechaNacimiento':  Timestamp.fromDate(_fecha!),
+        'horaNacimiento':   '${hora.toString().padLeft(2,'0')}:${minutos.toString().padLeft(2,'0')}',
+        'lugarNacimiento':  _lugarCtrl.text,
+        'latitud':          _lat ?? 0.0,
+        'longitud':         _lon ?? 0.0,
+        'signoSolar':       carta.signoSolar,
+        'signoLunar':       carta.signoLunar,
+        'ascendente':       carta.ascendente,
+        'planetas':         carta.planetas,
+      }, SetOptions(merge: true));
+    }
+    if (!mounted) return;
 
     Navigator.pushReplacement(
       context,

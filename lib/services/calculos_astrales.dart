@@ -183,8 +183,8 @@ class CalculosAstrales {
 
   // ── API pública ──────────────────────────────────────────────────────────────
 
-  static String calcularSignoSolar(DateTime fecha) =>
-      _gradosASigno(_lonSol(_jd(fecha) / 36525.0));
+  static String calcularSignoSolar(DateTime fecha, {int hora = 0, int minutos = 0}) =>
+      _gradosASigno(_lonSol(_jd(fecha, hora, minutos) / 36525.0));
 
   static String calcularSignoLunar(DateTime fecha, {int hora = 0, int minutos = 0}) =>
       _gradosASigno(_lonLuna(_jd(fecha, hora, minutos) / 36525.0));
@@ -209,7 +209,7 @@ class CalculosAstrales {
     final planetas = calcularPlanetas(fechaNacimiento, hora, minutos);
     final casas    = calcularCasas(fechaNacimiento, hora, minutos, latitud, longitud);
     return CartaAstral(
-      signoSolar: calcularSignoSolar(fechaNacimiento),
+      signoSolar: calcularSignoSolar(fechaNacimiento, hora: hora, minutos: minutos),
       signoLunar: calcularSignoLunar(fechaNacimiento, hora: hora, minutos: minutos),
       ascendente: calcularAscendente(fechaNacimiento, hora, minutos, latitud, longitud),
       planetas: planetas,
@@ -265,14 +265,24 @@ class CalculosAstrales {
 
   // ── Ascendente ───────────────────────────────────────────────────────────────
 
+  /// Snaps longitude to nearest whole-hour UTC offset (e.g. -99° → -7h)
+  static double _utcOffset(double longitud) => (longitud / 15.0).roundToDouble();
+
   static double _lonAscendente(
     DateTime fecha, int horaN, int minutosN,
     double latitud, double longitud,
   ) {
+    // GMST at UT midnight of birth date
     final jd0  = _jd(fecha);
-    final tsg  = _n(280.46061837 + 360.98564736629 * jd0);
-    final tsl  = _n(tsg + longitud);
-    final ramc = _n(tsl + (horaN + minutosN / 60.0) * 15.0);
+    final gmst = _n(280.46061837 + 360.98564736629 * jd0);
+
+    // Convert local birth time to UT using longitude-snapped offset
+    final utcOffset = _utcOffset(longitud);
+    final utHours   = horaN + minutosN / 60.0 - utcOffset;
+
+    // RAMC = GMST + UT_hours * sidereal_rate + east_longitude
+    const sidRate = 360.98564736629 / 24.0; // °/hour
+    final ramc = _n(gmst + utHours * sidRate + longitud);
 
     final latR  = _r(latitud);
     final oblR  = _r(23.4392911);
@@ -285,8 +295,6 @@ class CalculosAstrales {
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
-
-  static double _diasJulianos(DateTime fecha) => _jd(fecha);
 
   static String _gradosASigno(double grados) {
     const signos = [

@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'calculos_planetarios.dart';
+import 'calculos_astrales.dart';
 
 class AspectoNatal {
   final String planeta1;
@@ -76,21 +76,21 @@ class AspectosNatales {
   };
 
   static List<AspectoNatal> calcular(DateTime fecha, int hora, int min) {
-    final dt = DateTime(fecha.year, fecha.month, fecha.day, hora, min);
-    final planetas = CalculosPlanetarios.calcularPosiciones(dt);
+    final lons = CalculosAstrales.calcularLongitudes(fecha, hora, min);
+    final nombres = lons.keys.toList();
     final resultados = <AspectoNatal>[];
 
-    for (int i = 0; i < planetas.length; i++) {
-      for (int j = i + 1; j < planetas.length; j++) {
-        var diff = (planetas[i].longitud - planetas[j].longitud).abs();
+    for (int i = 0; i < nombres.length; i++) {
+      for (int j = i + 1; j < nombres.length; j++) {
+        var diff = (lons[nombres[i]]! - lons[nombres[j]]!).abs();
         if (diff > 180) diff = 360 - diff;
 
         for (final (angulo, nombre, orbeMax) in _tipos) {
           final orbe = (diff - angulo).abs();
           if (orbe <= orbeMax) {
             resultados.add(AspectoNatal(
-              planeta1: planetas[i].nombre,
-              planeta2: planetas[j].nombre,
+              planeta1: nombres[i],
+              planeta2: nombres[j],
               tipo: nombre,
               orbe: orbe,
             ));
@@ -109,27 +109,25 @@ class AspectosNatales {
     DateTime fecha1, int hora1, int min1,
     DateTime fecha2, int hora2, int min2,
   ) {
-    final p1 = CalculosPlanetarios.calcularPosiciones(
-        DateTime(fecha1.year, fecha1.month, fecha1.day, hora1, min1));
-    final p2 = CalculosPlanetarios.calcularPosiciones(
-        DateTime(fecha2.year, fecha2.month, fecha2.day, hora2, min2));
+    final lons1 = CalculosAstrales.calcularLongitudes(fecha1, hora1, min1);
+    final lons2 = CalculosAstrales.calcularLongitudes(fecha2, hora2, min2);
 
-    // Solo los primeros 5 (Sol, Luna, Mercurio, Venus, Marte)
-    final key1 = p1.take(5).toList();
-    final key2 = p2.take(5).toList();
+    // Solo los planetas personales: Sol, Luna, Mercurio, Venus, Marte
+    const personales = ['Sol', 'Luna', 'Mercurio', 'Venus', 'Marte'];
     final resultados = <AspectoNatal>[];
 
-    for (final a in key1) {
-      for (final b in key2) {
-        var diff = (a.longitud - b.longitud).abs();
+    for (final a in personales) {
+      for (final b in personales) {
+        if (!lons1.containsKey(a) || !lons2.containsKey(b)) continue;
+        var diff = (lons1[a]! - lons2[b]!).abs();
         if (diff > 180) diff = 360 - diff;
 
         for (final (angulo, nombre, orbeMax) in _tipos) {
           final orbe = (diff - angulo).abs();
           if (orbe <= orbeMax) {
             resultados.add(AspectoNatal(
-              planeta1: a.nombre,
-              planeta2: b.nombre,
+              planeta1: a,
+              planeta2: b,
               tipo: nombre,
               orbe: orbe,
             ));

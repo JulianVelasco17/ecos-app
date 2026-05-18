@@ -37,7 +37,9 @@
       "PowerShell(& \"C:\\\\Users\\\\julia\\\\Flutter\\\\bin\\\\flutter.bat\" analyze lib/screens/ 2>&1)",
       "Bash(find /mnt/c/Users/julia/Flutter -name \"flutter\" -maxdepth 3 2>/dev/null | head -5)",
       "Read(//mnt/c/Users/julia/**)",
-      "Bash(grep -v \"^$\")"
+      "Bash(grep -v \"^$\")",
+      "Bash(dart analyze *)",
+      "Bash(del \"c:\\\\Users\\\\julia\\\\mi_primera_app\\\\lib\\\\widget_background.dart\")"
     ]
   }
 }

@@ -14,9 +14,6 @@ import 'services/auth_service.dart';
 import 'services/notification_service.dart';
 import 'services/ouroboros_service.dart';
 import 'services/clima_astral_service.dart';
-import 'package:home_widget/home_widget.dart';
-import 'widget_background.dart';
-
 // Shader cargado una sola vez al arranque y compartido globalmente
 FragmentShader? shaderMarble;
 
@@ -24,7 +21,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  HomeWidget.registerInteractivityCallback(widgetBackground);
   // Cargar shader y notificaciones en paralelo para no bloquear el arranque
   final results = await Future.wait([
     FragmentProgram.fromAsset('shaders/marble.frag'),

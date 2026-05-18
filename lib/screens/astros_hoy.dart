@@ -11,11 +11,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/calculos_astrales.dart';
 import '../services/claude_service.dart';
 import '../services/banco_frases.dart';
+import '../services/banco_frases_amigos.dart';
 import 'buscar_amigos.dart';
 import 'notificaciones.dart';
 import 'color_del_dia.dart';
 import 'mas_alla.dart';
-import 'package:home_widget/home_widget.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'configuracion.dart';
@@ -60,6 +60,7 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
   String _areaFrase = 'identidad';
 
   int _debugColorOffset = 0;
+  int _debugCompatOffset = 0;
 
   // Debug
   bool _mostrarDebug = false;
@@ -93,14 +94,12 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
       await FirebaseFirestore.instance
           .collection('usuarios')
           .doc(miUid)
-          .collection('lecturas')
-          .doc(fechaHoy)
           .collection('compatibilidades')
           .doc(amigo['uid'] as String)
           .delete();
     }
 
-    setState(() { _amigos = []; _compatibilidades = {}; });
+    setState(() { _amigos = []; _compatibilidades = {}; _debugCompatOffset++; });
     await _cargarTodo();
   }
 
@@ -148,7 +147,7 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
     final miUid = FirebaseAuth.instance.currentUser?.uid;
     if (miUid == null) return;
 
-    final hoy      = DateTime.now();
+    final hoy      = DateTime.now().add(Duration(days: _debugCompatOffset));
     final fechaHoy = '${hoy.year}-${hoy.month.toString().padLeft(2, '0')}-${hoy.day.toString().padLeft(2, '0')}';
     final prefs    = await SharedPreferences.getInstance();
 
@@ -196,12 +195,6 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
       }));
     }
 
-    HomeWidget.saveWidgetData<String>('widget_uid',    miUid);
-    HomeWidget.saveWidgetData<String>('widget_nombre', widget.nombre);
-    HomeWidget.saveWidgetData<String>('widget_solar',  carta.signoSolar);
-    HomeWidget.saveWidgetData<String>('widget_lunar',  carta.signoLunar);
-    HomeWidget.saveWidgetData<String>('widget_asc',    carta.ascendente);
-
     // ── Paso 2: lectura del día — caché local por día ────────────────────────
     final claveLect = 'lectura_${miUid}_$fechaHoy';
     String fraseBase;
@@ -235,15 +228,28 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
         fraseBase = fraseSeleccionada['frase'] as String;
         areaFrase = fraseSeleccionada['area']  as String? ?? 'identidad';
 
-        lectura = await ClaudeService.generarAstrosDelDia(
-          nombre:     widget.nombre,
-          signoSolar: carta.signoSolar,
-          signoLunar: carta.signoLunar,
-          ascendente: carta.ascendente,
-          fraseBase:  fraseBase,
-          areaFrase:  areaFrase,
-          planetas:   carta.planetas,
-        );
+        // Caché compartido: misma combinación signo+frase → reutilizar texto generado
+        final cacheKey = '${carta.signoSolar}_${carta.signoLunar}_${carta.ascendente}_$idSeleccionado';
+        final cacheDoc = await FirebaseFirestore.instance
+            .collection('frasesDiarias').doc(cacheKey).get();
+
+        if (cacheDoc.exists) {
+          lectura = cacheDoc.data()!['texto'] as String? ?? '';
+        } else {
+          lectura = await ClaudeService.generarAstrosDelDia(
+            nombre:     widget.nombre,
+            signoSolar: carta.signoSolar,
+            signoLunar: carta.signoLunar,
+            ascendente: carta.ascendente,
+            fraseBase:  fraseBase,
+            areaFrase:  areaFrase,
+            planetas:   carta.planetas,
+          );
+          await FirebaseFirestore.instance
+              .collection('frasesDiarias').doc(cacheKey)
+              .set({'texto': lectura});
+        }
+
         await FirebaseFirestore.instance
             .collection('usuarios').doc(miUid)
             .collection('lecturas').doc(fechaHoy)
@@ -268,10 +274,7 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
       } catch (_) {
         _frase = fraseBase;
       }
-      if (_frase != null) {
-        HomeWidget.saveWidgetData('widget_frase', _frase);
-        HomeWidget.updateWidget(androidName: 'AstrosWidget');
-      }
+
       _miUid          = miUid;
       _ecosPlusActivo = datos['ecosPlusActivo'] == true;
       _miFotoUrl      = (datos['fotoUrl'] as String?)?.isNotEmpty == true
@@ -324,26 +327,51 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
         final compatDoc = await compatRef.get();
 
         String compatibilidad;
-        if (compatDoc.exists) {
+        final fechaGuardada = compatDoc.data()?['fecha'] as String?;
+        if (compatDoc.exists && fechaGuardada == fechaHoy) {
           compatibilidad = compatDoc.data()!['texto'] as String;
         } else {
-          compatibilidad = await ClaudeService.generarCompatibilidad(
-            nombre1:     widget.nombre,
-            signoSolar1: carta.signoSolar,
-            signoLunar1: carta.signoLunar,
-            nombre2:     amigoNombre,
-            signoSolar2: amigoCarta.signoSolar,
-            signoLunar2: amigoCarta.signoLunar,
-            tipo:        Random().nextBool() ? 'solo' : 'interaccion',
-          );
-          await compatRef.set({'texto': compatibilidad});
+          // Titular del banco (sin Claude)
+          final frasePlaceholder = BancoFrasesAmigos.seleccionar(miUid, amigoUid, hoy);
+          final tono = ClaudeService.tonoAmigosDelDia(hoy);
+          final tonoIdx = (hoy.year * 10000 + hoy.month * 100 + hoy.day) % 7;
+
+          // Desarrollo: cache compartido por signos + frase + tono
+          final cacheKey = '${carta.signoSolar}_${carta.signoLunar}_${amigoCarta.signoSolar}_${amigoCarta.signoLunar}_${frasePlaceholder.hashCode}_t${tonoIdx}_v2';
+          final cacheDoc = await FirebaseFirestore.instance
+              .collection('compatibilidadesCache').doc(cacheKey).get();
+
+          String desarrolloConPlaceholders;
+          if (cacheDoc.exists) {
+            desarrolloConPlaceholders = cacheDoc.data()!['texto'] as String;
+          } else {
+            desarrolloConPlaceholders = await ClaudeService.generarDesarrolloAmigos(
+              frase: frasePlaceholder,
+              signoSolar1: carta.signoSolar,
+              signoLunar1: carta.signoLunar,
+              signoSolar2: amigoCarta.signoSolar,
+              signoLunar2: amigoCarta.signoLunar,
+              tono: tono,
+            );
+            await FirebaseFirestore.instance
+                .collection('compatibilidadesCache').doc(cacheKey)
+                .set({'texto': desarrolloConPlaceholders});
+          }
+
+          final miNombre = widget.nombre.split(' ').first;
+          final suNombre = amigoNombre.split(' ').first;
+          final titulo = frasePlaceholder.replaceAll('[USUARIO]', miNombre).replaceAll('[AMIGO]', suNombre);
+          final texto  = desarrolloConPlaceholders.replaceAll('[USUARIO]', miNombre).replaceAll('[AMIGO]', suNombre);
+          compatibilidad = jsonEncode({'titulo': titulo, 'texto': texto});
+
+          await compatRef.set({'texto': compatibilidad, 'fecha': fechaHoy});
         }
 
         return (
           amigo: <String, dynamic>{
             'uid':      amigoUid,
             'nombre':   amigoNombre,
-            'username': ad['username'] ?? '',
+            'username': ad['usuario'] ?? '',
             'fotoUrl':  ad['fotoUrl'],
             'solar':    amigoCarta.signoSolar,
             'lunar':    amigoCarta.signoLunar,
@@ -371,12 +399,17 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
       children: [
         Row(
           children: [
-            const Text(
-              'COLOR DEL DÍA',
-              style: TextStyle(
-                color: Color(0xFFB8973A),
-                fontSize: 10,
-                letterSpacing: 2,
+            RichText(
+              text: const TextSpan(
+                style: TextStyle(
+                  color: Color(0xFFB8973A),
+                  fontSize: 10,
+                  letterSpacing: 2,
+                ),
+                children: [
+                  TextSpan(text: 'TU ', style: TextStyle(fontStyle: FontStyle.italic)),
+                  TextSpan(text: 'COLOR DEL DÍA'),
+                ],
               ),
             ),
             if (_mostrarDebug) ...[
@@ -658,6 +691,7 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                               setState(() => _ecosPlusActivo = true);
                             }
                           }
+                          if (!mounted) return;
                           final box = _keyMasAlla.currentContext!
                               .findRenderObject() as RenderBox;
                           final origen = box.localToGlobal(
@@ -768,7 +802,16 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                   final solar    = amigo['solar']    as String;
                   final lunar    = amigo['lunar']    as String;
                   final asc      = amigo['asc']      as String;
-                  final caption  = _compatibilidades[uid] ?? '';
+                  final rawCaption = _compatibilidades[uid] ?? '';
+                  String captionTitulo = '';
+                  String captionTexto  = rawCaption;
+                  try {
+                    final limpio = rawCaption.replaceAll(RegExp(r'```json|```'), '').trim();
+                    final parsed = jsonDecode(limpio) as Map<String, dynamic>;
+                    captionTitulo = parsed['titulo'] as String? ?? '';
+                    captionTexto  = parsed['texto']  as String? ?? rawCaption;
+                  } catch (_) {}
+                  final caption = captionTexto;
                   final simbolo  = simbolosSignos[solar] ?? '';
 
                   return Column(
@@ -868,12 +911,22 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                                 ),
                               ],
                             ),
-                            if (caption.isNotEmpty) ...[
+                            if (captionTitulo.isNotEmpty || caption.isNotEmpty) ...[
                               const SizedBox(height: 14),
-                              Text(caption,
-                                  style: const TextStyle(
-                                      color: Colors.black54, fontSize: 13,
-                                      height: 1.7, letterSpacing: 0.2)),
+                              if (captionTitulo.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 10),
+                                  child: Text(captionTitulo,
+                                      style: const TextStyle(
+                                          fontFamily: 'PlayfairDisplay',
+                                          color: Colors.black87, fontSize: 18,
+                                          fontWeight: FontWeight.w400, height: 1.4)),
+                                ),
+                              if (caption.isNotEmpty)
+                                Text(caption,
+                                    style: GoogleFonts.manrope(
+                                        color: Colors.black54, fontSize: 13,
+                                        height: 1.7, letterSpacing: 0.2)),
                             ],
                           ],
                         ),

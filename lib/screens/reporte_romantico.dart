@@ -573,12 +573,16 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
               ),
             ),
             const SizedBox.expand(child: ColoredBox(color: Color(0x80000000))),
-            // Beige fade sincronizado con el slide-up
+            // Beige→negro: entra con el slide, oscurece con el flip
             AnimatedBuilder(
               animation: _slideCtrl,
               builder: (_, child) => SizedBox.expand(
                 child: ColoredBox(
-                  color: const Color(0xFFF3EBD6).withValues(alpha: _slideCtrl.value),
+                  color: Color.lerp(
+                    const Color(0xFFF3EBD6).withValues(alpha: _slideCtrl.value),
+                    Colors.black,
+                    _flipProgress,
+                  )!,
                 ),
               ),
             ),
@@ -648,7 +652,7 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
           // FASE 2: Reporte
           // ═══════════════════════════════════════════════════════════════════
           if (_fase == _Fase.reporte) ...[
-            const SizedBox.expand(child: ColoredBox(color: Color(0xFFF3EBD6))),
+            const SizedBox.expand(child: ColoredBox(color: Colors.black)),
             FadeTransition(
               opacity: _reporteFadeAnim,
               child: SlideTransition(
@@ -677,7 +681,7 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
                             const SizedBox(width: 14),
                             Text('Tú y $primerNombre',
                                 style: const TextStyle(
-                                  color: Colors.black87, fontSize: 18,
+                                  color: Color(0xCCF3EBD6), fontSize: 18,
                                   fontWeight: FontWeight.w300, letterSpacing: 1,
                                 )),
                           ],
@@ -685,12 +689,12 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
                         const SizedBox(height: 28),
                         Text('ARQUETIPO',
                             style: TextStyle(
-                                color: Colors.black.withValues(alpha: 0.35),
+                                color: const Color(0xFFF3EBD6).withValues(alpha: 0.35),
                                 fontSize: 10, letterSpacing: 3)),
                         const SizedBox(height: 8),
                         Text(_arquetipoActivo,
                             style: const TextStyle(
-                              color: Colors.black87, fontSize: 32,
+                              color: Color(0xFFF3EBD6), fontSize: 32,
                               fontWeight: FontWeight.w200, letterSpacing: 1, height: 1.2,
                             )),
                         const SizedBox(height: 28),
@@ -720,12 +724,12 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Divider(color: Colors.black.withValues(alpha: 0.08)),
+                        Divider(color: const Color(0xFFF3EBD6).withValues(alpha: 0.08)),
                         const SizedBox(height: 40),
                         if (_reporte['intro']?.isNotEmpty == true)
                           Text(_reporte['intro']!,
                               style: const TextStyle(
-                                color: Colors.black87, fontSize: 16,
+                                color: Color(0xCCF3EBD6), fontSize: 16,
                                 fontWeight: FontWeight.w300, height: 1.8, letterSpacing: 0.2,
                               )),
                         const SizedBox(height: 48),
@@ -820,14 +824,14 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(titulo,
-              style: TextStyle(
-                  color: Colors.black.withValues(alpha: 0.35),
+              style: const TextStyle(
+                  color: Color(0x66F3EBD6),
                   fontSize: 10,
                   letterSpacing: 3)),
           const SizedBox(height: 14),
           Text(texto,
-              style: TextStyle(
-                  color: Colors.black.withValues(alpha: 0.75),
+              style: const TextStyle(
+                  color: Color(0xCCF3EBD6),
                   fontSize: 14,
                   fontWeight: FontWeight.w300,
                   height: 1.85,
@@ -860,13 +864,13 @@ class _EscenariosVida extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('SU FUTURO JUNTOS',
-            style: TextStyle(
-                color: Colors.black.withValues(alpha: 0.35),
+            style: const TextStyle(
+                color: Color(0x66F3EBD6),
                 fontSize: 10, letterSpacing: 3)),
         const SizedBox(height: 20),
         ...List.generate(_filas.length * 2 - 1, (i) {
           if (i.isOdd) {
-            return Divider(height: 1, color: Colors.black.withValues(alpha: 0.06));
+            return const Divider(height: 1, color: Color(0x15F3EBD6));
           }
           final (label, key) = _filas[i ~/ 2];
           final texto = escenarios[key] ?? '';
@@ -878,8 +882,8 @@ class _EscenariosVida extends StatelessWidget {
                 SizedBox(
                   width: 100,
                   child: Text(label,
-                      style: TextStyle(
-                          color: Colors.black.withValues(alpha: 0.35),
+                      style: const TextStyle(
+                          color: Color(0x66F3EBD6),
                           fontSize: 9, letterSpacing: 1.5,
                           fontWeight: FontWeight.w500)),
                 ),
@@ -888,13 +892,13 @@ class _EscenariosVida extends StatelessWidget {
                       ? Container(
                           height: 12,
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.07),
+                            color: const Color(0xFFF3EBD6).withValues(alpha: 0.07),
                             borderRadius: BorderRadius.circular(2),
                           ),
                         )
                       : Text(texto,
-                          style: TextStyle(
-                              color: Colors.black.withValues(alpha: 0.72),
+                          style: const TextStyle(
+                              color: Color(0xCCF3EBD6),
                               fontSize: 13,
                               fontWeight: FontWeight.w300,
                               height: 1.6,
@@ -978,9 +982,9 @@ class _CompatibilidadVisual extends StatelessWidget {
           )),
         ),
         const SizedBox(height: 36),
-        Text('AFINIDAD TOTAL',
+        const Text('AFINIDAD TOTAL',
             style: TextStyle(
-                color: Colors.black.withValues(alpha: 0.35),
+                color: Color(0x66F3EBD6),
                 fontSize: 10, letterSpacing: 3)),
         const SizedBox(height: 12),
         Row(
@@ -998,10 +1002,10 @@ class _CompatibilidadVisual extends StatelessWidget {
                       child: Stack(
                         children: [
                           Container(height: 3,
-                              color: Colors.black.withValues(alpha: 0.08)),
+                              color: const Color(0xFFF3EBD6).withValues(alpha: 0.12)),
                           FractionallySizedBox(
                             widthFactor: v,
-                            child: Container(height: 3, color: Colors.black87),
+                            child: Container(height: 3, color: const Color(0xFFF3EBD6)),
                           ),
                         ],
                       ),
@@ -1018,7 +1022,7 @@ class _CompatibilidadVisual extends StatelessWidget {
               builder: (ctx, v, ch) => Text(
                 '${(v * 100).round()}%',
                 style: const TextStyle(
-                  color: Colors.black87,
+                  color: Color(0xCCF3EBD6),
                   fontSize: 13,
                   fontWeight: FontWeight.w300,
                   letterSpacing: 1,
@@ -1055,7 +1059,7 @@ class _Anillo extends StatelessWidget {
                 child: Text(
                   '${(v * 100).round()}%',
                   style: const TextStyle(
-                    color: Colors.black87,
+                    color: Color(0xCCF3EBD6),
                     fontSize: 12,
                     fontWeight: FontWeight.w300,
                     letterSpacing: 0,
@@ -1066,8 +1070,8 @@ class _Anillo extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(label,
-              style: TextStyle(
-                color: Colors.black.withValues(alpha: 0.35),
+              style: const TextStyle(
+                color: Color(0x66F3EBD6),
                 fontSize: 8,
                 letterSpacing: 1.5,
               )),
@@ -1091,7 +1095,7 @@ class _AnilloPainter extends CustomPainter {
     // Fondo
     canvas.drawCircle(center, radius,
         Paint()
-          ..color = Colors.black.withValues(alpha: 0.07)
+          ..color = const Color(0xFFF3EBD6).withValues(alpha: 0.12)
           ..style = PaintingStyle.stroke
           ..strokeWidth = stroke);
 
@@ -1103,7 +1107,7 @@ class _AnilloPainter extends CustomPainter {
         2 * math.pi * value,
         false,
         Paint()
-          ..color = Colors.black87
+          ..color = const Color(0xCCF3EBD6)
           ..style = PaintingStyle.stroke
           ..strokeWidth = stroke
           ..strokeCap = StrokeCap.round,

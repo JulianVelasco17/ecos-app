@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/calculos_astrales.dart';
 import '../services/aspectos_natales.dart';
 import '../services/claude_service.dart';
+import '../widgets/ouroboros_loader.dart';
 
 class PantallaLecturaCartaProfunda extends StatefulWidget {
   const PantallaLecturaCartaProfunda({super.key});
@@ -21,13 +22,13 @@ class _PantallaLecturaCartaProfundaState extends State<PantallaLecturaCartaProfu
   static const _gold  = Color(0xFFB8973A);
 
   static const _secciones = [
-    ('ESENCIA',     'esencia',    '◉'),
-    ('PROPÓSITO',   'proposito',  '↑'),
-    ('AMOR',        'amor',       '♡'),
-    ('SOMBRA',      'sombra',     '◐'),
-    ('DONES',       'dones',      '✦'),
-    ('CARRERA',     'carrera',    '△'),
-    ('CRECIMIENTO', 'crecimiento','○'),
+    ('TU BIG 3',          'big3',     '◉'),
+    ('ASPECTOS NATALES',  'aspectos', '✦'),
+    ('AMOR',              'amor',     '♡'),
+    ('AMISTAD',           'amistad',  '○'),
+    ('SUERTE',            'suerte',   '△'),
+    ('FAMILIA',           'familia',  '◐'),
+    ('DINERO',            'dinero',   '↑'),
   ];
 
   @override
@@ -37,67 +38,72 @@ class _PantallaLecturaCartaProfundaState extends State<PantallaLecturaCartaProfu
   }
 
   Future<void> _cargar() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    final cacheDoc = await FirebaseFirestore.instance
-        .collection('lecturasProfundas').doc('${uid}_carta_profunda').get();
-
-    if (cacheDoc.exists) {
-      final raw = cacheDoc.data()!;
-      if (mounted) {
-        setState(() {
-          _lectura = {for (final s in _secciones) s.$2: raw[s.$2] as String? ?? ''};
-          _cargando = false;
-        });
-      }
-      return;
-    }
-
-    final userDoc = await FirebaseFirestore.instance.collection('usuarios').doc(uid).get();
-    if (!userDoc.exists || !mounted) return;
-    final datos = userDoc.data()!;
-
-    final fechaTs = datos['fechaNacimiento'] as dynamic;
-    final fecha   = fechaTs.toDate() as DateTime;
-    final horaParts = ((datos['horaNacimiento'] as String?) ?? '12:00').split(':');
-    final hora = int.tryParse(horaParts[0]) ?? 12;
-    final min  = int.tryParse(horaParts.length > 1 ? horaParts[1] : '0') ?? 0;
-    final lat  = (datos['latitud']  as num?)?.toDouble() ?? 0.0;
-    final lon  = (datos['longitud'] as num?)?.toDouble() ?? 0.0;
-
-    final carta = CalculosAstrales.calcular(
-        fechaNacimiento: fecha, hora: hora, minutos: min, latitud: lat, longitud: lon);
-    final aspectos = AspectosNatales.calcular(fecha, hora, min);
-    final etiquetas = aspectos.map((a) =>
-        '${a.planeta1} ${a.tipo} ${a.planeta2} (orbe ${a.orbe.toStringAsFixed(1)}°)').toList();
-
-    final rawStr = await ClaudeService.generarLecturaCartaProfunda(
-      nombre:     datos['nombre'] as String? ?? '',
-      signoSolar: carta.signoSolar,
-      signoLunar: carta.signoLunar,
-      ascendente: carta.ascendente,
-      aspectos:   etiquetas,
-      planetas:   carta.planetas,
-    );
-
-    Map<String, String> lectura = {};
     try {
-      final start = rawStr.indexOf('{');
-      final end   = rawStr.lastIndexOf('}');
-      final json  = jsonDecode(rawStr.substring(start, end + 1)) as Map<String, dynamic>;
-      lectura = {for (final s in _secciones) s.$2: json[s.$2] as String? ?? ''};
-    } catch (_) {
-      lectura = {'esencia': rawStr};
-    }
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) { if (mounted) setState(() => _cargando = false); return; }
 
-    if (lectura.isNotEmpty) {
-      await FirebaseFirestore.instance
-          .collection('lecturasProfundas').doc('${uid}_carta_profunda')
-          .set({...lectura, 'fecha': FieldValue.serverTimestamp()});
-    }
+      final cacheDoc = await FirebaseFirestore.instance
+          .collection('lecturasProfundas').doc('${uid}_carta_v2').get();
 
-    if (mounted) setState(() { _lectura = lectura; _cargando = false; });
+      if (cacheDoc.exists) {
+        final raw = cacheDoc.data()!;
+        if (mounted) {
+          setState(() {
+            _lectura = {for (final s in _secciones) s.$2: raw[s.$2] as String? ?? ''};
+            _cargando = false;
+          });
+        }
+        return;
+      }
+
+      final userDoc = await FirebaseFirestore.instance.collection('usuarios').doc(uid).get();
+      if (!mounted) return;
+      if (!userDoc.exists) { setState(() => _cargando = false); return; }
+      final datos = userDoc.data()!;
+
+      final fechaTs = datos['fechaNacimiento'] as dynamic;
+      final fecha   = fechaTs.toDate() as DateTime;
+      final horaParts = ((datos['horaNacimiento'] as String?) ?? '12:00').split(':');
+      final hora = int.tryParse(horaParts[0]) ?? 12;
+      final min  = int.tryParse(horaParts.length > 1 ? horaParts[1] : '0') ?? 0;
+      final lat  = (datos['latitud']  as num?)?.toDouble() ?? 0.0;
+      final lon  = (datos['longitud'] as num?)?.toDouble() ?? 0.0;
+
+      final carta = CalculosAstrales.calcular(
+          fechaNacimiento: fecha, hora: hora, minutos: min, latitud: lat, longitud: lon);
+      final aspectos = AspectosNatales.calcular(fecha, hora, min);
+      final etiquetas = aspectos.map((a) =>
+          '${a.planeta1} ${a.tipo} ${a.planeta2} (orbe ${a.orbe.toStringAsFixed(1)}°)').toList();
+
+      final rawStr = await ClaudeService.generarLecturaCartaProfunda(
+        nombre:     datos['nombre'] as String? ?? '',
+        signoSolar: carta.signoSolar,
+        signoLunar: carta.signoLunar,
+        ascendente: carta.ascendente,
+        aspectos:   etiquetas,
+        planetas:   carta.planetas,
+      );
+
+      Map<String, String> lectura = {};
+      try {
+        final start = rawStr.indexOf('{');
+        final end   = rawStr.lastIndexOf('}');
+        final json  = jsonDecode(rawStr.substring(start, end + 1)) as Map<String, dynamic>;
+        lectura = {for (final s in _secciones) s.$2: json[s.$2] as String? ?? ''};
+      } catch (_) {
+        lectura = {'esencia': rawStr};
+      }
+
+      if (lectura.isNotEmpty) {
+        await FirebaseFirestore.instance
+            .collection('lecturasProfundas').doc('${uid}_carta_v2')
+            .set({...lectura, 'fecha': FieldValue.serverTimestamp()});
+      }
+
+      if (mounted) setState(() { _lectura = lectura; _cargando = false; });
+    } catch (e) {
+      if (mounted) setState(() => _cargando = false);
+    }
   }
 
   @override
@@ -106,8 +112,7 @@ class _PantallaLecturaCartaProfundaState extends State<PantallaLecturaCartaProfu
       backgroundColor: Colors.black,
       body: SafeArea(
         child: _cargando
-            ? const Center(child: CircularProgressIndicator(
-                color: Color(0x44F3EBD6), strokeWidth: 1.5))
+            ? const Center(child: OuroborosLoader(size: 200))
             : SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(28, 32, 28, 60),
                 child: Column(

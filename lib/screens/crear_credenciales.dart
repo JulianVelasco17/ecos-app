@@ -66,19 +66,11 @@ class _PantallaCrearCredencialesState extends State<PantallaCrearCredenciales> {
     );
     if (confirmar != true || !context.mounted) return;
 
-    // Guardamos los datos sin credenciales
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       await FirebaseFirestore.instance.collection('usuarios').doc(user.uid).set({
-        'nombre': widget.nombre,
-        'usuario': widget.usuario,
-        'fechaNacimiento': Timestamp.fromDate(widget.fechaNacimiento),
-        'horaNacimiento': '${widget.horaNacimiento.hour}:${widget.horaNacimiento.minute.toString().padLeft(2, '0')}',
-        'lugarNacimiento': widget.lugarNacimiento,
-        'latitud': widget.latitud,
-        'longitud': widget.longitud,
         'creadoEn': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
     }
 
     if (!context.mounted) return;
@@ -125,18 +117,10 @@ class _PantallaCrearCredencialesState extends State<PantallaCrearCredenciales> {
         uid = result.user!.uid;
       }
 
-      // Guardamos datos del perfil en Firestore
       await FirebaseFirestore.instance.collection('usuarios').doc(uid).set({
-        'nombre': widget.nombre,
-        'usuario': widget.usuario,
-        'fechaNacimiento': Timestamp.fromDate(widget.fechaNacimiento),
-        'horaNacimiento': '${widget.horaNacimiento.hour}:${widget.horaNacimiento.minute.toString().padLeft(2, '0')}',
-        'lugarNacimiento': widget.lugarNacimiento,
-        'latitud': widget.latitud,
-        'longitud': widget.longitud,
         'email': email,
         'creadoEn': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
 
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(

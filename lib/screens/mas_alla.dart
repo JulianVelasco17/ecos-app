@@ -295,7 +295,7 @@ class _PantallaMasAllaState extends State<PantallaMasAlla> {
                                     : const SizedBox.shrink(),
                               ),
                               Opacity(
-                                opacity: 0.55,
+                                opacity: 0.75,
                                 child: Image.network(
                                   _imagenDelDia(),
                                   width: 150,
@@ -317,7 +317,7 @@ class _PantallaMasAllaState extends State<PantallaMasAlla> {
                           if (widget.desarrollo != null)
                             _ParrafoConLinea(
                               texto: widget.desarrollo!,
-                              color: _beige.withValues(alpha: 0.65),
+                              color: _beige.withValues(alpha: 0.85),
                             ),
 
                           // Expansión — todos excepto el último con línea normal
@@ -328,7 +328,7 @@ class _PantallaMasAllaState extends State<PantallaMasAlla> {
                                 padding: const EdgeInsets.only(top: 4),
                                 child: _ParrafoConLinea(
                                   texto: p,
-                                  color: _beige.withValues(alpha: 0.45),
+                                  color: _beige.withValues(alpha: 0.72),
                                 ),
                               ),
                             ),
@@ -339,16 +339,16 @@ class _PantallaMasAllaState extends State<PantallaMasAlla> {
                               width: double.infinity,
                               padding: const EdgeInsets.fromLTRB(16, 20, 20, 16),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF111111),
+                                color: const Color(0xFF181612),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: _beige.withValues(alpha: 0.07)),
+                                border: Border.all(color: _beige.withValues(alpha: 0.12)),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   _ParrafoConLinea(
                                     texto: parrafos.last,
-                                    color: _beige.withValues(alpha: 0.45),
+                                    color: _beige.withValues(alpha: 0.72),
                                   ),
                                   const SizedBox(height: 12),
                                   GestureDetector(
@@ -541,12 +541,12 @@ class _ParrafoConLinea extends StatelessWidget {
         children: [
           Column(
             children: [
-              Text('✦', style: TextStyle(color: _gold.withValues(alpha: 0.5), fontSize: 18)),
+              Text('✦', style: TextStyle(color: _gold.withValues(alpha: 0.7), fontSize: 18)),
               const SizedBox(height: 6),
               Expanded(
                 child: Container(
                   width: 1,
-                  color: _gold.withValues(alpha: 0.15),
+                  color: _gold.withValues(alpha: 0.25),
                 ),
               ),
             ],
@@ -597,7 +597,7 @@ class _TextoDestacadoState extends State<_TextoDestacado> {
         text: i < palabras.length - 1 ? '${palabras[i]} ' : palabras[i],
         style: GoogleFonts.manrope(
           color: widget.color,
-          fontSize: 16,
+          fontSize: 17,
           fontWeight: negrita ? FontWeight.w700 : FontWeight.w300,
           height: 1.65,
           letterSpacing: -0.19,

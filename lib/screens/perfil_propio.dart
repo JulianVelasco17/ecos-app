@@ -11,8 +11,8 @@ import '../services/calculos_astrales.dart';
 import '../services/aspectos_natales.dart';
 import '../services/claude_service.dart';
 import '../widgets/rueda_zodiacal.dart';
-import 'lectura_carta_profunda.dart';
-import 'compra_carta_astral.dart';
+import 'carta_presentacion.dart';
+import 'lectura_carta_astral.dart';
 
 class PantallaPerfilPropio extends StatefulWidget {
   final void Function(bool)? onCargandoChanged;
@@ -471,8 +471,8 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio>
                           context,
                           MaterialPageRoute(
                             builder: (_) => cartaActiva
-                                ? const PantallaLecturaCartaProfunda()
-                                : const PantallaCompraCarta(),
+                                ? const PantallaLecturaCartaAstral()
+                                : const PantallaCartaPresentacion(),
                           ),
                         );
                       },

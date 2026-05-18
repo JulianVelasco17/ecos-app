@@ -1,6 +1,10 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:video_player/video_player.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/claude_service.dart';
 import 'compra_carta_astral.dart';
 
@@ -490,6 +494,8 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
   late Animation<double> _fade;
   late Animation<double> _arrowAnim;
   final _pageCtrl = PageController();
+  bool _zoomingOut = false;
+  VideoPlayerController? _videoReveal;
 
   String? _descSol;
   String? _descLuna;
@@ -569,21 +575,55 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
         CurvedAnimation(parent: _arrowCtrl, curve: Curves.easeInOut));
 
     _generarLectura();
+    _precargarImagenes();
+    _precargarVideo();
+  }
+
+  void _precargarVideo() {
+    const url = 'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Fonboard.mp4?alt=media&token=4dc6d672-2bb1-43b5-933b-47fda187ac9c';
+    _videoReveal = VideoPlayerController.networkUrl(Uri.parse(url))
+      ..setLooping(true)
+      ..setVolume(0)
+      ..initialize();
+  }
+
+  void _precargarImagenes() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      for (final signo in [_signoSolarActivo, _signoLunarActivo, _ascendenteActivo]) {
+        final url = _imagenesDescripcion[signo];
+        if (url != null) precacheImage(NetworkImage(url), context);
+        final urlSigno = _imagenesSigno[signo];
+        if (urlSigno != null) precacheImage(NetworkImage(urlSigno), context);
+      }
+    });
+  }
+
+  Future<String?> _descPosicionCacheada(String planeta, String signo, int? casa) async {
+    final key = '${planeta}_${signo}_c${casa ?? 0}';
+    final doc = await FirebaseFirestore.instance.collection('descSignos').doc(key).get();
+    if (doc.exists) return doc.data()!['texto'] as String?;
+    final texto = await ClaudeService.generarDescripcionPosicion(
+      planeta: planeta,
+      signo: signo,
+      casa: casa,
+    );
+    await FirebaseFirestore.instance.collection('descSignos').doc(key).set({'texto': texto});
+    return texto;
   }
 
   Future<void> _generarLectura() async {
     try {
-      final resultado = await ClaudeService.generarDescripcionesSignos(
-        signoSolar: widget.signoSolar,
-        signoLunar: widget.signoLunar,
-        ascendente: widget.ascendente,
-        casas: widget.casas,
-      );
+      final results = await Future.wait([
+        _descPosicionCacheada('Sol',        widget.signoSolar,  widget.casas['Sol']),
+        _descPosicionCacheada('Luna',       widget.signoLunar,  widget.casas['Luna']),
+        _descPosicionCacheada('Ascendente', widget.ascendente,  widget.casas['Ascendente']),
+      ]);
+
       if (mounted) {
         setState(() {
-          _descSol  = resultado['sol']!.trim().isNotEmpty        ? resultado['sol']        : null;
-          _descLuna = resultado['luna']!.trim().isNotEmpty       ? resultado['luna']       : null;
-          _descAsc  = resultado['ascendente']!.trim().isNotEmpty ? resultado['ascendente'] : null;
+          _descSol  = results[0]?.trim().isNotEmpty == true ? results[0] : null;
+          _descLuna = results[1]?.trim().isNotEmpty == true ? results[1] : null;
+          _descAsc  = results[2]?.trim().isNotEmpty == true ? results[2] : null;
         });
       }
     } catch (_) {}
@@ -602,6 +642,7 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
     _fadeCtrl.dispose();
     _arrowCtrl.dispose();
     _pageCtrl.dispose();
+    _videoReveal?.dispose();
     super.dispose();
   }
 
@@ -612,41 +653,75 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
     // página 4 = descubre relaciones
     // página 5 = descubre resto de astros
     return Scaffold(
-      backgroundColor: _beige,
-      body: FadeTransition(
-        opacity: _fade,
-        child: PageView.builder(
+      backgroundColor: Colors.black,
+      body: AnimatedScale(
+        scale: _zoomingOut ? 0.85 : 1.0,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeIn,
+        child: AnimatedOpacity(
+          opacity: _zoomingOut ? 0.0 : 1.0,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeIn,
+          child: FadeTransition(
+            opacity: _fade,
+            child: PageView.builder(
           controller: _pageCtrl,
           scrollDirection: Axis.vertical,
           itemCount: 6,
           itemBuilder: (_, i) {
             if (i == 0) return _paginaSignos();
-            if (i == 1) return _paginaDescripcionSigno(
+            if (i == 1) { return _paginaDescripcionSigno(
               titulo: 'TU SIGNO SOLAR',
               signo: _signoSolarActivo,
               descripcion: _descSol,
               esUltimo: false,
-            );
-            if (i == 2) return _paginaDescripcionSigno(
+            ); }
+            if (i == 2) { return _paginaDescripcionSigno(
               titulo: 'TU SIGNO LUNAR',
               signo: _signoLunarActivo,
               descripcion: _descLuna,
               esUltimo: false,
-            );
-            if (i == 3) return _paginaDescripcionSigno(
+            ); }
+            if (i == 3) { return _paginaDescripcionSigno(
               titulo: 'TU ASCENDENTE',
               signo: _ascendenteActivo,
               descripcion: _descAsc,
               esUltimo: true,
-            );
+            ); }
             if (i == 4) return _paginaDescubreRelaciones();
             return _paginaDescubreAstros();
           },
         ),
       ),
+        ),
+      ),
     );
   }
 
+
+  Future<void> _iniciarTransicion() async {
+    setState(() => _zoomingOut = true);
+    await Future.delayed(const Duration(milliseconds: 650));
+    if (!mounted) return;
+    // Armar lista de datos planetarios
+    final datos = <String>[
+      'su Sol en ${widget.signoSolar}',
+      'su Luna en ${widget.signoLunar}',
+      'su Ascendente en ${widget.ascendente}',
+      ...widget.planetas.entries.map((e) => 'su ${e.key} en ${e.value}'),
+    ];
+    await Navigator.of(context).push(PageRouteBuilder(
+      pageBuilder: (_, __, ___) => _PantallaVideoReveal(
+        nombre:       widget.nombre,
+        datos:        datos,
+        videoPreload: _videoReveal,
+      ),
+      transitionsBuilder: (_, anim, _, child) =>
+          FadeTransition(opacity: anim, child: child),
+      transitionDuration: const Duration(milliseconds: 800),
+    ));
+    if (mounted) setState(() => _zoomingOut = false);
+  }
 
   int _paginaSigno = 0;
   double _dragAcumulado = 0;
@@ -746,21 +821,53 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
     final frase       = _slidesSignos[_paginaSigno].$3;
     final urlImagen   = _imagenesSigno[signoActivo];
 
-    return GestureDetector(
-      onHorizontalDragUpdate: (d) => _dragAcumulado += d.delta.dx,
-      onHorizontalDragEnd: (_) {
-        if (_dragAcumulado < -40 && _paginaSigno < 2) {
-          setState(() { _paginaSigno++; _dragAcumulado = 0; });
+    return NotificationListener<ScrollNotification>(
+      onNotification: (_) => _paginaSigno < 2, // bloquea scroll exterior hasta llegar al ascendente
+      child: GestureDetector(
+      onVerticalDragUpdate: (d) => _dragAcumulado += d.delta.dy,
+      onVerticalDragEnd: (_) {
+        if (_dragAcumulado < -40) {
+          if (_paginaSigno < 2) {
+            setState(() { _paginaSigno++; });
+          } else {
+            // En ascendente → avanzar al PageView exterior
+            _pageCtrl.nextPage(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOut,
+            );
+          }
         } else if (_dragAcumulado > 40 && _paginaSigno > 0) {
-          setState(() { _paginaSigno--; _dragAcumulado = 0; });
-        } else {
-          _dragAcumulado = 0;
+          setState(() { _paginaSigno--; });
         }
+        _dragAcumulado = 0;
       },
       child: Stack(
         children: [
           const Positioned.fill(child: ColoredBox(color: Colors.black)),
           const Positioned.fill(child: CieloEstrellado()),
+
+          // ── Indicadores verticales (derecha) ─────────────────────────────
+          Positioned(
+            right: 20,
+            top: 0, bottom: 0,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(3, (i) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  width:  6,
+                  height: _paginaSigno == i ? 16 : 6,
+                  decoration: BoxDecoration(
+                    color: _paginaSigno == i
+                        ? const Color(0xFFF3EBD6)
+                        : const Color(0x44F3EBD6),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                )),
+              ),
+            ),
+          ),
 
           // ── Botón debug (esquina superior derecha) ───────────────────────
           Positioned(
@@ -785,23 +892,7 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
             final diametro = sw * 1.15;
             return Column(
               children: [
-                // ── Indicadores arriba ─────────────────────────────────────
                 const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(3, (i) => AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width:  _paginaSigno == i ? 16 : 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: _paginaSigno == i
-                          ? const Color(0xFFF3EBD6)
-                          : const Color(0x44F3EBD6),
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  )),
-                ),
                 const Spacer(),
 
                 // ── Etiqueta + nombre (fade al cambiar) ───────────────────
@@ -930,11 +1021,11 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
                 AnimatedBuilder(
                   animation: _arrowAnim,
                   builder: (ctx, _) => Transform.translate(
-                    offset: Offset(0, -_arrowAnim.value),
-                    child: Column(children: [
-                      const Icon(Icons.keyboard_arrow_up,
-                          color: Color(0x44F3EBD6), size: 22),
-                    ]),
+                    offset: Offset(0, _paginaSigno < 2 ? _arrowAnim.value : -_arrowAnim.value),
+                    child: Icon(
+                      _paginaSigno < 2 ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_up,
+                      color: const Color(0x44F3EBD6), size: 22,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 40),
@@ -944,7 +1035,7 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
           ),  // SafeArea
         ],
       ),   // Stack
-    );
+    ));   // NotificationListener
   }
 
   static const _imagenesSigno = <String, String>{
@@ -1065,15 +1156,19 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
                                   letterSpacing: 4,
                                 )),
                             const SizedBox(height: 6),
-                            Text(signo.toUpperCase(),
-                                style: const TextStyle(
-                                  color: Color(0xFFF3EBD6),
-                                  fontSize: 40,
-                                  letterSpacing: 1.2,
-                                  fontWeight: FontWeight.w400,
-                                  fontFamily: 'PlayfairDisplay',
-                                  height: 1,
-                                )),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(signo.toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Color(0xFFF3EBD6),
+                                    fontSize: 40,
+                                    letterSpacing: 1.2,
+                                    fontWeight: FontWeight.w400,
+                                    fontFamily: 'PlayfairDisplay',
+                                    height: 1,
+                                  )),
+                            ),
                           ],
                         ),
                       ),
@@ -1100,6 +1195,15 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
                                   height: 200,
                                   fit: BoxFit.contain,
                                   errorBuilder: (ctx, err, _) => const SizedBox(width: 200, height: 200),
+                                  frameBuilder: (ctx, child, frame, sync) {
+                                    if (sync) return child;
+                                    return AnimatedOpacity(
+                                      opacity: frame == null ? 0.0 : 1.0,
+                                      duration: const Duration(milliseconds: 800),
+                                      curve: Curves.easeIn,
+                                      child: child,
+                                    );
+                                  },
                                 ),
                               ),
                             ),
@@ -1184,7 +1288,8 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Spacer(),
-                const Text('PROFUNDIZA EN TU CARTA',
+                const Spacer(),
+                const Text('LO QUE TU CARTA REVELA',
                     style: TextStyle(
                       color: Color(0xFFD4AF6A),
                       fontSize: 13,
@@ -1192,7 +1297,7 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
                     )),
                 const SizedBox(height: 24),
                 Text(
-                  'Descubre cómo esto afecta tus relaciones, de dónde vienes y hacia dónde vas, qué necesitas y tu misión.',
+                  'Todo en ti está conectado. Descubre cómo tu carta une lo que sientes, buscas y repites.',
                   style: GoogleFonts.manrope(
                     color: const Color(0xFFF3EBD6),
                     fontSize: 24,
@@ -1202,56 +1307,26 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
                   ),
                 ),
                 const Spacer(),
-                Row(
+                Column(
                   children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => _pageCtrl.nextPage(
-                            duration: const Duration(milliseconds: 500),
-                            curve: Curves.easeInOut),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: const Color(0x44F3EBD6)),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                          child: const Center(
-                            child: Text('OMITIR',
-                                style: TextStyle(
-                                  color: Color(0x88F3EBD6),
-                                  fontSize: 11,
-                                  letterSpacing: 3,
-                                )),
-                          ),
-                        ),
-                      ),
+                    _BotonAnimado(
+                      onTap: _iniciarTransicion,
+                      filled: true,
+                      label: 'PROFUNDIZAR',
+                      tallPadding: true,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (_) => const PantallaCompraCarta()),
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          decoration: BoxDecoration(
-                            color: _beige,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                          child: const Center(
-                            child: Text('PROFUNDIZAR',
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 11,
-                                  letterSpacing: 3,
-                                )),
-                          ),
-                        ),
-                      ),
+                    const SizedBox(height: 10),
+                    _BotonAnimado(
+                      onTap: () => _pageCtrl.nextPage(
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeInOut),
+                      filled: false,
+                      label: 'OMITIR',
+                      tallPadding: false,
                     ),
                   ],
                 ),
+                const SizedBox(height: 32),
               ],
             ),
           ),
@@ -1378,13 +1453,15 @@ class _CieloEstrelladoState extends State<CieloEstrellado>
   void initState() {
     super.initState();
     _ctrl = AnimationController(vsync: this, duration: const Duration(seconds: 6))
-      ..repeat(reverse: true);
+      ..repeat();
     final rnd = Random(42);
+    // velocidad es entero (1, 2 o 3) para que sin(2π*v*t) sea siempre continuo en el loop
     _estrellas = List.generate(widget.cantidad, (i) => _Estrella(
-      x:     rnd.nextDouble(),
-      y:     rnd.nextDouble(),
-      radio: rnd.nextDouble() * 0.9 + 0.3,
-      fase:  (i / widget.cantidad) * 2 * pi + rnd.nextDouble() * 0.4,
+      x:          rnd.nextDouble(),
+      y:          rnd.nextDouble(),
+      radio:      rnd.nextDouble() * 1.1 + 0.4,
+      fase:       rnd.nextDouble() * 2 * pi,
+      velocidad:  (rnd.nextInt(3) + 1).toDouble(),
     ));
   }
 
@@ -1415,9 +1492,9 @@ class _CieloEstrelladoState extends State<CieloEstrellado>
 }
 
 class _Estrella {
-  final double x, y, radio, fase;
+  final double x, y, radio, fase, velocidad;
   const _Estrella({required this.x, required this.y, required this.radio,
-      required this.fase});
+      required this.fase, this.velocidad = 1.0});
 }
 
 class _CieloPainter extends CustomPainter {
@@ -1429,8 +1506,8 @@ class _CieloPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (final e in estrellas) {
-      final cycle = sin(t * pi + e.fase);
-      final alpha = (cycle * 0.5 + 0.5) * 0.75 + 0.15;
+      final cycle = sin(t * 2 * pi * e.velocidad + e.fase);
+      final alpha = (cycle * 0.5 + 0.5) * 0.55 + 0.25;
       // Paralaje: las estrellas se mueven un 5% del desplazamiento de cámara
       final px = (e.x * size.width  + paralaje.dx * 0.05) % size.width;
       final py = (e.y * size.height + paralaje.dy * 0.05) % size.height;
@@ -1447,3 +1524,262 @@ class _CieloPainter extends CustomPainter {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+
+class _BotonAnimado extends StatefulWidget {
+  final VoidCallback onTap;
+  final bool filled;
+  final String label;
+  final bool tallPadding;
+  const _BotonAnimado({required this.onTap, required this.filled, required this.label, this.tallPadding = false});
+  @override
+  State<_BotonAnimado> createState() => _BotonAnimadoState();
+}
+
+class _BotonAnimadoState extends State<_BotonAnimado> {
+  bool _pressed = false;
+
+  void _handleTap() async {
+    setState(() => _pressed = true);
+    await Future.delayed(const Duration(milliseconds: 120));
+    if (mounted) setState(() => _pressed = false);
+    widget.onTap();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _handleTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedScale(
+        scale: _pressed ? 0.96 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(vertical: widget.tallPadding ? 24 : 14),
+          decoration: BoxDecoration(
+            color: widget.filled ? const Color(0xFFF3EBD6) : Colors.transparent,
+            border: widget.filled ? null : Border.all(color: const Color(0x44F3EBD6)),
+            borderRadius: BorderRadius.circular(2),
+          ),
+          child: Center(
+            child: Text(
+              widget.label,
+              style: TextStyle(
+                color: widget.filled ? Colors.black : const Color(0x88F3EBD6),
+                fontSize: widget.filled ? 14 : 11,
+                letterSpacing: 3,
+                fontWeight: widget.filled ? FontWeight.w500 : FontWeight.w300,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Pantalla de video reveal ──────────────────────────────────────────────────
+
+class _PantallaVideoReveal extends StatefulWidget {
+  final String nombre;
+  final List<String> datos;
+  final VideoPlayerController? videoPreload;
+
+  const _PantallaVideoReveal({
+    required this.nombre,
+    required this.datos,
+    this.videoPreload,
+  });
+  @override
+  State<_PantallaVideoReveal> createState() => _PantallaVideoRevealState();
+}
+
+class _PantallaVideoRevealState extends State<_PantallaVideoReveal> {
+  late VideoPlayerController _video;
+  double _videoOpacity = 0.0;
+  bool _mostrarBoton = false;
+  double _opacidadBoton = 0.0;
+  int _datoIndex = 0;
+  double _datoOpacity = 1.0;
+  Timer? _timer;
+  Timer? _datoTimer;
+
+  static const _url = 'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Fonboard.mp4?alt=media&token=4dc6d672-2bb1-43b5-933b-47fda187ac9c';
+
+  void _iniciarCicloDatos() {
+    _datoTimer = Timer.periodic(const Duration(seconds: 1), (_) async {
+      if (!mounted) return;
+      // fade out
+      setState(() => _datoOpacity = 0.0);
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (!mounted) return;
+      setState(() {
+        _datoIndex = (_datoIndex + 1) % widget.datos.length;
+        _datoOpacity = 1.0;
+      });
+    });
+  }
+
+  void _armarTimer() {
+    _timer = Timer(const Duration(seconds: 6), () async {
+      if (!mounted) return;
+      _datoTimer?.cancel();
+      // fade out cycling text block
+      setState(() => _datoOpacity = 0.0);
+      await Future.delayed(const Duration(milliseconds: 450));
+      if (!mounted) return;
+      // show "Tu lectura está lista" + button, both at opacity 0
+      setState(() { _mostrarBoton = true; _opacidadBoton = 0.0; });
+      await Future.delayed(const Duration(milliseconds: 50));
+      if (!mounted) return;
+      // fade them in together
+      setState(() => _opacidadBoton = 1.0);
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        HapticFeedback.mediumImpact();
+      });
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.videoPreload != null && widget.videoPreload!.value.isInitialized) {
+      // Ya precargado — úsalo directo
+      _video = widget.videoPreload!;
+      _video.play();
+      _videoOpacity = 1.0;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) { setState(() {}); _iniciarCicloDatos(); _armarTimer(); }
+      });
+    } else {
+      // Sin precarga — inicializar ahora
+      _video = (widget.videoPreload ?? VideoPlayerController.networkUrl(Uri.parse(_url)))
+        ..setLooping(true)
+        ..setVolume(0);
+      _video.initialize().then((_) {
+        if (!mounted) return;
+        _video.play();
+        setState(() => _videoOpacity = 1.0);
+        _iniciarCicloDatos();
+        _armarTimer();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _datoTimer?.cancel();
+    if (widget.videoPreload == null) _video.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Video
+          AnimatedOpacity(
+            opacity: _videoOpacity,
+            duration: const Duration(seconds: 1),
+            child: _video.value.isInitialized
+                ? FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _video.value.size.width,
+                      height: _video.value.size.height,
+                      child: VideoPlayer(_video),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+          // Overlay oscuro 50%
+          Container(color: Colors.black.withValues(alpha: 0.5)),
+          // Texto central
+          Positioned.fill(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: _mostrarBoton
+                    ? AnimatedOpacity(
+                        opacity: _opacidadBoton,
+                        duration: const Duration(milliseconds: 2500),
+                        curve: Curves.easeIn,
+                        child: Text(
+                          'Tu lectura está lista',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.manrope(
+                            color: const Color(0xFFF3EBD6),
+                            fontSize: 24,
+                            fontWeight: FontWeight.w300,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      )
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            '${widget.nombre.split(' ').first} tiene',
+                            style: GoogleFonts.manrope(
+                              color: const Color(0xFFF3EBD6),
+                              fontSize: 20,
+                              fontWeight: FontWeight.w300,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          AnimatedOpacity(
+                            opacity: _datoOpacity,
+                            duration: const Duration(milliseconds: 300),
+                            child: Builder(builder: (_) {
+                              final dato = widget.datos.isNotEmpty ? widget.datos[_datoIndex] : '';
+                              final match = RegExp(r'^(su )(.*?)( en )(.*?)$').firstMatch(dato);
+                              final base = GoogleFonts.manrope(fontSize: 26, fontWeight: FontWeight.w300);
+                              if (match == null) {
+                                return Text(dato, style: base.copyWith(color: const Color(0xFFD4AF6A)));
+                              }
+                              return RichText(
+                                textAlign: TextAlign.center,
+                                text: TextSpan(style: base, children: [
+                                  TextSpan(text: match.group(1), style: const TextStyle(color: Color(0xFFF3EBD6))),
+                                  TextSpan(text: match.group(2), style: const TextStyle(color: Color(0xFFD4AF6A))),
+                                  TextSpan(text: match.group(3), style: const TextStyle(color: Color(0xFFF3EBD6))),
+                                  TextSpan(text: match.group(4), style: const TextStyle(color: Color(0xFFD4AF6A))),
+                                ]),
+                              );
+                            }),
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+          ),
+          // Botón revelar
+          if (_mostrarBoton)
+            Positioned(
+              left: 32, right: 32, bottom: 64,
+              child: AnimatedOpacity(
+                opacity: _opacidadBoton,
+                duration: const Duration(milliseconds: 2500),
+                curve: Curves.easeIn,
+                child: _BotonAnimado(
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => PantallaCompraCarta(
+                      videoExterno: _video,
+                    )),
+                  ),
+                  filled: true,
+                  label: 'REVELAR LECTURA',
+                  tallPadding: true,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}

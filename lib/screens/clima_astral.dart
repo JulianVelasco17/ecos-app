@@ -26,6 +26,9 @@ class _PantallaClimaAstralState extends State<PantallaClimaAstral> {
   bool _cargando = true;
   String? _seleccionado;
   bool _ecosPlusActivo = false;
+  bool _pressedNavegar = false;
+  bool _pressedSol = false;
+  bool _pressedLuna = false;
 
   @override
   void initState() {
@@ -168,19 +171,31 @@ class _PantallaClimaAstralState extends State<PantallaClimaAstral> {
 
                     if (_ecosPlusActivo) ...[
                       const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.push(context, MaterialPageRoute(
-                              builder: (_) => const PantallaLecturaClimaPersonal())),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
-                            foregroundColor: const Color(0xFFF3EBD6),
+                      AnimatedScale(
+                        scale: _pressedNavegar ? 0.96 : 1.0,
+                        duration: const Duration(milliseconds: 120),
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTapDown: (_) => setState(() => _pressedNavegar = true),
+                          onTapUp: (_) async {
+                            setState(() => _pressedNavegar = false);
+                            final nav = Navigator.of(context);
+                            await Future.delayed(const Duration(milliseconds: 80));
+                            if (!mounted) return;
+                            nav.push(MaterialPageRoute(builder: (_) => const PantallaLecturaClimaPersonal()));
+                          },
+                          onTapCancel: () => setState(() => _pressedNavegar = false),
+                          child: Container(
+                            width: double.infinity,
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                            elevation: 0,
+                            decoration: BoxDecoration(
+                              color: Colors.black,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                            alignment: Alignment.center,
+                            child: const Text('NAVEGAR EL CLIMA ASTRAL',
+                              style: TextStyle(letterSpacing: 2, fontSize: 12, color: Color(0xFFF3EBD6))),
                           ),
-                          child: const Text('NAVEGAR EL CLIMA ASTRAL', style: TextStyle(letterSpacing: 2, fontSize: 12)),
                         ),
                       ),
                     ],
@@ -207,29 +222,47 @@ class _PantallaClimaAstralState extends State<PantallaClimaAstral> {
                         child: Row(
                           children: [
                             Expanded(
-                              child: GestureDetector(
-                                onTap: () => setState(() =>
-                                  _seleccionado = _seleccionado == 'Sol' ? null : 'Sol'),
-                                child: _CeldaPlaneta(
-                                  simbolo: sol.simbolo,
-                                  label: 'Sol en',
-                                  signo: sol.signo,
-                                  activo: _seleccionado == 'Sol',
-                                  isLeft: true,
+                              child: AnimatedScale(
+                                scale: _pressedSol ? 0.96 : 1.0,
+                                duration: const Duration(milliseconds: 120),
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTapDown: (_) => setState(() => _pressedSol = true),
+                                  onTapUp: (_) => setState(() {
+                                    _pressedSol = false;
+                                    _seleccionado = _seleccionado == 'Sol' ? null : 'Sol';
+                                  }),
+                                  onTapCancel: () => setState(() => _pressedSol = false),
+                                  child: _CeldaPlaneta(
+                                    simbolo: sol.simbolo,
+                                    label: 'Sol en',
+                                    signo: sol.signo,
+                                    activo: _seleccionado == 'Sol',
+                                    isLeft: true,
+                                  ),
                                 ),
                               ),
                             ),
                             Container(width: 0.5, height: 48, color: Colors.black12),
                             Expanded(
-                              child: GestureDetector(
-                                onTap: () => setState(() =>
-                                  _seleccionado = _seleccionado == 'Luna' ? null : 'Luna'),
-                                child: _CeldaPlaneta(
-                                  simbolo: luna.simbolo,
-                                  label: 'Luna en',
-                                  signo: luna.signo,
-                                  activo: _seleccionado == 'Luna',
-                                  isLeft: false,
+                              child: AnimatedScale(
+                                scale: _pressedLuna ? 0.96 : 1.0,
+                                duration: const Duration(milliseconds: 120),
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTapDown: (_) => setState(() => _pressedLuna = true),
+                                  onTapUp: (_) => setState(() {
+                                    _pressedLuna = false;
+                                    _seleccionado = _seleccionado == 'Luna' ? null : 'Luna';
+                                  }),
+                                  onTapCancel: () => setState(() => _pressedLuna = false),
+                                  child: _CeldaPlaneta(
+                                    simbolo: luna.simbolo,
+                                    label: 'Luna en',
+                                    signo: luna.signo,
+                                    activo: _seleccionado == 'Luna',
+                                    isLeft: false,
+                                  ),
                                 ),
                               ),
                             ),

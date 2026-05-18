@@ -110,33 +110,47 @@ Responde SOLO con JSON:
     return await _llamarClaude(prompt, maxTokens: 200);
   }
 
-  // Genera el mensaje de compatibilidad entre dos amigos.
-  // tipo: 'solo' = frase sobre el amigo, 'interaccion' = dinámica entre los dos.
-  static Future<String> generarCompatibilidad({
-    required String nombre1,
+  static const _tonosAmigos = [
+    'observador: describe lo que pasa sin opinar, como alguien que mira desde afuera con cara de "ya sé cómo termina esto".',
+    'irónico: usa la ironía afectuosa. Que se note que sabes exactamente qué está pasando y te parece un poco ridículo, pero con cariño.',
+    'tierno: cálido y directo, sin ser cursi. Como cuando alguien dice algo lindo sin querer.',
+    'directo: sin rodeos ni adornos. Solo la verdad, enunciada con la frialdad de quien ya lo vio venir.',
+    'nostálgico: como recordando algo que ya ocurrió entre ellos, con cierta ternura resignada.',
+    'chusco: con humor real, como alguien que cuenta un chisme gracioso. Puede ser un poco exagerado. Que dé risa.',
+    'reflexivo: pausado, como alguien que acaba de darse cuenta de algo incómodo pero cierto.',
+  ];
+
+  static String tonoAmigosDelDia(DateTime fecha) {
+    final idx = (fecha.year * 10000 + fecha.month * 100 + fecha.day) % _tonosAmigos.length;
+    return _tonosAmigos[idx];
+  }
+
+  // Genera 1 oración de desarrollo para una frase del banco de amigos
+  static Future<String> generarDesarrolloAmigos({
+    required String frase,
     required String signoSolar1,
     required String signoLunar1,
-    required String nombre2,
     required String signoSolar2,
     required String signoLunar2,
-    required String tipo, // 'solo' | 'interaccion'
+    required String tono,
   }) async {
-    final n1 = nombre1.split(' ').first;
-    final n2 = nombre2.split(' ').first;
+    final prompt = '''
+Eres la voz de una app de astrología. Esta frase describe a dos personas:
 
-    final prompt = tipo == 'solo'
-        ? '''
-Eres la voz de una app de astrología. Solo conoces los signos de $n2: Sol en $signoSolar2, Luna en $signoLunar2. No sabes nada más de su vida.
+"$frase"
 
-Escribe exactamente 2 oraciones en español dirigidas a $n1, describiendo cómo puede estar $n2 hoy según su carta astral — su estado de ánimo, su manera de ser en este momento. Traduce los signos a experiencias humanas concretas, sin mencionar nombres de signos ni planetas. Tono: íntimo, observador. Sin "energía", "vibra", "universo". Sin guiones largos. Sin saludos.
-'''
-        : '''
-Eres la voz de una app de astrología. Solo conoces los signos de estas dos personas: $n1 tiene Sol en $signoSolar1 y Luna en $signoLunar1. $n2 tiene Sol en $signoSolar2 y Luna en $signoLunar2. No sabes nada de su relación real.
+[USUARIO] tiene Sol en $signoSolar1, Luna en $signoLunar1.
+[AMIGO] tiene Sol en $signoSolar2, Luna en $signoLunar2.
 
-Escribe exactamente 2 oraciones en español sobre cómo podrían relacionarse $n1 y $n2 según sus cartas — qué tensión o complicidad natural existe entre sus formas de ser. Traduce los signos a experiencias humanas concretas, sin mencionar nombres de signos ni planetas. Tono: íntimo, directo. Sin "energía", "vibra", "universo". Sin guiones largos. Solo los primeros nombres. Sin saludos.
+Escribe exactamente 1 oración en español que desarrolle o complemente esa frase, usando los nombres [USUARIO] y [AMIGO]. Traduce los signos a comportamientos concretos sin mencionar signos ni planetas.
+
+Tono: $tono
+
+ESTRICTAMENTE PROHIBIDO: guiones de cualquier tipo (— – -), paréntesis, punto y coma, metáforas, palabras como "energía", "vibra", "universo", "brillar", "intensidad", más de una oración, repetir palabras clave de la frase.
+
+Responde SOLO con el texto, sin JSON, sin comillas.
 ''';
-
-    return await _llamarClaude(prompt);
+    return await _llamarClaude(prompt, maxTokens: 80);
   }
 
   // Genera un caption astrológico sobre la dinámica de pareja (martes Venus)
@@ -326,7 +340,7 @@ Responde SOLO con este JSON sin nada más:
     return await _llamarClaude(prompt, maxTokens: 600);
   }
 
-  // Genera una lectura profunda expandida de carta astral (7 secciones)
+  // Genera una lectura profunda de carta astral (3 secciones + 5 ámbitos)
   static Future<String> generarLecturaCartaProfunda({
     required String nombre,
     required String signoSolar,
@@ -338,22 +352,48 @@ Responde SOLO con este JSON sin nada más:
     final n = nombre.split(' ').first;
     final planetasStr = planetas.entries.map((e) => '${e.key} en ${e.value}').join(', ');
     final prompt = '''
-Eres la voz de una app de astrología profunda. Carta natal de $n: Sol en $signoSolar, Luna en $signoLunar, Ascendente en $ascendente. Planetas: $planetasStr. Aspectos dominantes: ${aspectos.take(8).join('; ')}.
+Eres un astrólogo que escribe lecturas de carta natal para una app. Carta de $n: Sol en $signoSolar, Luna en $signoLunar, Ascendente en $ascendente. Planetas: $planetasStr. Aspectos: ${aspectos.take(8).join('; ')}.
 
-Escribe una lectura completa de carta natal organizada en 7 secciones. Cada sección: 2-3 oraciones directas, concretas, íntimas. No menciones signos ni planetas — tradúcelos a experiencias humanas reales. Tono: revelador, sin florituras, como alguien que te conoce de verdad. Sin "energía", "vibra", "universo", "flujo". Sin guiones largos. Sin markdown.
+Escribe una lectura personal. Reglas absolutas:
+- Habla directamente a $n en segunda persona ("eres", "tienes", "buscas")
+- NUNCA menciones signos, planetas, aspectos ni ningún término técnico de astrología — traduce todo a comportamiento, emociones y situaciones humanas concretas
+- Tono: íntimo, directo, revelador — como alguien que te ha observado años
+- Sin "energía", "vibra", "universo", "flujo", "cósmico"
+- PROHIBIDO usar guiones de cualquier tipo (-, –, —). Usa punto o dos puntos en su lugar.
+- PROHIBIDO usar oraciones adversativas: nada de "pero", "sino", "aunque", "sin embargo", "no obstante", "a pesar de". Si hay contraste, exprésalo en dos oraciones separadas.
+- Sin markdown. Sin listas.
 
-Responde SOLO con este JSON sin nada más:
+Secciones:
+
+frase — Una sola oración de máximo 10 palabras que capture la esencia de $n. Debe ser impactante, específica, casi incómoda de lo precisa que es. Sin clichés astrológicos. Sin signos de puntuación al final.
+
+big3 — Cómo interactúan tu identidad, tu mundo emocional y la imagen que proyectas como UN sistema. No describas cada uno por separado. Describe la dinámica entre ellos: la tensión interna, cómo se contradicen o se refuerzan, qué produce esa combinación específica en la vida diaria de $n. 3-4 oraciones.
+
+aspectos — Los patrones más marcados de su carta: qué repite sin darse cuenta, qué le cuesta aunque tenga capacidad, qué le sale con una facilidad que no entiende. Concreta y específica, sin nombrar los aspectos técnicamente. 3-4 oraciones.
+
+amor — Cómo se comporta $n en relaciones románticas: qué busca, qué evita, qué patrón repite, qué necesita aunque no lo pida. 2-3 oraciones.
+
+amistad — Cómo se relaciona con amigos y grupos: qué tipo de vínculo construye, qué le cuesta en lo social, cómo es como amigo/a. 2-3 oraciones.
+
+suerte — Dónde y cómo tiende a aparecer la oportunidad para $n, qué tipo de timing o contexto le favorece. 2-3 oraciones.
+
+familia — Su dinámica con la familia de origen y la que construye: qué hereda, qué repite, qué intenta cambiar. 2-3 oraciones.
+
+dinero — Su relación con el dinero, el trabajo y la seguridad material: cómo lo gana, cómo lo gestiona, qué creencia lleva sin cuestionarla. 2-3 oraciones.
+
+Responde SOLO con este JSON:
 {
-  "esencia": "Quién eres en el núcleo — tu naturaleza más verdadera.",
-  "proposito": "Para qué viniste — tu dirección de vida.",
-  "amor": "Cómo amas, qué buscas, qué te desafía en relaciones.",
-  "sombra": "Tu mayor patrón inconsciente — lo que sabotea sin que lo veas.",
-  "dones": "Tus talentos naturales más distinctivos.",
-  "carrera": "Dónde florecen tus capacidades en el trabajo.",
-  "crecimiento": "Tu frontera de evolución — lo que este ciclo pide de ti."
+  "frase": "...",
+  "big3": "...",
+  "aspectos": "...",
+  "amor": "...",
+  "amistad": "...",
+  "suerte": "...",
+  "familia": "...",
+  "dinero": "..."
 }
 ''';
-    return await _llamarClaude(prompt, maxTokens: 900);
+    return await _llamarClaude(prompt, maxTokens: 1150);
   }
 
   // Genera una lectura de sinastría entre dos personas

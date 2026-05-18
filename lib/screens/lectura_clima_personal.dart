@@ -135,135 +135,87 @@ class _PantallaLecturaClimaPersonalState extends State<PantallaLecturaClimaPerso
 
   @override
   Widget build(BuildContext context) {
+    final screenH = MediaQuery.of(context).size.height;
+
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Stack(
+      body: _cargando
+          ? const Center(child: OuroborosLoader(size: 260))
+          : Stack(
         children: [
-          // Video de fondo con fade de 2s al terminar de cargar
-          Positioned.fill(
-            child: AnimatedOpacity(
-              opacity: _videoOpacity,
-              duration: const Duration(seconds: 2),
-              child: const _ClimaVideo(),
-            ),
-          ),
-          // Overlay oscuro 60%
-          Positioned.fill(
-            child: Container(color: Colors.black.withValues(alpha: 0.6)),
-          ),
-          SafeArea(
-            child: _cargando
-                ? const Center(child: OuroborosLoader(size: 260))
-                : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Back
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    behavior: HitTestBehavior.opaque,
-                    child: const Padding(
-                      padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
+          // Scroll principal — video de fondo + contenido encima
+          SingleChildScrollView(
+            child: Stack(
+              children: [
+                // Video: ocupa screenH, scrollea con el contenido
+                SizedBox(
+                  height: screenH,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      AnimatedOpacity(
+                        opacity: _videoOpacity,
+                        duration: const Duration(seconds: 2),
+                        child: const _ClimaVideo(),
+                      ),
+                      Container(color: Colors.black.withValues(alpha: 0.45)),
+                    ],
+                  ),
+                ),
+                // Todo el contenido encima del video desde arriba
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SafeArea(
                       child: Padding(
-                        padding: EdgeInsets.all(8),
-                        child: Icon(Icons.arrow_back_ios,
-                            color: Color(0x55F3EBD6), size: 18),
+                        padding: const EdgeInsets.fromLTRB(48, 24, 24, 0),
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('CLIMA ASTRAL',
+                                  style: TextStyle(color: _gold.withValues(alpha: 0.8), fontSize: 10, letterSpacing: 3, fontWeight: FontWeight.w500)),
+                                const SizedBox(height: 14),
+                                RichText(
+                                  text: TextSpan(
+                                    style: const TextStyle(fontFamily: 'PlayfairDisplay', color: _beige, fontSize: 48, fontWeight: FontWeight.w400, height: 1.15),
+                                    children: [
+                                      const TextSpan(text: 'El cielo\nde hoy\n'),
+                                      TextSpan(text: 'en ti.', style: TextStyle(color: _gold.withValues(alpha: 0.9))),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Row(children: [
+                                  Container(width: 32, height: 1, color: _gold.withValues(alpha: 0.45)),
+                                  const SizedBox(width: 8),
+                                  Text('✦', style: TextStyle(color: _gold.withValues(alpha: 0.55), fontSize: 11)),
+                                ]),
+                              ],
+                            ),
+                            Positioned(right: 40, top: 60, child: Text('·', style: TextStyle(color: _gold.withValues(alpha: 0.3), fontSize: 18))),
+                            Positioned(right: 16, top: 110, child: Text('✦', style: TextStyle(color: _gold.withValues(alpha: 0.2), fontSize: 10))),
+                            Positioned(right: 60, top: 130, child: Text('·', style: TextStyle(color: _gold.withValues(alpha: 0.25), fontSize: 12))),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(24, 12, 24, 48),
+                    // Tarjetas directamente debajo del título, sobre el video
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 48),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
 
-                          // Hero: label + título + decoración
-                          Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'CLIMA ASTRAL',
-                                    style: TextStyle(
-                                      color: _gold.withValues(alpha: 0.8),
-                                      fontSize: 10,
-                                      letterSpacing: 3,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 14),
-                                  // Título con "clima de hoy" en dorado
-                                  RichText(
-                                    text: TextSpan(
-                                      style: const TextStyle(
-                                        fontFamily: 'PlayfairDisplay',
-                                        color: _beige,
-                                        fontSize: 48,
-                                        fontWeight: FontWeight.w400,
-                                        height: 1.15,
-                                      ),
-                                      children: [
-                                        const TextSpan(text: 'El cielo\nde hoy\n'),
-                                        TextSpan(
-                                          text: 'en ti.',
-                                          style: TextStyle(color: _gold.withValues(alpha: 0.9)),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                ],
-                              ),
-                              // Estrellitas decorativas
-                              Positioned(
-                                right: 40,
-                                top: 60,
-                                child: Text('·', style: TextStyle(color: _gold.withValues(alpha: 0.3), fontSize: 18)),
-                              ),
-                              Positioned(
-                                right: 16,
-                                top: 110,
-                                child: Text('✦', style: TextStyle(color: _gold.withValues(alpha: 0.2), fontSize: 10)),
-                              ),
-                              Positioned(
-                                right: 60,
-                                top: 130,
-                                child: Text('·', style: TextStyle(color: _gold.withValues(alpha: 0.25), fontSize: 12)),
-                              ),
-                            ],
-                          ),
-
-                          // Divisor
-                          Row(
-                            children: [
-                              Container(width: 32, height: 1,
-                                  color: _gold.withValues(alpha: 0.45)),
-                              const SizedBox(width: 8),
-                              Text('✦',
-                                  style: TextStyle(
-                                      color: _gold.withValues(alpha: 0.55),
-                                      fontSize: 11)),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Card: CLIMA ASTRAL DE HOY
                           if (_tieneIndicadores) ...[
                             _Card(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    'ASPECTOS INTERNOS',
-                                    style: TextStyle(
-                                      color: _beige.withValues(alpha: 0.25),
-                                      fontSize: 9,
-                                      letterSpacing: 3,
-                                    ),
-                                  ),
+                                  Text('ASPECTOS INTERNOS',
+                                      style: TextStyle(color: _beige.withValues(alpha: 0.25), fontSize: 9, letterSpacing: 3)),
                                   const SizedBox(height: 20),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -278,42 +230,26 @@ class _PantallaLecturaClimaPersonalState extends State<PantallaLecturaClimaPerso
                             const SizedBox(height: 12),
                           ],
 
-                          // Card: QUÉ ESTÁ ACTIVADO
                           if ((_lectura['activado'] ?? '').isNotEmpty) ...[
-                            _SeccionCard(
-                              titulo: 'QUÉ ESTÁ ACTIVADO',
-                              texto: _lectura['activado']!,
-                            ),
+                            _SeccionCard(titulo: 'QUÉ ESTÁ ACTIVADO', texto: _lectura['activado']!),
                             const SizedBox(height: 12),
                           ],
 
-                          // Card: CÓMO NAVEGARLO (viñetas)
                           if ((_lectura['navegar'] ?? '').isNotEmpty) ...[
-                            _SeccionBullets(
-                              titulo: 'CÓMO NAVEGARLO',
-                              texto: _lectura['navegar']!,
-                            ),
+                            _SeccionBullets(titulo: 'CÓMO NAVEGARLO', texto: _lectura['navegar']!),
                             const SizedBox(height: 12),
                           ],
 
-                          // Card: QUÉ CUIDAR (sin tarjeta extra si no hay frase)
                           if ((_lectura['cuidar'] ?? '').isNotEmpty) ...[
-                            _SeccionCard(
-                              titulo: 'QUÉ CUIDAR',
-                              texto: _lectura['cuidar']!,
-                            ),
+                            _SeccionCard(titulo: 'QUÉ CUIDAR', texto: _lectura['cuidar']!),
                             const SizedBox(height: 12),
                           ],
 
-                          // Card: frase clave centrada
                           if ((_lectura['frase'] ?? '').isNotEmpty)
                             _Card(
                               child: Column(
                                 children: [
-                                  Text('✦',
-                                      style: TextStyle(
-                                          color: _gold.withValues(alpha: 0.35),
-                                          fontSize: 14)),
+                                  Text('✦', style: TextStyle(color: _gold.withValues(alpha: 0.35), fontSize: 14)),
                                   const SizedBox(height: 20),
                                   Text(
                                     _lectura['frase']!,
@@ -327,15 +263,11 @@ class _PantallaLecturaClimaPersonalState extends State<PantallaLecturaClimaPerso
                                     ),
                                   ),
                                   const SizedBox(height: 20),
-                                  Text('✦',
-                                      style: TextStyle(
-                                          color: _gold.withValues(alpha: 0.35),
-                                          fontSize: 14)),
+                                  Text('✦', style: TextStyle(color: _gold.withValues(alpha: 0.35), fontSize: 14)),
                                 ],
                               ),
                             ),
 
-                          // Debug
                           const SizedBox(height: 32),
                           Center(
                             child: Row(
@@ -346,29 +278,21 @@ class _PantallaLecturaClimaPersonalState extends State<PantallaLecturaClimaPerso
                                   behavior: HitTestBehavior.opaque,
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                    child: Text(
-                                      'debug: ver animación',
-                                      style: TextStyle(color: _beige.withValues(alpha: 0.12), fontSize: 10, letterSpacing: 1.5),
-                                    ),
+                                    child: Text('debug: ver animación',
+                                        style: TextStyle(color: _beige.withValues(alpha: 0.12), fontSize: 10, letterSpacing: 1.5)),
                                   ),
                                 ),
                                 Text('·', style: TextStyle(color: _beige.withValues(alpha: 0.12), fontSize: 10)),
                                 GestureDetector(
                                   onTap: () {
-                                    setState(() {
-                                      _debugDiaOffset++;
-                                      _lectura = {};
-                                      _cargando = true;
-                                    });
+                                    setState(() { _debugDiaOffset++; _lectura = {}; _cargando = true; });
                                     _cargar();
                                   },
                                   behavior: HitTestBehavior.opaque,
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                    child: Text(
-                                      'día +$_debugDiaOffset →',
-                                      style: TextStyle(color: _beige.withValues(alpha: 0.12), fontSize: 10, letterSpacing: 1.5),
-                                    ),
+                                    child: Text('día +$_debugDiaOffset →',
+                                        style: TextStyle(color: _beige.withValues(alpha: 0.12), fontSize: 10, letterSpacing: 1.5)),
                                   ),
                                 ),
                               ],
@@ -377,9 +301,24 @@ class _PantallaLecturaClimaPersonalState extends State<PantallaLecturaClimaPerso
                         ],
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Botón back flotante
+          SafeArea(
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              behavior: HitTestBehavior.opaque,
+              child: const Padding(
+                padding: EdgeInsets.fromLTRB(12, 12, 12, 12),
+                child: Padding(
+                  padding: EdgeInsets.all(8),
+                  child: Icon(Icons.arrow_back_ios, color: Color(0x55F3EBD6), size: 18),
+                ),
               ),
+            ),
           ),
         ],
       ),
