@@ -361,39 +361,51 @@ Escribe una lectura personal. Reglas absolutas:
 - Sin "energía", "vibra", "universo", "flujo", "cósmico"
 - PROHIBIDO usar guiones de cualquier tipo (-, –, —). Usa punto o dos puntos en su lugar.
 - PROHIBIDO usar oraciones adversativas: nada de "pero", "sino", "aunque", "sin embargo", "no obstante", "a pesar de". Si hay contraste, exprésalo en dos oraciones separadas.
-- Sin markdown. Sin listas.
+- Sin markdown. Sin listas. Sin enumeraciones ("X, Y, Z") — cada idea en su propia oración.
 
 Secciones:
 
 frase — Una sola oración de máximo 10 palabras que capture la esencia de $n. Debe ser impactante, específica, casi incómoda de lo precisa que es. Sin clichés astrológicos. Sin signos de puntuación al final.
 
-big3 — Cómo interactúan tu identidad, tu mundo emocional y la imagen que proyectas como UN sistema. No describas cada uno por separado. Describe la dinámica entre ellos: la tensión interna, cómo se contradicen o se refuerzan, qué produce esa combinación específica en la vida diaria de $n. 3-4 oraciones.
+big3_p1 — 3-4 oraciones, máximo 55 palabras. Describe cómo interactúan Sol en $signoSolar, Luna en $signoLunar y Ascendente en $ascendente como un sistema en la vida de $n. No los describas por separado — teje los tres en una narrativa donde cada uno aparece en relación con los demás: la tensión, cómo se contradicen o refuerzan, qué produce esa combinación en el día a día.
 
-aspectos — Los patrones más marcados de su carta: qué repite sin darse cuenta, qué le cuesta aunque tenga capacidad, qué le sale con una facilidad que no entiende. Concreta y específica, sin nombrar los aspectos técnicamente. 3-4 oraciones.
+big3_p2 — 2-3 oraciones, máximo 40 palabras. OBLIGATORIO: nombra los signos así — "tu $signoSolar", "tu $signoLunar", "tu $ascendente" — y describe cómo los tres conviven o se boicotean dentro de $n. PROHIBIDO enumerar o listar atributos ("quiere X, quiere Y, quiere Z") — describe la dinámica como una narrativa fluida.
 
-amor — Cómo se comporta $n en relaciones románticas: qué busca, qué evita, qué patrón repite, qué necesita aunque no lo pida. 2-3 oraciones.
+aspectos — 3-4 oraciones. Conecta las virtudes y sombras de $n como dos caras del mismo patrón: cómo la misma fuerza que le da claridad también le genera fricción, qué produce esa tensión en su vida diaria. No los listes por separado — descríbelos como un sistema integrado.
 
-amistad — Cómo se relaciona con amigos y grupos: qué tipo de vínculo construye, qué le cuesta en lo social, cómo es como amigo/a. 2-3 oraciones.
+virtudes — Exactamente 3 virtudes de $n, específicas a su carta. Formato: cada una en una línea separada, nombre en mayúsculas, dos puntos, descripción de máximo 6 palabras. Ejemplo: "INTUICIÓN: Ve lo que otros no ven."
 
-suerte — Dónde y cómo tiende a aparecer la oportunidad para $n, qué tipo de timing o contexto le favorece. 2-3 oraciones.
+defectos — Exactamente 3 defectos de $n, específicos a su carta. Mismo formato: nombre en mayúsculas, dos puntos, descripción de máximo 6 palabras. Sé honesto y directo, sin suavizar.
 
-familia — Su dinámica con la familia de origen y la que construye: qué hereda, qué repite, qué intenta cambiar. 2-3 oraciones.
+amor — Dos párrafos separados por \n\n. Párrafo 1: "[Observación concreta sobre cómo $n ama o qué busca en pareja, sin mencionar planetas — 2 oraciones]. Eso tiene nombre: Venus en ${planetas['Venus'] ?? ''}. [1 oración que explique qué produce esa posición]." Párrafo 2: 2-3 oraciones sobre cómo ese patrón aparece en situaciones cotidianas del amor — qué hace $n cuando se enamora, qué le cuesta, qué lo/la hace brillar en pareja. Sin planetas ni signos en el párrafo 2.
 
-dinero — Su relación con el dinero, el trabajo y la seguridad material: cómo lo gana, cómo lo gestiona, qué creencia lleva sin cuestionarla. 2-3 oraciones.
+amistad — Dos párrafos separados por \n\n. Párrafo 1: "[Observación sobre cómo $n se relaciona o comunica, sin mencionar planetas — 2 oraciones]. Mercurio en ${planetas['Mercurio'] ?? ''} explica eso. [1 oración de consecuencia en sus amistades]." Párrafo 2: 2-3 oraciones sobre cómo eso se manifiesta con sus amigos — qué tipo de amigo es $n, qué conflictos repite, qué le da a los demás sin darse cuenta. Sin planetas en el párrafo 2.
+
+suerte — Dos párrafos separados por \n\n. Párrafo 1: "[Observación sobre dónde o cómo fluye la vida de $n, sin mencionar planetas — 2 oraciones]. Júpiter en ${planetas['Júpiter'] ?? ''} marca ese terreno. [1 oración sobre cómo aprovecharlo]." Párrafo 2: 2-3 oraciones concretas sobre en qué áreas o situaciones específicas suele fluirle todo más fácil, y qué actitud lo activa o lo bloquea. Sin planetas en el párrafo 2.
+
+familia — Dos párrafos separados por \n\n. Párrafo 1: "[Observación sobre algo que $n carga o repite emocionalmente, sin mencionar planetas — 2 oraciones]. La Luna en $signoLunar pone eso en contexto. [1 oración sobre qué hacer con esa herencia]." Párrafo 2: 2-3 oraciones sobre cómo ese patrón familiar aparece hoy — en sus reacciones, en lo que evita, en cómo cuida o no se deja cuidar. Sin planetas en el párrafo 2.
+
+dinero — Dos párrafos separados por \n\n. Párrafo 1: "[Observación sobre cómo $n vive el trabajo o el dinero — un hábito, una creencia, una contradicción, sin mencionar planetas — 2 oraciones]. Saturno en ${planetas['Saturno'] ?? ''} es la raíz de eso. [1 oración de consecuencia práctica]." Párrafo 2: 2-3 oraciones sobre cómo ese patrón se traduce en decisiones reales — qué hace $n bien con el dinero, dónde se autosabotea, qué le costaría cambiar. Sin planetas en el párrafo 2.
+
+futuro — Exactamente 5 bullets. Mismo tono íntimo y directo que el resto de la lectura. Cada bullet es una oración corta (máximo 15 palabras) que describe un patrón concreto que se está formando para $n: una oportunidad, una tensión, un cambio, una versión de sí mismo que está siendo convocada, algo que deberá soltar. OBLIGATORIO: cada bullet empieza con "• " (bullet unicode seguido de espacio). Sin fechas, sin tránsitos, sin términos astrológicos. Las 5 líneas separadas por \n.
 
 Responde SOLO con este JSON:
 {
   "frase": "...",
-  "big3": "...",
+  "big3_p1": "...",
+  "big3_p2": "...",
   "aspectos": "...",
+  "virtudes": "...",
+  "defectos": "...",
   "amor": "...",
   "amistad": "...",
   "suerte": "...",
   "familia": "...",
-  "dinero": "..."
+  "dinero": "...",
+  "futuro": "..."
 }
 ''';
-    return await _llamarClaude(prompt, maxTokens: 1150);
+    return await _llamarClaude(prompt, maxTokens: 3200);
   }
 
   // Genera una lectura de sinastría entre dos personas

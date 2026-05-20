@@ -153,58 +153,58 @@ List<String> _tresPlanes(int semana) {
 
 // ─── Banco de retos (sábado) — 52 semanas ────────────────────────────────────
 const _retos = [
-  'Cocinemos algo nuevo juntos hoy, sin receta.',
-  'Daos un masaje de 10 minutos cada uno. Sin prisa.',
-  'Elegid una película que ninguno haya visto y no la pauséis.',
-  'Haced una lista de 10 cosas que os gustan del otro. Compartidla.',
-  'Id a dar un paseo sin destino. Solo seguid lo que os llame.',
-  'Elegid una canción que describa vuestra historia. Escuchadla juntos.',
-  'Preparad el desayuno favorito del otro.',
-  'Haced algo que el otro siempre ha querido hacer pero nunca han hecho.',
-  'Pasad una hora sin teléfonos. Solo vosotros.',
-  'Escribid cada uno una carta de una página al otro. Leedlas en voz alta.',
-  'Buscad un sitio nuevo en vuestra ciudad al que nunca hayáis ido.',
-  'Cread una playlist juntos. 10 canciones cada uno.',
-  'Mirad fotos antiguas vuestras y contad la historia detrás de una.',
-  'Haced algo físico juntos: bailar, caminar, estirarse.',
-  'Comprad algo pequeño para el otro sin gastar más de 5 euros.',
-  'Elegid un tema que ninguno sabe nada y aprended algo juntos.',
-  'Haced una cena con velas aunque sea en casa.',
-  'Contad cada uno algo que no habéis contado nunca.',
-  'Dibujad al otro. Sin juzgar el resultado.',
-  'Elegid un juego de mesa o de cartas. El que pierde hace un forfait.',
-  'Buscad un atardecer o un amanecer para verlo juntos.',
-  'Escribid vuestros planes para el próximo año. Comparadlos.',
-  'Daos un abrazo largo. Más de 30 segundos. Sin soltaros antes.',
-  'Cocinad una receta del país favorito del otro.',
-  'Cread un ritual pequeño que sea solo vuestro.',
-  'Elegid una serie nueva y ved el primer episodio.',
-  'Id al mercado o supermercado y elegid juntos algo que nunca hayáis probado.',
-  'Haced una lista de lugares a los que queréis ir juntos algún día.',
-  'Pasad una hora haciendo cada uno lo que el otro disfruta.',
-  'Contad el mejor recuerdo de infancia que tengáis.',
-  'Tomad café o té en silencio cómodo, sin distracciones.',
-  'Elegid una foto favorita de vosotros y explicad por qué.',
-  'Haced algo creativo juntos: dibujar, escribir, cantar, lo que sea.',
-  'Daos un tour mental de vuestra casa soñada.',
-  'Contad cómo os habéis visto cambiar desde que estáis juntos.',
-  'Preparad una cesta de picnic aunque sea en el salón.',
-  'Leed juntos un artículo sobre algo que os interese a los dos.',
-  'Haced algo que os dé un poco de miedo juntos.',
-  'Buscad en internet el lugar más bonito cerca de vosotros e id.',
-  'Elegid cada uno su película favorita. Votad cuál ver.',
-  'Haced una lista de "las cosas que hacemos bien juntos".',
-  'Pasad la tarde sin agenda. Lo que surja.',
-  'Cocinad algo sin mirarse, solo guiándose por la voz.',
-  'Elegid un podcast y escuchadlo dando un paseo.',
-  'Haced una llamada a alguien que queráis los dos.',
-  'Escribid juntos la historia de cómo os conocisteis, con todos los detalles.',
-  'Buscad un mercadillo, feria o mercado de segunda mano.',
-  'Descubrid juntos un artista, músico o fotógrafo que no conocíais.',
-  'Haced algo bueno por alguien más, juntos.',
-  'Elegid una actividad manual: origami, pintura de uñas, trenzas, lo que queráis.',
-  'Cread un menú de restaurante imaginario con vuestros platos favoritos.',
-  'Pasad el día haciéndoos pequeños gestos sin decir por qué.',
+  'Cocinen algo nuevo juntos hoy, sin receta.',
+  'Dénse un masaje de 10 minutos cada uno. Sin prisa.',
+  'Elijan una película que ninguno haya visto y no la pausen.',
+  'Hagan una lista de 10 cosas que les gustan del otro. Compártanla.',
+  'Salgan a caminar sin destino. Solo sigan lo que les llame.',
+  'Elijan una canción que describa su historia. Escúchenla juntos.',
+  'Preparen el desayuno favorito del otro.',
+  'Hagan algo que el otro siempre ha querido hacer pero nunca han hecho.',
+  'Pasen una hora sin teléfonos. Solo ustedes.',
+  'Escriban cada uno una carta de una página al otro. Léanla en voz alta.',
+  'Busquen un lugar nuevo en su ciudad al que nunca hayan ido.',
+  'Creen una playlist juntos. 10 canciones cada uno.',
+  'Vean fotos antiguas y cuenten la historia detrás de una.',
+  'Hagan algo físico juntos: bailar, caminar, estirarse.',
+  'Cómprenle algo pequeño al otro sin gastar más de 5 dólares.',
+  'Elijan un tema del que ninguno sabe nada y aprendan algo juntos.',
+  'Hagan una cena con velas aunque sea en casa.',
+  'Cuenten cada uno algo que nunca le han contado al otro.',
+  'Dibújense. Sin juzgar el resultado.',
+  'Elijan un juego de mesa o de cartas. El que pierda hace lo que el otro diga.',
+  'Busquen un atardecer o un amanecer para verlo juntos.',
+  'Escriban sus planes para el próximo año. Compárenlos.',
+  'Dense un abrazo largo. Más de 30 segundos. Sin soltarse antes.',
+  'Cocinen una receta del país favorito del otro.',
+  'Creen un ritual pequeño que sea solo de ustedes.',
+  'Elijan una serie nueva y vean el primer episodio.',
+  'Vayan al mercado o supermercado y elijan juntos algo que nunca hayan probado.',
+  'Hagan una lista de lugares a los que quieren ir juntos algún día.',
+  'Pasen una hora haciendo cada uno lo que el otro disfruta.',
+  'Cuenten el mejor recuerdo de infancia que tengan.',
+  'Tomen café o té en silencio cómodo, sin distracciones.',
+  'Elijan una foto favorita de ustedes y expliquen por qué.',
+  'Hagan algo creativo juntos: dibujar, escribir, cantar, lo que sea.',
+  'Dense un tour mental de su casa soñada.',
+  'Cuenten cómo se han visto cambiar desde que están juntos.',
+  'Preparen una canasta de picnic aunque sea en la sala.',
+  'Lean juntos un artículo sobre algo que les interese a los dos.',
+  'Hagan algo que les dé un poco de miedo juntos.',
+  'Busquen el lugar más bonito cerca de ustedes y vayan.',
+  'Elijan cada uno su película favorita. Voten cuál ver.',
+  'Hagan una lista de "las cosas que hacemos bien juntos".',
+  'Pasen la tarde sin agenda. Lo que surja.',
+  'Cocinen algo sin verse, solo guiándose por la voz.',
+  'Elijan un podcast y escúchenlo dando un paseo.',
+  'Llámenle a alguien que quieran los dos.',
+  'Escriban juntos la historia de cómo se conocieron, con todos los detalles.',
+  'Busquen un mercado de pulgas, feria o tianguis.',
+  'Descubran juntos un artista, músico o fotógrafo que no conocían.',
+  'Hagan algo bueno por alguien más, juntos.',
+  'Elijan una actividad manual: origami, pintarse las uñas, trenzas, lo que quieran.',
+  'Creen un menú de restaurante imaginario con sus platillos favoritos.',
+  'Pasen el día haciéndose pequeños gestos sin decir por qué.',
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -241,7 +241,8 @@ class VenusActividadDiaria extends StatefulWidget {
   State<VenusActividadDiaria> createState() => _VenusActividadDiariaState();
 }
 
-class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
+class _VenusActividadDiariaState extends State<VenusActividadDiaria>
+    with SingleTickerProviderStateMixin {
   final _ctrl      = TextEditingController();
   bool _enviado    = false;
   bool _cargando   = true;
@@ -252,6 +253,7 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
 
   // Miércoles
   File?   _imagenSeleccionada;
+  AnimationController? _sobreCtrl;
 
   // Martes: caption Claude
   String? _captionMartes;
@@ -259,12 +261,14 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
   @override
   void initState() {
     super.initState();
+    _sobreCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
     _cargar();
   }
 
   @override
   void dispose() {
     _ctrl.dispose();
+    _sobreCtrl?.dispose();
     super.dispose();
   }
 
@@ -382,7 +386,7 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
     if (mounted) setState(() => _cargando = false);
   }
 
-  Future<void> _enviar({String? textoExtra}) async {
+  Future<void> _enviar({String? textoExtra, bool sinCarta = false}) async {
     final texto = textoExtra ?? _ctrl.text.trim();
     if (texto.isEmpty && _imagenSeleccionada == null) return;
     setState(() => _enviando = true);
@@ -413,22 +417,25 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
     // La notificación la dispara automáticamente la Cloud Function notificarCarta
     // al crear el documento en venus_cartas
 
-    await FirebaseFirestore.instance
-        .collection('venus_cartas')
-        .doc(widget.parejaUid)
-        .collection('cartas')
-        .add({
-          'de':        widget.miNombre,
-          'deUid':     widget.miUid,
-          'mensaje':   texto,
-          'imagenUrl': respuesta.contains('||IMG||')
-              ? respuesta.split('||IMG||')[1]
-              : null,
-          'semana':    sk,
-          'dia':       _diaSemana,
-          'leida':     false,
-          'timestamp': FieldValue.serverTimestamp(),
-        });
+    if (!sinCarta) {
+      await FirebaseFirestore.instance
+          .collection('venus_cartas')
+          .doc(widget.parejaUid)
+          .collection('cartas')
+          .add({
+            'de':        widget.miNombre,
+            'deUid':     widget.miUid,
+            'mensaje':   texto,
+            'pregunta':  _preguntaDia,
+            'imagenUrl': respuesta.contains('||IMG||')
+                ? respuesta.split('||IMG||')[1]
+                : null,
+            'semana':    sk,
+            'dia':       _diaSemana,
+            'leida':     false,
+            'timestamp': FieldValue.serverTimestamp(),
+          });
+    }
 
     if (mounted) {
       setState(() {
@@ -447,6 +454,7 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
     );
     if (picked != null && mounted) {
       setState(() => _imagenSeleccionada = File(picked.path));
+      _sobreCtrl?.forward(from: 0);
     }
   }
 
@@ -480,6 +488,8 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
                       _suRespuesta = null;
                       _planClaude = null;
                       _captionMartes = null;
+                      _imagenSeleccionada = null;
+                      _sobreCtrl?.reset();
                     });
                     _cargar();
                   },
@@ -515,6 +525,8 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
                 _debugSemanaOffset = (_debugSemanaOffset - 1) % 60;
                 _enviado = false;
                 _miRespuesta = null;
+                _imagenSeleccionada = null;
+                _sobreCtrl?.reset();
               }),
               behavior: HitTestBehavior.opaque,
               child: const Padding(
@@ -530,6 +542,8 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
                 _debugSemanaOffset = (_debugSemanaOffset + 1) % 60;
                 _enviado = false;
                 _miRespuesta = null;
+                _imagenSeleccionada = null;
+                _sobreCtrl?.reset();
               }),
               behavior: HitTestBehavior.opaque,
               child: const Padding(
@@ -563,16 +577,24 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
       contenido: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(pregunta,
-              style: const TextStyle(color: Colors.black87, fontSize: 15,
-                  fontWeight: FontWeight.w300, height: 1.7)),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: double.infinity),
+            child: FractionallySizedBox(
+              widthFactor: 0.85,
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 24, bottom: 20),
+                child: Text(pregunta, style: _kPreguntaStyle),
+              ),
+            ),
+          ),
           const SizedBox(height: 24),
           if (_enviado)
             _respuestaEnviada(_miRespuesta ?? '')
           else ...[
-            _campoTexto('tu respuesta…', maxLength: 160),
+            _campoTexto('Escríbele a $_placeholder  Lo primero que venga a tu mente', maxLength: 160),
             const SizedBox(height: 16),
-            _botonEnviar('Enviar como carta', onTap: () => _enviar()),
+            _botonEnviar('ENVIAR A ${_placeholder.toUpperCase()}', onTap: () => _enviar(), showSend: true),
             const SizedBox(height: 8),
             Text('Tu respuesta llegará como carta a $_placeholder.',
                 style: const TextStyle(color: Colors.black26, fontSize: 11, height: 1.5)),
@@ -602,11 +624,13 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
                 border: Border.all(color: Colors.black12),
                 borderRadius: BorderRadius.circular(2),
               ),
-              child: Text(
-                _captionMartes!,
-                style: const TextStyle(color: Colors.black87, fontSize: 14,
-                    fontWeight: FontWeight.w300, height: 1.7),
-              ),
+              child: Text(_captionMartes!, style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w300,
+                height: 1.7,
+                letterSpacing: 0.1,
+                color: Color(0xFF161311),
+              )),
             )
           else
             const Center(
@@ -628,28 +652,30 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
       contenido: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(caption,
-              style: const TextStyle(color: Colors.black87, fontSize: 15,
-                  fontWeight: FontWeight.w300, height: 1.6)),
-          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.only(top: 24, bottom: 20),
+            child: Text(caption, style: _kPreguntaStyle),
+          ),
           if (_enviado)
             _respuestaEnviada(_miRespuesta ?? '')
           else ...[
-            GestureDetector(
-              onTap: _elegirImagen,
-              child: Container(
-                width: double.infinity,
-                height: 200,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black12),
-                  borderRadius: BorderRadius.circular(2),
-                  color: Colors.black.withValues(alpha: 0.02),
-                ),
-                child: _imagenSeleccionada != null
-                    ? ClipRRect(
+            _imagenSeleccionada != null
+                ? _SobreAnimado(
+                    imagen: _imagenSeleccionada!,
+                    ctrl: _sobreCtrl!,
+                    onTap: _elegirImagen,
+                  )
+                : GestureDetector(
+                    onTap: _elegirImagen,
+                    child: Container(
+                      width: double.infinity,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.black12),
                         borderRadius: BorderRadius.circular(2),
-                        child: Image.file(_imagenSeleccionada!, fit: BoxFit.cover))
-                    : const Column(
+                        color: Colors.black.withValues(alpha: 0.02),
+                      ),
+                      child: const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.add_photo_alternate_outlined, color: Colors.black26, size: 32),
@@ -657,10 +683,20 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
                           Text('elegir foto', style: TextStyle(color: Colors.black26, fontSize: 12, letterSpacing: 1)),
                         ],
                       ),
+                    ),
+                  ),
+            if (_imagenSeleccionada != null) ...[
+              const SizedBox(height: 10),
+              GestureDetector(
+                onTap: _elegirImagen,
+                child: const Center(
+                  child: Text('cambiar foto',
+                      style: TextStyle(color: Colors.black38, fontSize: 11, letterSpacing: 1.5)),
+                ),
               ),
-            ),
+            ],
             const SizedBox(height: 16),
-            _botonEnviar('Enviar como carta', onTap: () => _enviar()),
+            _botonEnviar('ENVIAR A ${_placeholder.toUpperCase()}', onTap: () => _enviar(), showSend: true),
           ],
         ],
       ),
@@ -675,16 +711,17 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
       contenido: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('¿Qué hacen este fin de semana?',
-              style: TextStyle(color: Colors.black45, fontSize: 13, height: 1.6)),
-          const SizedBox(height: 20),
+          const Padding(
+            padding: EdgeInsets.only(top: 24, bottom: 20),
+            child: Text('¿Qué hacen este fin de semana?', style: _kPreguntaStyle),
+          ),
           if (_enviado)
             _respuestaEnviada(_miRespuesta ?? '')
           else ...[
             ...planes.map((plan) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: GestureDetector(
-                onTap: () => _enviar(textoExtra: plan),
+                onTap: () => _enviar(textoExtra: plan, sinCarta: true),
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -735,9 +772,7 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
             const Text('PROPUESTA PARA EL FINDE',
                 style: TextStyle(color: Colors.black26, fontSize: 10, letterSpacing: 3)),
             const SizedBox(height: 12),
-            Text(_planClaude!,
-                style: const TextStyle(color: Colors.black87, fontSize: 14,
-                    fontWeight: FontWeight.w300, height: 1.7)),
+            Text(_planClaude!, style: _kPreguntaStyle),
           ],
         ],
       ),
@@ -759,9 +794,7 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
               border: Border.all(color: Colors.black12),
               borderRadius: BorderRadius.circular(2),
             ),
-            child: Text(reto,
-                style: const TextStyle(color: Colors.black87, fontSize: 15,
-                    fontWeight: FontWeight.w300, height: 1.7)),
+            child: Text(reto, style: _kPreguntaStyle),
           ),
           const SizedBox(height: 20),
           if (_enviado)
@@ -782,16 +815,22 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
       contenido: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('¿Cuál fue tu momento favorito de esta semana juntos?',
-              style: TextStyle(color: Colors.black87, fontSize: 15,
-                  fontWeight: FontWeight.w300, height: 1.7)),
-          const SizedBox(height: 24),
+          const Padding(
+            padding: EdgeInsets.only(top: 24, bottom: 20),
+            child: Text('¿Cuál fue tu momento favorito de esta semana juntos?', style: _kPreguntaStyle),
+          ),
           if (_enviado)
-            _respuestaEnviada(_miRespuesta ?? '')
+            const Row(
+              children: [
+                Icon(Icons.check_circle_outline, size: 14, color: Colors.black38),
+                SizedBox(width: 6),
+                Text('enviado', style: TextStyle(color: Colors.black38, fontSize: 12, letterSpacing: 1.5)),
+              ],
+            )
           else ...[
             _campoTexto('cuéntalo…', maxLength: 160),
             const SizedBox(height: 16),
-            _botonEnviar('Enviar como carta', onTap: () => _enviar()),
+            _botonEnviar('ENVIAR A ${_placeholder.toUpperCase()}', onTap: () => _enviar(), showSend: true),
           ],
         ],
       ),
@@ -801,6 +840,19 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
   // ── Helpers de UI ─────────────────────────────────────────────────────────────
 
   String get _placeholder => widget.parejaName.split(' ').first;
+
+  String get _preguntaDia {
+    final nombre = widget.parejaName.split(' ').first;
+    switch (_diaSemana) {
+      case 1: return _preguntas[_semanaDebug % _preguntas.length];
+      case 2: return 'La energía que tiene $nombre contigo';
+      case 3: return _captionMiercoles(nombre, semanaOverride: _semanaDebug);
+      case 4: return '¿Qué hacen este fin de semana?';
+      case 6: return _retos[_semanaDebug % _retos.length];
+      case 7: return '¿Cuál fue tu momento favorito de esta semana juntos?';
+      default: return '';
+    }
+  }
 
   Widget _campoTexto(String hint, {required int maxLength}) {
     return TextField(
@@ -824,7 +876,7 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
     );
   }
 
-  Widget _botonEnviar(String label, {required VoidCallback onTap}) {
+  Widget _botonEnviar(String label, {required VoidCallback onTap, bool showSend = false}) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
@@ -833,14 +885,24 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
           backgroundColor: Colors.black,
           foregroundColor: const Color(0xFFF3EBD6),
           disabledBackgroundColor: Colors.black26,
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
           elevation: 0,
         ),
         child: _enviando
             ? const SizedBox(width: 16, height: 16,
-                child: CircularProgressIndicator(color: Colors.black54, strokeWidth: 1.5))
-            : Text(label, style: const TextStyle(letterSpacing: 2, fontSize: 12)),
+                child: CircularProgressIndicator(color: Color(0xFFF3EBD6), strokeWidth: 1.5))
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(label, style: const TextStyle(letterSpacing: 2.5, fontSize: 12, fontWeight: FontWeight.w500)),
+                  if (showSend) ...[
+                    const SizedBox(width: 10),
+                    const Icon(Icons.near_me, size: 15),
+                  ],
+                ],
+              ),
       ),
     );
   }
@@ -897,21 +959,203 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria> {
 
 // ─── Tarjeta contenedora ──────────────────────────────────────────────────────
 
+const _kPreguntaStyle = TextStyle(
+  fontFamily: 'PlayfairDisplay',
+  fontSize: 22,
+  fontWeight: FontWeight.w500,
+  height: 1.2,
+  letterSpacing: -0.3,
+  color: Color(0xFF161311),
+);
+
 class _TarjetaActividad extends StatelessWidget {
   final String etiqueta;
   final Widget contenido;
   const _TarjetaActividad({required this.etiqueta, required this.contenido});
 
+  static const _gold = Color(0xFFB8973A);
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(etiqueta,
-            style: const TextStyle(color: Colors.black26, fontSize: 10, letterSpacing: 3)),
-        const SizedBox(height: 20),
-        contenido,
-      ],
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAF6EE),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(etiqueta,
+              style: const TextStyle(
+                color: _gold,
+                fontSize: 10,
+                letterSpacing: 3,
+                fontWeight: FontWeight.w500,
+              )),
+          const SizedBox(height: 20),
+          contenido,
+        ],
+      ),
     );
   }
+}
+
+// ── Animación de sobre (miércoles) ────────────────────────────────────────────
+
+class _SobreAnimado extends StatelessWidget {
+  final File imagen;
+  final AnimationController ctrl;
+  final VoidCallback onTap;
+
+  const _SobreAnimado({
+    required this.imagen,
+    required this.ctrl,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const h = 200.0;
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: double.infinity,
+        height: h,
+        child: AnimatedBuilder(
+          animation: ctrl,
+          builder: (context, child) {
+            final t = ctrl.value;
+
+            // slide: intervalo 0→0.6, easeInOut
+            final slideT = (t / 0.6).clamp(0.0, 1.0);
+            final slide  = Curves.easeInOut.transform(slideT);
+
+            // solapa: intervalo 0.55→1.0, easeInOut
+            final solapaT = ((t - 0.55) / 0.45).clamp(0.0, 1.0);
+            final solapa  = Curves.easeInOut.transform(solapaT);
+
+            return Stack(
+              clipBehavior: Clip.hardEdge,
+              children: [
+                // Foto de fondo
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: Image.file(imagen, width: double.infinity, height: h, fit: BoxFit.cover),
+                ),
+
+                // Cuerpo del sobre sube desde abajo
+                Positioned(
+                  left: 0, right: 0,
+                  bottom: 0,
+                  height: h * (0.55 + 0.45 * slide),
+                  child: CustomPaint(
+                    painter: _SobreCuerpoPainter(solapaProgress: solapa),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _SobreCuerpoPainter extends CustomPainter {
+  final double solapaProgress;
+  _SobreCuerpoPainter({required this.solapaProgress});
+
+  static const _beige = Color(0xFFF3EBD6);
+  static const _beigeOscuro = Color(0xFFE0D4B8);
+  static const _gold = Color(0xFFB8973A);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final paint = Paint()..isAntiAlias = true;
+
+    // Sombra sutil encima del sobre
+    final shadowRect = Rect.fromLTWH(0, 0, w, h);
+    paint.shader = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Colors.black.withValues(alpha: 0.18), Colors.transparent],
+      stops: const [0.0, 0.25],
+    ).createShader(shadowRect);
+    canvas.drawRect(Rect.fromLTWH(0, 0, w, 32), paint);
+    paint.shader = null;
+
+    // Cuerpo del sobre (rectángulo beige)
+    paint.color = _beige;
+    canvas.drawRect(Rect.fromLTWH(0, 0, w, h), paint);
+
+    // Líneas diagonales del cuerpo (esquinas hacia centro)
+    paint
+      ..color = _beigeOscuro
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    final mid = Offset(w / 2, h * 0.42);
+    canvas.drawLine(Offset(0, h), mid, paint);
+    canvas.drawLine(Offset(w, h), mid, paint);
+
+    // Borde dorado arriba del sobre
+    paint
+      ..color = _gold.withValues(alpha: 0.4)
+      ..strokeWidth = 1.0;
+    canvas.drawLine(Offset.zero, Offset(w, 0), paint);
+
+    // Solapa superior: primero sube (se abre) luego baja sellada
+    final solapaH = h * 0.52;
+    final sealedH = h * 0.28; // altura del triángulo sellado
+
+    // Fase 1 (0→0.5): solapa sube de solapaH a 0
+    // Fase 2 (0.5→1): solapa sellada baja de 0 a sealedH
+    final double tipY;
+    final bool sellada = solapaProgress > 0.5;
+    if (!sellada) {
+      tipY = solapaH * (1 - solapaProgress * 2);
+    } else {
+      tipY = sealedH * ((solapaProgress - 0.5) * 2);
+    }
+
+    final flapPath = Path()
+      ..moveTo(0, 0)
+      ..lineTo(w / 2, tipY)
+      ..lineTo(w, 0)
+      ..close();
+
+    paint
+      ..style = PaintingStyle.fill
+      ..color = sellada ? _beigeOscuro.withValues(alpha: 0.9) : _beigeOscuro;
+    canvas.drawPath(flapPath, paint);
+
+    paint
+      ..style = PaintingStyle.stroke
+      ..color = _gold.withValues(alpha: sellada ? 0.5 : 0.35)
+      ..strokeWidth = 1.0;
+    canvas.drawPath(flapPath, paint);
+
+    // Sello dorado en la punta cuando está sellado
+    if (sellada) {
+      final opacity = ((solapaProgress - 0.5) * 2).clamp(0.0, 1.0);
+      final cx = w / 2;
+      final cy = tipY;
+      paint
+        ..style = PaintingStyle.stroke
+        ..color = _gold.withValues(alpha: 0.7 * opacity)
+        ..strokeWidth = 1.2;
+      canvas.drawCircle(Offset(cx, cy), 10, paint);
+      paint
+        ..style = PaintingStyle.fill
+        ..color = _gold.withValues(alpha: 0.18 * opacity);
+      canvas.drawCircle(Offset(cx, cy), 10, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_SobreCuerpoPainter old) => old.solapaProgress != solapaProgress;
 }

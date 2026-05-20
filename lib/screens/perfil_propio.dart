@@ -13,6 +13,7 @@ import '../services/claude_service.dart';
 import '../widgets/rueda_zodiacal.dart';
 import 'carta_presentacion.dart';
 import 'lectura_carta_astral.dart';
+import 'compra_carta_astral.dart';
 
 class PantallaPerfilPropio extends StatefulWidget {
   final void Function(bool)? onCargandoChanged;
@@ -28,13 +29,13 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio>
   CartaAstral? _carta;
   Map<String, double> _longitudes = {};
   double _ascLon = 0.0;
-  Map<String, String> _lectura = {};
   List<Map<String, dynamic>> _guardadas = [];
   bool _cargando = true;
   late AnimationController _slideCtrl;
   int  _paginaCarta = 0;
   String? _planetaSeleccionado;
   double _dragStartX = 0;
+  String _tabPerfil = 'carta';
 
   @override
   void initState() {
@@ -186,7 +187,7 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio>
         _carta      = carta;
         _longitudes = lons;
         _ascLon     = ascLon;
-        _lectura    = lectura;
+
         _guardadas  = guardadas;
         _cargando   = false;
       });
@@ -301,6 +302,23 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio>
                     const Divider(color: Colors.black12),
                     const SizedBox(height: 16),
 
+                    // ── Tab selector ──
+                    Container(
+                      decoration: const BoxDecoration(
+                        border: Border(bottom: BorderSide(color: Color(0x1A000000), width: 1)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(child: _TabBtn(label: 'Carta Natal', selected: _tabPerfil == 'carta',     onTap: () => setState(() => _tabPerfil = 'carta'))),
+                          Expanded(child: _TabBtn(label: 'Guardadas',   selected: _tabPerfil == 'guardadas', onTap: () => setState(() => _tabPerfil = 'guardadas'))),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    if (_tabPerfil == 'carta') ...[
+
                     // Carta natal — mapa deslizable → tabla
                     const Text(
                       'CARTA NATAL',
@@ -312,6 +330,23 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio>
                     ),
 
                     const SizedBox(height: 8),
+
+                    // Indicadores de página
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(2, (i) => AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width:  _paginaCarta == i ? 16 : 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: _paginaCarta == i ? Colors.black54 : Colors.black12,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      )),
+                    ),
+
+                    const SizedBox(height: 12),
 
                     // Rueda + chips (p0) ↔ tabla (p1) con slide animado
                     LayoutBuilder(builder: (context, constraints) {
@@ -447,22 +482,6 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio>
                       );
                     }),
 
-                    // Indicadores de página
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(2, (i) => AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width:  _paginaCarta == i ? 16 : 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: _paginaCarta == i ? Colors.black54 : Colors.black12,
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      )),
-                    ),
-
                     const SizedBox(height: 32),
                     GestureDetector(
                       onTap: () {
@@ -508,85 +527,88 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio>
                         ),
                       ),
                     ),
+                    GestureDetector(
+                      onTap: () => Navigator.push(context,
+                          MaterialPageRoute(builder: (_) => const PantallaCompraCarta())),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Text('debug: ver pantalla de compra →',
+                            style: TextStyle(color: const Color(0xFFB8973A).withValues(alpha: 0.4),
+                                fontSize: 11, letterSpacing: 1.5)),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () async {
+                        final uid = FirebaseAuth.instance.currentUser?.uid;
+                        if (uid == null) return;
+                        await FirebaseFirestore.instance
+                            .collection('lecturasProfundas')
+                            .doc('${uid}_carta_v3')
+                            .delete();
+                        if (context.mounted) {
+                          Navigator.push(context, MaterialPageRoute(
+                            builder: (_) => const PantallaLecturaCartaAstral()));
+                        }
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Text('debug: regenerar reporte →',
+                            style: TextStyle(color: const Color(0xFFB8973A).withValues(alpha: 0.4),
+                                fontSize: 11, letterSpacing: 1.5)),
+                      ),
+                    ),
                     const SizedBox(height: 48),
 
-                    if (_lectura.isNotEmpty) ...[
-                      const Divider(color: Colors.black12),
-                      const SizedBox(height: 40),
+                    ], // end carta tab
 
-                      const Text('TU LECTURA',
-                          style: TextStyle(color: Colors.black45, fontSize: 11, letterSpacing: 3)),
-                      const SizedBox(height: 32),
+                    if (_tabPerfil == 'guardadas') ...[
+                      if (_guardadas.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 32),
+                          child: Text('aún no tienes lecturas guardadas',
+                              style: GoogleFonts.manrope(
+                                  color: Colors.black26, fontSize: 13)),
+                        )
+                      else ...[
+                        const Text('GUARDADAS',
+                            style: TextStyle(color: Colors.black45, fontSize: 11, letterSpacing: 3)),
+                        const SizedBox(height: 24),
 
-                      ...[
-                        ('AMOR',    '♡', _lectura['amor']    ?? ''),
-                        ('AMISTAD', '◇', _lectura['amistad'] ?? ''),
-                        ('SUERTE',  '✦', _lectura['suerte']  ?? ''),
-                        ('FAMILIA', '○', _lectura['familia'] ?? ''),
-                        ('DINERO',  '△', _lectura['dinero']  ?? ''),
-                      ].where((e) => e.$3.isNotEmpty).map((e) => Padding(
-                        padding: const EdgeInsets.only(bottom: 28),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(children: [
-                              Text(e.$2, style: const TextStyle(color: Colors.black38, fontSize: 13)),
-                              const SizedBox(width: 8),
-                              Text(e.$1, style: const TextStyle(color: Colors.black38,
-                                  fontSize: 10, letterSpacing: 3)),
-                            ]),
-                            const SizedBox(height: 10),
-                            Text(e.$3, style: const TextStyle(color: Colors.black87,
-                                fontSize: 14, fontWeight: FontWeight.w300, height: 1.75)),
-                          ],
-                        ),
-                      )),
-
-                      const SizedBox(height: 12),
-                    ],
-
-                    if (_guardadas.isNotEmpty) ...[
-                      const Divider(color: Colors.black12),
-                      const SizedBox(height: 40),
-
-                      const Text('GUARDADAS',
-                          style: TextStyle(color: Colors.black45, fontSize: 11, letterSpacing: 3)),
-                      const SizedBox(height: 24),
-
-                      ..._guardadas.map((g) {
-                        final frase = g['frase'] as String? ?? '';
-                        final ts = g['fecha'];
-                        String fechaStr = '';
-                        if (ts != null) {
-                          final dt = (ts as dynamic).toDate() as DateTime;
-                          const meses = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
-                          fechaStr = '${dt.day} ${meses[dt.month - 1]} ${dt.year}';
-                        }
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (fechaStr.isNotEmpty)
-                                Text(fechaStr,
+                        ..._guardadas.map((g) {
+                          final frase = g['frase'] as String? ?? '';
+                          final ts = g['fecha'];
+                          String fechaStr = '';
+                          if (ts != null) {
+                            final dt = (ts as dynamic).toDate() as DateTime;
+                            const meses = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+                            fechaStr = '${dt.day} ${meses[dt.month - 1]} ${dt.year}';
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (fechaStr.isNotEmpty)
+                                  Text(fechaStr,
+                                      style: const TextStyle(
+                                          color: Colors.black38, fontSize: 10, letterSpacing: 2)),
+                                const SizedBox(height: 8),
+                                Text(frase,
                                     style: const TextStyle(
-                                        color: Colors.black38, fontSize: 10, letterSpacing: 2)),
-                              const SizedBox(height: 8),
-                              Text(frase,
-                                  style: const TextStyle(
-                                    fontFamily: 'PlayfairDisplay',
-                                    color: Color(0xFF222222),
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w400,
-                                    height: 1.4,
-                                    letterSpacing: 0.5,
-                                  )),
-                              const SizedBox(height: 16),
-                              const Divider(color: Colors.black12),
-                            ],
-                          ),
-                        );
-                      }),
+                                      fontFamily: 'PlayfairDisplay',
+                                      color: Color(0xFF222222),
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w400,
+                                      height: 1.4,
+                                      letterSpacing: 0.5,
+                                    )),
+                                const SizedBox(height: 16),
+                                const Divider(color: Colors.black12),
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
                     ],
                   ],
                 ),
@@ -768,6 +790,45 @@ class _TablaNatal extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _TabBtn extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _TabBtn({required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 180),
+              style: TextStyle(
+                color: selected ? Colors.black87 : Colors.black38,
+                fontSize: 14,
+                letterSpacing: 0.3,
+                fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
+                fontFamily: 'PlayfairDisplay',
+              ),
+              child: Text(label, textAlign: TextAlign.center),
+            ),
+          ),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            height: 1.5,
+            color: selected ? Colors.black87 : Colors.transparent,
+          ),
+        ],
+      ),
     );
   }
 }

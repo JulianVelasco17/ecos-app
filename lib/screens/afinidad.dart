@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'pago_romantico.dart';
 import '../services/calculos_astrales.dart';
-import '../services/claude_service.dart';
 import '../widgets/rueda_zodiacal.dart';
 
 class PantallaAfinidad extends StatefulWidget {
@@ -271,7 +270,7 @@ class _PantallaAfinidadState extends State<PantallaAfinidad>
                 child: Row(
                   children: [
                     Expanded(child: _TabBtn(label: 'Afinidad',     selected: _tab == 'afinidad', onTap: () => setState(() => _tab = 'afinidad'))),
-                    Expanded(child: _TabBtn(label: 'Carta Astral', selected: _tab == 'carta',    onTap: () => setState(() => _tab = 'carta'))),
+                    Expanded(child: _TabBtn(label: 'Carta Natal', selected: _tab == 'carta',    onTap: () => setState(() => _tab = 'carta'))),
                   ],
                 ),
               ),
@@ -519,78 +518,6 @@ class _PantallaAfinidadState extends State<PantallaAfinidad>
               ],
             ),
           ),
-        ),
-
-        const SizedBox(height: 40),
-        Divider(color: Colors.black.withValues(alpha: 0.07)),
-        const SizedBox(height: 28),
-
-        // Planetas
-        const Text('PLANETAS',
-            style: TextStyle(color: Colors.black38, fontSize: 10, letterSpacing: 3)),
-        const SizedBox(height: 20),
-        FutureBuilder<Map<String, String>>(
-          future: () async {
-            final ids = [widget.miUid, widget.amigoUid]..sort();
-            final cacheRef = FirebaseFirestore.instance
-                .collection('afinidades').doc('${ids[0]}_${ids[1]}');
-            final cacheDoc = await cacheRef.get();
-            if (cacheDoc.exists) return Map<String, String>.from(cacheDoc.data()!);
-            final resultado = await ClaudeService.generarComparacionPlanetas(
-              nombre1: widget.miNombre,   nombre2: widget.amigoNombre,
-              solar1:  widget.miSolar,    solar2:  widget.amigoSolar,
-              lunar1:  widget.miLunar,    lunar2:  widget.amigoLunar,
-              planetas1: widget.miPlanetas, planetas2: widget.amigoPlanetas,
-            );
-            await cacheRef.set(resultado);
-            return resultado;
-          }(),
-          builder: (context, snap) {
-            final comp = snap.data ?? {};
-            final planetas = [
-              ('SOL',      'sol',      widget.miSolar,                       widget.amigoSolar),
-              ('LUNA',     'luna',     widget.miLunar,                       widget.amigoLunar),
-              ('MERCURIO', 'mercurio', widget.miPlanetas['Mercurio'] ?? '?', widget.amigoPlanetas['Mercurio'] ?? '?'),
-              ('VENUS',    'venus',    widget.miPlanetas['Venus']    ?? '?', widget.amigoPlanetas['Venus']    ?? '?'),
-              ('MARTE',    'marte',    widget.miPlanetas['Marte']    ?? '?', widget.amigoPlanetas['Marte']    ?? '?'),
-              ('JÚPITER',  'jupiter',  widget.miPlanetas['Júpiter']  ?? '?', widget.amigoPlanetas['Júpiter']  ?? '?'),
-            ];
-            return Column(
-              children: planetas.map((p) {
-                final texto = comp[p.$2];
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(p.$1, style: TextStyle(color: Colors.black.withValues(alpha: 0.35), fontSize: 10, letterSpacing: 3)),
-                          const Spacer(),
-                          Text('Tú: ${p.$3}', style: const TextStyle(color: Colors.black54, fontSize: 11)),
-                          Text('  ·  $primerNombre: ${p.$4}', style: const TextStyle(color: Colors.black54, fontSize: 11)),
-                        ],
-                      ),
-                      if (texto != null) ...[
-                        const SizedBox(height: 12),
-                        Text(texto, style: const TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w300, height: 1.7)),
-                      ] else
-                        const Padding(
-                          padding: EdgeInsets.only(top: 12),
-                          child: SizedBox(height: 12, child: LinearProgressIndicator(
-                            backgroundColor: Color(0x18000000), color: Color(0x40000000))),
-                        ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            );
-          },
         ),
 
         const SizedBox(height: 48),

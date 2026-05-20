@@ -337,10 +337,12 @@ int _distanciaSignos(String s1, String s2) {
 bool _armonico(String s1, String s2) =>
     _distanciasArmonicas.contains(_distanciaSignos(s1, s2));
 
-// Score continuo 0.0–1.0 según distancia entre signos
+// Score continuo 0.0–1.0 según distancia entre signos (±3% de varianza)
 double _scoreDistancia(String s1, String s2) {
-  const tabla = {0: 0.95, 1: 0.45, 2: 0.75, 3: 0.28, 4: 0.90, 5: 0.35, 6: 0.55};
-  return tabla[_distanciaSignos(s1, s2)]?.toDouble() ?? 0.50;
+  const tabla = {0: 0.97, 1: 0.30, 2: 0.82, 3: 0.12, 4: 0.94, 5: 0.18, 6: 0.55};
+  final base = tabla[_distanciaSignos(s1, s2)]?.toDouble() ?? 0.50;
+  final jitter = (Random().nextDouble() * 0.06) - 0.03;
+  return (base + jitter).clamp(0.0, 1.0);
 }
 
 Map<String, double> calcularScoresSinastria({

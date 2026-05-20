@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/claude_service.dart';
@@ -69,6 +70,8 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
   late final Map<String, double> _scoresSinastria;
   Map<String, String> _escenarios = {};
 
+  bool _imagenesListas = false;
+
   // Facts
   int _factIndex = 0;
   Timer? _factTimer;
@@ -80,10 +83,7 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
   // Flip de la carta (drag-driven)
   double _flipProgress = 0.0; // 0.0 → 1.0
   AnimationController? _flipSnapCtrl;
-
-  // Estrellas al revelar
-  late final AnimationController _starCtrl;
-  late final List<_Particle> _particles;
+  CurvedAnimation? _flipCurved;
 
   // Fade del reporte al entrar
   late final AnimationController _reporteFadeCtrl;
@@ -93,8 +93,23 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
       'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Ffondo2.gif?alt=media&token=ef484e31-3c7d-4873-93bf-707188cd687c';
   static const _anversoUrl =
       'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Fanverso.png?alt=media&token=88b0101a-9661-4079-a776-2472ced1daa3';
-  static const _arquetipoUrl =
-      'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Falquimistas.png?alt=media&token=cb123d2d-38d5-4a7d-85bc-2bd0280f1e79';
+
+  static const _arquetipoImgUrls = <String, String>{
+    'Los Alquimistas':      'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2FAngie%2Fsideral_ALQUIMISTAS.png?alt=media&token=9f5a54bb-b947-4997-8f29-9f73eb042bd0',
+    'Amor Fati':            'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2FAngie%2Fsideral_AMOR%20FATI.png?alt=media&token=35b832e1-483f-435f-9794-bb3d95aa1b9e',
+    'Animo Flore':          'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2FAngie%2Fsideral_ANIMO%20FLORE.png?alt=media&token=017f12c9-0382-4924-87c4-31861e1c2612',
+    'Delusional':           'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2FAngie%2Fsideral_DELUSIONAL.png?alt=media&token=5428df3c-be61-4981-954e-5c21e7047ebf',
+    'El Hechizo':           'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2FAngie%2Fsideral_EL%20HECHIZO.png?alt=media&token=d3ce04af-abbe-4fc1-ace9-a68c42b78786',
+    'El Espiral y el Ciclo':'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2FAngie%2Fsideral_ESPIRAL.png?alt=media&token=b9150ec1-8324-49c9-8442-47f443971eff',
+    'Flor de Loto':         'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2FAngie%2Fsideral_FLOR%20DE%20LOTO.png?alt=media&token=4328c160-7b46-49b6-b000-42cfb565872b',
+    'Jardín Sereno':        'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2FAngie%2Fsideral_JARDIN%20SERENO.png?alt=media&token=fa670b03-fbb9-4b7f-b267-351875885a65',
+    'La Maravilla':         'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2FAngie%2Fsideral_LA%20MARAVILLA.png?alt=media&token=ce263433-c7b8-487c-a62b-1811cfb3ea6d',
+    'Nudo Kármico':         'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2FAngie%2Fsideral_NUDO%20K.png?alt=media&token=bf356802-e3cf-4361-b63b-800dbd2d2723',
+    'Sahacara':             'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2FAngie%2Fsideral_SAHACARA.png?alt=media&token=362299b5-57c1-4316-96ba-a6d3a9e07eab',
+    'Sublime':              'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2FAngie%2Fsideral_SUBLIME.png?alt=media&token=fa642731-bd3e-49e4-977b-763480d6a977',
+    'Umbral':               'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2FAngie%2Fsideral_UMBRAL.png?alt=media&token=e595844f-851e-4d97-921a-5f7299d0d421',
+    'Sen':                  'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2FAngie%2Fsideral_ZEN.png?alt=media&token=551cb0c7-7ce8-472c-b4f5-95aa2036d3e8',
+  };
 
   static const _beige = Color(0xFFF3EBD6);
 
@@ -121,8 +136,10 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
     ];
   }
 
-  bool get _listoParaRevelar => !_cargando;
+  bool get _listoParaRevelar => !_cargando && _imagenesListas;
   String get _arquetipoActivo => _arquetipoDebug ?? widget.arquetipo;
+  String get _arquetipoImgUrl =>
+      _arquetipoImgUrls[_arquetipoActivo] ?? _arquetipoImgUrls.values.first;
 
   @override
   void initState() {
@@ -134,14 +151,6 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
     );
     _slideAnim = Tween<Offset>(begin: const Offset(0, 1.2), end: Offset.zero)
         .animate(CurvedAnimation(parent: _slideCtrl, curve: Curves.easeOutCubic));
-
-    _starCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200));
-    final rng = math.Random();
-    _particles = List.generate(30, (_) => _Particle(
-      angle: rng.nextDouble() * 2 * math.pi,
-      speed: 0.4 + rng.nextDouble() * 0.6,
-      size:  3.0 + rng.nextDouble() * 5.0,
-    ));
 
     _reporteFadeCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
     _reporteFadeAnim = CurvedAnimation(parent: _reporteFadeCtrl, curve: Curves.easeOut);
@@ -175,10 +184,12 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
 
   Future<void> _precargar() async {
     if (!mounted) return;
-    await precacheImage(const NetworkImage(_anversoUrl), context);
-    // ignore: use_build_context_synchronously
-    if (!mounted) return;
-    await precacheImage(const NetworkImage(_arquetipoUrl), context);
+    await Future.wait([
+      precacheImage(const NetworkImage(_anversoUrl), context),
+      // ignore: use_build_context_synchronously
+      precacheImage(NetworkImage(_arquetipoImgUrl), context),
+    ]);
+    if (mounted) setState(() => _imagenesListas = true);
   }
 
   void _iniciarFacts() {
@@ -192,8 +203,8 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
   void dispose() {
     _factTimer?.cancel();
     _slideCtrl.dispose();
+    _flipCurved?.dispose();
     _flipSnapCtrl?.dispose();
-    _starCtrl.dispose();
     _reporteFadeCtrl.dispose();
     super.dispose();
   }
@@ -205,20 +216,22 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
     _slideCtrl.forward();
   }
 
-  // ── Pan para girar la carta (cualquier dirección) ───────────────────────
+  // ── Pan para girar la carta ──────────────────────────────────────────────
   void _onPanUpdate(DragUpdateDetails d) {
     if (_fase != _Fase.carta) return;
-    final delta = (d.delta.dx.abs() > d.delta.dy.abs() ? d.delta.dx : d.delta.dy);
+    // Solo eje horizontal; si el gesto es más vertical lo ignoramos
+    if (d.delta.dy.abs() > d.delta.dx.abs() * 1.5) return;
+    _flipSnapCtrl?.stop();
     setState(() {
-      _flipProgress = (_flipProgress + delta / 160.0).clamp(0.0, 1.0);
+      _flipProgress = (_flipProgress + d.delta.dx / 220.0).clamp(0.0, 1.0);
     });
   }
 
   void _onPanEnd(DragEndDetails d) {
     if (_fase != _Fase.carta) return;
-    final speed = d.velocity.pixelsPerSecond;
-    final velocidadSuficiente = speed.dx.abs() > 200 || speed.dy.abs() > 200;
-    if (_flipProgress > 0.35 || velocidadSuficiente) {
+    final vx = d.velocity.pixelsPerSecond.dx;
+    // Completa si pasó la mitad, o si viene con suficiente velocidad hacia adelante
+    if (_flipProgress >= 0.5 || vx > 300) {
       _snapFlip(1.0);
     } else {
       _snapFlip(0.0);
@@ -226,25 +239,26 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
   }
 
   void _snapFlip(double target) {
-    if (target == 1.0) HapticFeedback.mediumImpact();
     _flipSnapCtrl?.dispose();
-    _flipSnapCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 350),
-    );
+    final remaining = (target - _flipProgress).abs();
+    // Duración proporcional a distancia restante, mínimo 150 ms
+    final ms = (remaining * 520).clamp(150, 520).toInt();
+    _flipSnapCtrl = AnimationController(vsync: this, duration: Duration(milliseconds: ms));
+    _flipCurved?.dispose();
+    _flipCurved = CurvedAnimation(parent: _flipSnapCtrl!, curve: Curves.easeOutCubic);
     final start = _flipProgress;
-    _flipSnapCtrl!.addListener(() {
+
+    _flipCurved!.addListener(() {
       if (!mounted) return;
-      setState(() {
-        _flipProgress = start + (target - start) * _flipSnapCtrl!.value;
-      });
+      setState(() => _flipProgress = (start + (target - start) * _flipCurved!.value).clamp(0.0, 1.0));
     });
+
     if (target == 1.0) {
+      HapticFeedback.mediumImpact();
       _flipSnapCtrl!.addStatusListener((s) {
         if (s == AnimationStatus.completed && mounted) {
           HapticFeedback.heavyImpact();
-          _starCtrl.forward(from: 0);
-          Future.delayed(const Duration(milliseconds: 400), () {
+          Future.delayed(const Duration(milliseconds: 350), () {
             if (mounted) {
               setState(() => _fase = _Fase.reporte);
               _reporteFadeCtrl.forward(from: 0);
@@ -253,7 +267,8 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
         }
       });
     }
-    _flipSnapCtrl!.forward();
+
+    _flipSnapCtrl!.forward(from: 0);
   }
 
   Future<void> _regenerarReporte() async {
@@ -596,7 +611,7 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
                   child: _CartaAnimada(
                     flipProgress: _flipProgress,
                     anversoUrl: _anversoUrl,
-                    arquetipoUrl: _arquetipoUrl,
+                    arquetipoUrl: _arquetipoImgUrl,
                     cardWidth: size.width * 0.85,
                     cardHeight: size.height * 0.74,
                   ),
@@ -604,21 +619,6 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
               ),
             ),
 
-            // Estrellas al revelar
-            AnimatedBuilder(
-              animation: _starCtrl,
-              builder: (_, ch) => IgnorePointer(
-                child: CustomPaint(
-                  size: Size(size.width, size.height),
-                  painter: _StarPainter(
-                    particles: _particles,
-                    progress: _starCtrl.value,
-                    center: Offset(size.width / 2, size.height / 2),
-                    maxRadius: size.width * 0.75,
-                  ),
-                ),
-              ),
-            ),
 
             // Hint "desliza →"
             Positioned(
@@ -629,16 +629,20 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
                 builder: (_, ch) => AnimatedOpacity(
                   opacity: _slideCtrl.isCompleted ? 1.0 : 0.0,
                   duration: const Duration(milliseconds: 500),
-                  child: const Column(
+                  child: Column(
                     children: [
                       Text(
-                        'desliza →',
+                        'desliza la carta →',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.white38,
-                          fontSize: 13,
-                          letterSpacing: 3,
-                          fontWeight: FontWeight.w300,
+                          color: Color.lerp(
+                            Colors.black87,
+                            Colors.white70,
+                            _flipProgress,
+                          ),
+                          fontSize: 14,
+                          letterSpacing: 2,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                     ],
@@ -663,107 +667,159 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(28, 56, 28, 0),
+                    padding: const EdgeInsets.fromLTRB(24, 56, 24, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Header: avatares + nombres + ícono config
                         Row(
                           children: [
-                            CircleAvatar(
-                              radius: 22,
-                              backgroundColor: Colors.black12,
-                              backgroundImage: widget.amigoFotoUrl != null
-                                  ? NetworkImage(widget.amigoFotoUrl!) : null,
-                              child: widget.amigoFotoUrl == null
-                                  ? const Icon(Icons.person, color: Colors.black38, size: 20)
-                                  : null,
+                            Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                CircleAvatar(
+                                  radius: 18,
+                                  backgroundColor: Colors.white10,
+                                  backgroundImage: _miFotoUrlResolved != null
+                                      ? NetworkImage(_miFotoUrlResolved!) : null,
+                                  child: _miFotoUrlResolved == null
+                                      ? const Icon(Icons.person, color: Colors.white38, size: 16) : null,
+                                ),
+                                Positioned(
+                                  left: 22,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.black, width: 1.5),
+                                    ),
+                                    child: CircleAvatar(
+                                      radius: 18,
+                                      backgroundColor: Colors.white10,
+                                      backgroundImage: widget.amigoFotoUrl != null
+                                          ? NetworkImage(widget.amigoFotoUrl!) : null,
+                                      child: widget.amigoFotoUrl == null
+                                          ? const Icon(Icons.person, color: Colors.white38, size: 16) : null,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 14),
-                            Text('Tú y $primerNombre',
+                            const SizedBox(width: 48),
+                            Text('Tú · $primerNombre',
                                 style: const TextStyle(
-                                  color: Color(0xCCF3EBD6), fontSize: 18,
-                                  fontWeight: FontWeight.w300, letterSpacing: 1,
+                                  color: Color(0xCCF3EBD6), fontSize: 16,
+                                  fontWeight: FontWeight.w300, letterSpacing: 0.5,
                                 )),
+                            const Spacer(),
                           ],
                         ),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          height: 20,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              const Divider(color: Color(0x33F3EBD6)),
+                              Container(
+                                color: Colors.black,
+                                padding: const EdgeInsets.symmetric(horizontal: 10),
+                                child: const Text('✦',
+                                    style: TextStyle(color: Color(0xFFB8973A), fontSize: 13)),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        // Arquetipo
                         Text('ARQUETIPO',
-                            style: TextStyle(
-                                color: const Color(0xFFF3EBD6).withValues(alpha: 0.35),
-                                fontSize: 10, letterSpacing: 3)),
-                        const SizedBox(height: 8),
+                            style: const TextStyle(
+                                color: Color(0xFFB8973A),
+                                fontSize: 10, letterSpacing: 3,
+                                fontWeight: FontWeight.w500)),
+                        const SizedBox(height: 10),
                         Text(_arquetipoActivo,
                             style: const TextStyle(
-                              color: Color(0xFFF3EBD6), fontSize: 32,
-                              fontWeight: FontWeight.w200, letterSpacing: 1, height: 1.2,
+                              fontFamily: 'PlayfairDisplay',
+                              color: Color(0xFFF3EBD6), fontSize: 40,
+                              fontWeight: FontWeight.w400, height: 1.15,
                             )),
                         const SizedBox(height: 28),
                       ],
                     ),
                   ),
+
+                  // Imagen del arquetipo
                   Center(
                     child: Padding(
-                      padding: const EdgeInsets.only(bottom: 40),
+                      padding: const EdgeInsets.only(bottom: 32),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: SizedBox(
-                          width: size.width * 0.85,
-                          height: size.height * 0.74,
-                          child: Image.network(
-                            _arquetipoUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, e, st) =>
-                                const ColoredBox(color: Color(0xFF1A1A1A)),
+                        borderRadius: BorderRadius.circular(14),
+                        child: Image.network(
+                          _arquetipoImgUrl,
+                          width: size.width * 0.86,
+                          fit: BoxFit.fitWidth,
+                          errorBuilder: (_, e, st) => SizedBox(
+                            width: size.width * 0.86,
+                            height: size.width * 0.86 * 1.5,
+                            child: const ColoredBox(color: Color(0xFF1A1A1A)),
                           ),
                         ),
                       ),
                     ),
                   ),
+
+                  // Frase + CTA
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 28),
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Divider(color: const Color(0xFFF3EBD6).withValues(alpha: 0.08)),
-                        const SizedBox(height: 40),
-                        if (_reporte['intro']?.isNotEmpty == true)
-                          Text(_reporte['intro']!,
-                              style: const TextStyle(
-                                color: Color(0xCCF3EBD6), fontSize: 16,
-                                fontWeight: FontWeight.w300, height: 1.8, letterSpacing: 0.2,
-                              )),
-                        const SizedBox(height: 48),
-                        _CompatibilidadVisual(scores: _scoresSinastria),
-                        const SizedBox(height: 48),
-                        Divider(color: Colors.black.withValues(alpha: 0.08)),
-                        const SizedBox(height: 40),
-                        _seccion('ATRACCIÓN FÍSICA',     _reporte['atraccion']          ?? ''),
-                        _seccion('COMUNICACIÓN',         _reporte['comunicacion']       ?? ''),
-                        _seccion('CONEXIÓN EMOCIONAL',   _reporte['conexion_emocional'] ?? ''),
-                        _seccion('POTENCIAL',             _reporte['potencial']          ?? ''),
-                        const SizedBox(height: 48),
-                        _EscenariosVida(escenarios: _escenarios),
-                        const SizedBox(height: 48),
-                        GestureDetector(
-                          onTap: _regenerarReporte,
-                          behavior: HitTestBehavior.opaque,
-                          child: Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Text(
-                                _cargando ? 'generando…' : 'debug: regenerar reporte',
-                                style: TextStyle(
-                                  color: Colors.black.withValues(alpha: 0.2),
-                                  fontSize: 11,
-                                  letterSpacing: 1,
+                        Container(
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.04),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0x22F3EBD6)),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 38, height: 38,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: const Color(0xFFB8973A).withValues(alpha: 0.12),
+                                ),
+                                child: const Center(
+                                  child: Text('✦',
+                                      style: TextStyle(color: Color(0xFFB8973A), fontSize: 16)),
                                 ),
                               ),
-                            ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Text(
+                                  _fraseArquetipo(_arquetipoActivo),
+                                  style: const TextStyle(
+                                    color: Color(0xCCF3EBD6), fontSize: 13,
+                                    fontWeight: FontWeight.w300, height: 1.7,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 48),
                       ],
                     ),
+                  ),
+                  // ── Contenido del reporte ──────────────────────────────
+                  _ReporteContenido(
+                    reporte: _reporte,
+                    scores: _scoresSinastria,
+                    escenarios: _escenarios,
+                    amigoNombre: primerNombre,
+                    onDebug: _regenerarReporte,
+                    cargando: _cargando,
                   ),
                 ],
               ),
@@ -806,6 +862,25 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
     );
   }
 
+  static String _fraseArquetipo(String arquetipo) => const {
+    'Los Alquimistas':       'Lo que crean juntos no existía antes de que se encontraran.',
+    'Amor Fati':             'Hay patrones entre ustedes que aparecen para que los elijan, no para que los repitan.',
+    'Animo Flore':           'El crecimiento que se vive al lado del otro no siempre se ve, pero siempre se siente.',
+    'Delusional':            'A veces lo que parece ilusión es solo una verdad que aún no ha llegado.',
+    'El Hechizo':            'Hay cosas entre dos personas que no necesitan explicación. Solo presencia.',
+    'El Espiral y el Ciclo': 'Hay patrones que se repiten para que los entiendan,\nno para que se queden ahí.',
+    'Flor de Loto':          'La conexión más profunda nace de sostener al otro en lo que no es fácil.',
+    'Jardín Sereno':         'No todo amor es tormenta. Este es el tipo que permite respirar.',
+    'La Maravilla':          'Quedarse con alguien que todavía te sorprende es un acto de valentía.',
+    'Nudo Kármico':          'Cuando algo se repite, es porque todavía tiene algo que enseñar.',
+    'Sahacara':              'Algunas conexiones no buscan explicarse. Solo piden ser vividas.',
+    'Sublime':               'Lo que alcanzan juntos supera lo que cualquiera de los dos podría imaginar solo.',
+    'Umbral':                'Estar en el umbral no es estar perdido. Es estar a punto de algo.',
+    'Sen':                   'El silencio cómodo entre dos personas es una de las formas más raras del amor.',
+    'Cruz de Caminos':       'Encontrarse en la encrucijada no es accidente. Es el inicio de una elección.',
+    'Vértigo':               'La intensidad no es el problema. Lo que hacen con ella, sí importa.',
+  }[arquetipo] ?? 'Cada conexión tiene su propio lenguaje. Este es el suyo.';
+
   Widget _inicialWidget(String nombre) => Container(
     color: Colors.white10,
     child: Center(
@@ -816,43 +891,22 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
     ),
   );
 
-  Widget _seccion(String titulo, String texto) {
-    if (texto.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 40),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(titulo,
-              style: const TextStyle(
-                  color: Color(0x66F3EBD6),
-                  fontSize: 10,
-                  letterSpacing: 3)),
-          const SizedBox(height: 14),
-          Text(texto,
-              style: const TextStyle(
-                  color: Color(0xCCF3EBD6),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w300,
-                  height: 1.85,
-                  letterSpacing: 0.2)),
-        ],
-      ),
-    );
-  }
 }
 
 // ── Tabla "Su futuro juntos" ──────────────────────────────────────────────────
 class _EscenariosVida extends StatelessWidget {
   final Map<String, String> escenarios;
 
+  static const _beige = Color(0xFFF3EBD6);
+  static const _gold  = Color(0xFFB8973A);
+
   static const _filas = [
-    ('EN CASA',       'en_casa'),
-    ('EN PÚBLICO',    'en_publico'),
-    ('EN UNA PELEA',  'en_una_pelea'),
-    ('DE VIAJE',      'de_viaje'),
-    ('CON DINERO',    'con_dinero'),
-    ('EN LA VEJEZ',   'en_la_vejez'),
+    ('EN CASA',       'en_casa',       Icons.home_outlined),
+    ('EN PÚBLICO',    'en_publico',    Icons.people_outline),
+    ('EN UNA PELEA',  'en_una_pelea',  Icons.bolt_outlined),
+    ('DE VIAJE',      'de_viaje',      Icons.flight_outlined),
+    ('CON DINERO',    'con_dinero',    Icons.diamond_outlined),
+    ('EN LA VEJEZ',   'en_la_vejez',   Icons.favorite_border),
   ];
 
   const _EscenariosVida({required this.escenarios});
@@ -863,51 +917,89 @@ class _EscenariosVida extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('SU FUTURO JUNTOS',
-            style: const TextStyle(
-                color: Color(0x66F3EBD6),
-                fontSize: 10, letterSpacing: 3)),
-        const SizedBox(height: 20),
-        ...List.generate(_filas.length * 2 - 1, (i) {
-          if (i.isOdd) {
-            return const Divider(height: 1, color: Color(0x15F3EBD6));
-          }
-          final (label, key) = _filas[i ~/ 2];
-          final texto = escenarios[key] ?? '';
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 18),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 100,
-                  child: Text(label,
-                      style: const TextStyle(
-                          color: Color(0x66F3EBD6),
-                          fontSize: 9, letterSpacing: 1.5,
-                          fontWeight: FontWeight.w500)),
-                ),
-                Expanded(
-                  child: cargando || texto.isEmpty
-                      ? Container(
-                          height: 12,
+        // encabezado estilo carta
+        Row(children: [
+          Icon(Icons.auto_awesome_outlined, color: _gold.withValues(alpha: 0.6), size: 14),
+          const SizedBox(width: 10),
+          const Text('SU FUTURO JUNTOS',
+              style: TextStyle(
+                fontFamily: 'PlayfairDisplay',
+                color: _gold,
+                fontSize: 18, letterSpacing: 2, fontWeight: FontWeight.w700,
+              )),
+        ]),
+        const SizedBox(height: 6),
+        Text('Cómo se verían en distintos momentos de la vida.',
+            style: TextStyle(color: _beige.withValues(alpha: 0.3), fontSize: 12, height: 1.5)),
+        const SizedBox(height: 24),
+        // filas dentro de una tarjeta
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF0A0A0A),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: _beige.withValues(alpha: 0.07), width: 1),
+          ),
+          child: Column(
+            children: List.generate(_filas.length, (i) {
+              final (label, key, icon) = _filas[i];
+              final texto = escenarios[key] ?? '';
+              final isLast = i == _filas.length - 1;
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 36, height: 36,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF3EBD6).withValues(alpha: 0.07),
-                            borderRadius: BorderRadius.circular(2),
+                            shape: BoxShape.circle,
+                            color: _gold.withValues(alpha: 0.07),
+                            border: Border.all(color: _gold.withValues(alpha: 0.25), width: 1),
                           ),
-                        )
-                      : Text(texto,
-                          style: const TextStyle(
-                              color: Color(0xCCF3EBD6),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w300,
-                              height: 1.6,
-                              letterSpacing: 0.1)),
-                ),
-              ],
-            ),
-          );
-        }),
+                          child: Icon(icon, color: _gold.withValues(alpha: 0.65), size: 16),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(label,
+                                  style: TextStyle(
+                                    color: _beige.withValues(alpha: 0.45),
+                                    fontSize: 8, letterSpacing: 2,
+                                    fontWeight: FontWeight.w600,
+                                  )),
+                              const SizedBox(height: 6),
+                              cargando || texto.isEmpty
+                                  ? Container(
+                                      height: 10,
+                                      decoration: BoxDecoration(
+                                        color: _beige.withValues(alpha: 0.06),
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                    )
+                                  : Text(texto,
+                                      style: TextStyle(
+                                        color: _beige.withValues(alpha: 0.78),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w300,
+                                        height: 1.6,
+                                      )),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (!isLast)
+                    Divider(height: 1, color: _beige.withValues(alpha: 0.06)),
+                ],
+              );
+            }),
+          ),
+        ),
       ],
     );
   }
@@ -931,12 +1023,12 @@ class _CartaAnimada extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 0→0.5: anverso se achica (scaleX 1→0)
-    // 0.5→1: arquetipo crece (scaleX 0→1)
-    final showAnverso = flipProgress < 0.5;
-    final scaleX = showAnverso
+    final scaleX = flipProgress < 0.5
         ? 1.0 - flipProgress * 2.0
         : (flipProgress - 0.5) * 2.0;
+
+    // Sneak peek: arquetipo se asoma de 0.3→0.5, luego queda opaco
+    final arquetipoOpacity = ((flipProgress - 0.3) / 0.2).clamp(0.0, 1.0);
 
     return Transform(
       alignment: Alignment.center,
@@ -946,10 +1038,25 @@ class _CartaAnimada extends StatelessWidget {
         child: SizedBox(
           width: cardWidth,
           height: cardHeight,
-          child: Image.network(
-            showAnverso ? anversoUrl : arquetipoUrl,
-            fit: BoxFit.cover,
-            errorBuilder: (_, e, st) => const ColoredBox(color: Color(0xFF1A1A1A)),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Anverso siempre en el árbol — sin entrada/salida costosa
+              Image.network(
+                anversoUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, e, st) => const ColoredBox(color: Color(0xFF1A1A1A)),
+              ),
+              // Arquetipo siempre en el árbol, solo cambia su opacidad
+              Opacity(
+                opacity: arquetipoOpacity,
+                child: Image.network(
+                  arquetipoUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, e, st) => const ColoredBox(color: Color(0xFF1A1A1A)),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -961,75 +1068,108 @@ class _CartaAnimada extends StatelessWidget {
 class _CompatibilidadVisual extends StatelessWidget {
   final Map<String, double> scores;
 
-  static const _labels = ['IDENTIDAD', 'EMOCIÓN', 'ATRACCIÓN', 'PRESENCIA'];
-  static const _keys   = ['identidad', 'emocion', 'atraccion', 'presencia'];
+  static const _beige = Color(0xFFF3EBD6);
+  static const _gold  = Color(0xFFB8973A);
+
+  static const _datos = [
+    ('IDENTIDAD', 'identidad', Icons.person_outline),
+    ('EMOCIÓN',   'emocion',   Icons.water_drop_outlined),
+    ('ATRACCIÓN', 'atraccion', Icons.favorite_border),
+    ('PRESENCIA', 'presencia', Icons.visibility_outlined),
+  ];
 
   const _CompatibilidadVisual({required this.scores});
 
   @override
   Widget build(BuildContext context) {
-    final s = _keys.map((k) => scores[k] ?? 0.5).toList();
+    final s = _datos.map((d) => scores[d.$2] ?? 0.5).toList();
     final total = s.reduce((a, b) => a + b) / s.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // título sección
+        Row(children: [
+          Expanded(child: Divider(color: _gold.withValues(alpha: 0.18), thickness: 0.5)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Text('AFINIDAD', style: TextStyle(
+              color: _gold.withValues(alpha: 0.5), fontSize: 9, letterSpacing: 3)),
+          ),
+          Expanded(child: Divider(color: _gold.withValues(alpha: 0.18), thickness: 0.5)),
+        ]),
+        const SizedBox(height: 28),
+        // anillos
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: List.generate(4, (i) => _Anillo(
-            label: _labels[i],
+            label: _datos[i].$1,
+            icon: _datos[i].$3,
             value: s[i],
           )),
         ),
         const SizedBox(height: 36),
-        const Text('AFINIDAD TOTAL',
-            style: TextStyle(
-                color: Color(0x66F3EBD6),
-                fontSize: 10, letterSpacing: 3)),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: TweenAnimationBuilder<double>(
+        // barra total
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0A0A0A),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _gold.withValues(alpha: 0.15), width: 1),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Icon(Icons.auto_awesome, color: _gold.withValues(alpha: 0.6), size: 14),
+                const SizedBox(width: 8),
+                Text('AFINIDAD TOTAL', style: TextStyle(
+                  color: _beige.withValues(alpha: 0.4),
+                  fontSize: 9, letterSpacing: 3)),
+                const Spacer(),
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: total),
+                  duration: const Duration(milliseconds: 1300),
+                  curve: Curves.easeOutCubic,
+                  builder: (_, v, child) => Text(
+                    '${(v * 100).round()}%',
+                    style: TextStyle(
+                      color: _beige.withValues(alpha: 0.85),
+                      fontSize: 20,
+                      fontFamily: 'PlayfairDisplay',
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+              ]),
+              const SizedBox(height: 14),
+              TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0, end: total),
-                duration: const Duration(milliseconds: 1200),
+                duration: const Duration(milliseconds: 1300),
                 curve: Curves.easeOutCubic,
-                builder: (ctx, v, ch) => Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(2),
-                      child: Stack(
-                        children: [
-                          Container(height: 3,
-                              color: const Color(0xFFF3EBD6).withValues(alpha: 0.12)),
-                          FractionallySizedBox(
-                            widthFactor: v,
-                            child: Container(height: 3, color: const Color(0xFFF3EBD6)),
-                          ),
-                        ],
+                builder: (_, v, child) => ClipRRect(
+                  borderRadius: BorderRadius.circular(3),
+                  child: Stack(children: [
+                    Container(height: 5,
+                        color: _beige.withValues(alpha: 0.08)),
+                    FractionallySizedBox(
+                      widthFactor: v,
+                      child: Container(
+                        height: 5,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(colors: [
+                            _gold.withValues(alpha: 0.5),
+                            _gold,
+                          ]),
+                        ),
                       ),
                     ),
-                  ],
+                  ]),
                 ),
               ),
-            ),
-            const SizedBox(width: 16),
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: total),
-              duration: const Duration(milliseconds: 1200),
-              curve: Curves.easeOutCubic,
-              builder: (ctx, v, ch) => Text(
-                '${(v * 100).round()}%',
-                style: const TextStyle(
-                  color: Color(0xCCF3EBD6),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w300,
-                  letterSpacing: 1,
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -1038,9 +1178,13 @@ class _CompatibilidadVisual extends StatelessWidget {
 
 class _Anillo extends StatelessWidget {
   final String label;
-  final double value; // 0.0–1.0
+  final IconData icon;
+  final double value;
 
-  const _Anillo({required this.label, required this.value});
+  static const _beige = Color(0xFFF3EBD6);
+  static const _gold  = Color(0xFFB8973A);
+
+  const _Anillo({required this.label, required this.icon, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -1048,31 +1192,37 @@ class _Anillo extends StatelessWidget {
       tween: Tween(begin: 0, end: value),
       duration: const Duration(milliseconds: 1100),
       curve: Curves.easeOutCubic,
-      builder: (ctx, v, ch) => Column(
+      builder: (ctx, v, _) => Column(
         children: [
           SizedBox(
-            width: 64,
-            height: 64,
+            width: 72,
+            height: 72,
             child: CustomPaint(
               painter: _AnilloPainter(value: v),
               child: Center(
-                child: Text(
-                  '${(v * 100).round()}%',
-                  style: const TextStyle(
-                    color: Color(0xCCF3EBD6),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w300,
-                    letterSpacing: 0,
-                  ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icon, color: _gold.withValues(alpha: 0.7 + v * 0.3), size: 18),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${(v * 100).round()}',
+                      style: TextStyle(
+                        color: _beige.withValues(alpha: 0.8),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w300,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
           const SizedBox(height: 8),
           Text(label,
-              style: const TextStyle(
-                color: Color(0x66F3EBD6),
-                fontSize: 8,
+              style: TextStyle(
+                color: _beige.withValues(alpha: 0.4),
+                fontSize: 7,
                 letterSpacing: 1.5,
               )),
         ],
@@ -1119,57 +1269,607 @@ class _AnilloPainter extends CustomPainter {
   bool shouldRepaint(_AnilloPainter old) => old.value != value;
 }
 
-// ── Partícula de estrella ─────────────────────────────────────────────────────
-class _Particle {
-  final double angle;
-  final double speed;
-  final double size;
-  const _Particle({required this.angle, required this.speed, required this.size});
-}
+// ── Contenido del reporte — estilo carta astral ───────────────────────────────
+class _ReporteContenido extends StatelessWidget {
+  final Map<String, String> reporte;
+  final Map<String, double> scores;
+  final Map<String, String> escenarios;
+  final String amigoNombre;
+  final VoidCallback onDebug;
+  final bool cargando;
 
-// ── Painter de estrellas ──────────────────────────────────────────────────────
-class _StarPainter extends CustomPainter {
-  final List<_Particle> particles;
-  final double progress;   // 0→1
-  final Offset center;
-  final double maxRadius;
+  static const _beige = Color(0xFFF3EBD6);
+  static const _gold  = Color(0xFFB8973A);
 
-  const _StarPainter({
-    required this.particles,
-    required this.progress,
-    required this.center,
-    required this.maxRadius,
+  const _ReporteContenido({
+    required this.reporte,
+    required this.scores,
+    required this.escenarios,
+    required this.amigoNombre,
+    required this.onDebug,
+    required this.cargando,
   });
 
   @override
-  void paint(Canvas canvas, Size size) {
-    if (progress == 0) return;
-    final eased = Curves.easeOut.transform(progress);
-    for (final p in particles) {
-      final dist = eased * maxRadius * p.speed;
-      final opacity = (1.0 - progress).clamp(0.0, 1.0);
-      final paint = Paint()
-        ..color = const Color(0xFFF3EBD6).withValues(alpha: opacity)
-        ..style = PaintingStyle.fill;
+  Widget build(BuildContext context) {
+    final screenW = MediaQuery.of(context).size.width;
+    final screenH = MediaQuery.of(context).size.height;
 
-      final cx = center.dx + math.cos(p.angle) * dist;
-      final cy = center.dy + math.sin(p.angle) * dist;
-      final s = p.size * (1.0 - progress * 0.5);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Intro — tarjeta con cita en PlayfairDisplay ──────────────────
+        if ((reporte['intro'] ?? '').isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 48),
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xFF0D0D0D),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: _gold.withValues(alpha: 0.28), width: 1),
+                boxShadow: [
+                  BoxShadow(color: _gold.withValues(alpha: 0.08), blurRadius: 36),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // header ornamental
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    decoration: BoxDecoration(
+                      border: Border(bottom: BorderSide(color: _gold.withValues(alpha: 0.12))),
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 48, height: 48,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _gold.withValues(alpha: 0.08),
+                            border: Border.all(color: _gold.withValues(alpha: 0.4), width: 1),
+                            boxShadow: [BoxShadow(color: _gold.withValues(alpha: 0.22), blurRadius: 16)],
+                          ),
+                          child: const Center(
+                            child: Text('♡', style: TextStyle(color: _gold, fontSize: 20)),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          amigoNombre,
+                          style: const TextStyle(
+                            fontFamily: 'PlayfairDisplay',
+                            color: _gold,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w400,
+                            fontStyle: FontStyle.italic,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'lo que los une tiene una forma única.',
+                          style: TextStyle(
+                            color: _beige.withValues(alpha: 0.3),
+                            fontSize: 11,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: _TextoReporte(texto: reporte['intro']!, color: _beige.withValues(alpha: 0.82)),
+                  ),
+                ],
+              ),
+            ),
+          ),
 
-      // Estrella de 4 puntas
-      final path = Path();
-      for (int i = 0; i < 8; i++) {
-        final r = i.isEven ? s : s * 0.35;
-        final a = i * math.pi / 4 - math.pi / 8;
-        final x = cx + math.cos(a) * r;
-        final y = cy + math.sin(a) * r;
-        if (i == 0) { path.moveTo(x, y); } else { path.lineTo(x, y); }
-      }
-      path.close();
-      canvas.drawPath(path, paint);
-    }
+        // ── Afinidad visual ──────────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 56),
+          child: _CompatibilidadVisual(scores: scores),
+        ),
+
+        // ── Secciones tap-to-reveal ──────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(28, 0, 28, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _DividerOro(gold: _gold),
+              const Text(
+                'ENTRE USTEDES',
+                style: TextStyle(
+                  fontFamily: 'PlayfairDisplay',
+                  color: _gold,
+                  fontSize: 22,
+                  letterSpacing: 2,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Toca cada área para explorarla.',
+                style: TextStyle(color: _beige.withValues(alpha: 0.35), fontSize: 12, height: 1.5),
+              ),
+              const SizedBox(height: 28),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
+          child: _SeccionesReveal(reporte: reporte, beige: _beige, gold: _gold),
+        ),
+
+        // ── Potencial — tarjeta estilo "futuro" ──────────────────────────
+        if ((reporte['potencial'] ?? '').isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(28, 48, 28, 0),
+            child: _PotencialCard(texto: reporte['potencial']!, beige: _beige, gold: _gold),
+          ),
+
+        // ── Su futuro juntos ─────────────────────────────────────────────
+        if (escenarios.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(28, 56, 28, 0),
+            child: _EscenariosVida(escenarios: escenarios),
+          ),
+
+        // ── Despedida ────────────────────────────────────────────────────
+        const SizedBox(height: 72),
+        Builder(builder: (ctx) {
+          return ClipPath(
+            clipper: _CierreClipper(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: screenH * 0.72, minWidth: screenW),
+              child: Container(
+                width: screenW,
+                color: const Color(0xFFF0EBE3),
+                padding: const EdgeInsets.fromLTRB(28, 56, 28, 60),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Lo que encontraron tiene nombre.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: 'PlayfairDisplay',
+                        color: Color(0xFF1A1410),
+                        fontSize: 22,
+                        fontWeight: FontWeight.w400,
+                        height: 1.8,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 36),
+                    Text(
+                      'La astrología no crea la conexión entre dos personas. Solo le da un nombre, una forma, una manera de mirarse con más claridad.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: const Color(0xFF1A1410).withValues(alpha: 0.52),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w300,
+                        height: 2.0,
+                        letterSpacing: 0.1,
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    Text(
+                      'No hay dos vínculos iguales. Este es solo suyo. Úsenlo como quieran.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: const Color(0xFF1A1410).withValues(alpha: 0.52),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w300,
+                        height: 2.0,
+                        letterSpacing: 0.1,
+                      ),
+                    ),
+                    const SizedBox(height: 56),
+                    const Text(
+                      'Con cariño — El equipo de ecos',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xFFB8973A),
+                        fontSize: 16,
+                        letterSpacing: 2.5,
+                        fontWeight: FontWeight.w700,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    Text(
+                      '<3',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: const Color(0xFFB8973A).withValues(alpha: 0.5),
+                        fontSize: 18,
+                        letterSpacing: 2,
+                        fontWeight: FontWeight.w300,
+                      ),
+                    ),
+
+                    // Debug
+                    const SizedBox(height: 40),
+                    GestureDetector(
+                      onTap: onDebug,
+                      behavior: HitTestBehavior.opaque,
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Text(
+                            cargando ? 'generando…' : 'debug: regenerar reporte',
+                            style: TextStyle(
+                              color: const Color(0xFF1A1410).withValues(alpha: 0.18),
+                              fontSize: 11,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+}
+
+// ── Secciones tap-to-reveal (estilo Ámbitos) ─────────────────────────────────
+class _SeccionesReveal extends StatefulWidget {
+  final Map<String, String> reporte;
+  final Color beige;
+  final Color gold;
+  const _SeccionesReveal({required this.reporte, required this.beige, required this.gold});
+
+  @override
+  State<_SeccionesReveal> createState() => _SeccionesRevealState();
+}
+
+class _SeccionesRevealState extends State<_SeccionesReveal>
+    with SingleTickerProviderStateMixin {
+
+  static const _datos = [
+    ('atraccion',         'ATRACCIÓN',   '♡', Icons.favorite_border),
+    ('comunicacion',      'COMUNICACIÓN','◦', Icons.chat_bubble_outline),
+    ('conexion_emocional','EMOCIÓN',     '☽', Icons.water_drop_outlined),
+  ];
+
+  int? _abierto;
+  final Set<int> _vistos = {};
+  late final AnimationController _animCtrl;
+  late final Animation<double> _fadeAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _animCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 380));
+    _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeIn);
   }
 
   @override
-  bool shouldRepaint(_StarPainter old) => old.progress != progress;
+  void dispose() { _animCtrl.dispose(); super.dispose(); }
+
+  void _tap(int i) {
+    if (_abierto == i) {
+      _animCtrl.reverse().then((_) => setState(() => _abierto = null));
+    } else {
+      setState(() { _abierto = i; _vistos.add(i); });
+      _animCtrl.forward(from: 0);
+    }
+  }
+
+  Widget _circulo(int i) {
+    final gold  = widget.gold;
+    final beige = widget.beige;
+    final entry = _datos[i];
+    final selec = _abierto == i;
+    final visto = _vistos.contains(i);
+    final hasText = (widget.reporte[entry.$1] ?? '').isNotEmpty;
+
+    final iconColor = visto
+        ? (selec ? gold : gold.withValues(alpha: 0.7))
+        : (hasText ? beige.withValues(alpha: 0.4) : Colors.grey.withValues(alpha: 0.2));
+    final borderColor = visto
+        ? (selec ? gold.withValues(alpha: 0.85) : gold.withValues(alpha: 0.35))
+        : beige.withValues(alpha: 0.15);
+
+    return GestureDetector(
+      onTap: hasText ? () => _tap(i) : null,
+      child: Column(
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 280),
+            width: 72, height: 72,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF0D0D0D),
+              border: Border.all(color: borderColor, width: 1),
+              boxShadow: selec ? [
+                BoxShadow(color: gold.withValues(alpha: 0.38), blurRadius: 20),
+                BoxShadow(color: gold.withValues(alpha: 0.15), blurRadius: 40),
+              ] : [],
+            ),
+            child: Icon(entry.$4, size: 26, color: iconColor),
+          ),
+          const SizedBox(height: 9),
+          Text(
+            entry.$2,
+            style: TextStyle(
+              color: visto ? beige.withValues(alpha: 0.85) : beige.withValues(alpha: 0.45),
+              fontSize: 8,
+              letterSpacing: 1.8,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final gold  = widget.gold;
+    final beige = widget.beige;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: List.generate(_datos.length, _circulo),
+        ),
+        if (_abierto != null) ...[
+          const SizedBox(height: 28),
+          FadeTransition(
+            opacity: _fadeAnim,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0D0D0D),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: gold.withValues(alpha: 0.3), width: 1),
+                boxShadow: [
+                  BoxShadow(color: gold.withValues(alpha: 0.1), blurRadius: 20),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 42, height: 42,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: gold.withValues(alpha: 0.08),
+                          border: Border.all(color: gold.withValues(alpha: 0.5), width: 1),
+                          boxShadow: [BoxShadow(color: gold.withValues(alpha: 0.2), blurRadius: 12)],
+                        ),
+                        child: Icon(_datos[_abierto!].$4, size: 20, color: gold),
+                      ),
+                      const SizedBox(width: 14),
+                      Text(
+                        _datos[_abierto!].$2,
+                        style: TextStyle(
+                          fontFamily: 'PlayfairDisplay',
+                          color: gold,
+                          fontSize: 16, letterSpacing: 2.5, fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () => _animCtrl.reverse().then((_) => setState(() => _abierto = null)),
+                        child: Icon(Icons.close, size: 16, color: beige.withValues(alpha: 0.25)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Divider(color: gold.withValues(alpha: 0.1), thickness: 0.5),
+                  const SizedBox(height: 14),
+                  _TextoReporte(
+                    texto: widget.reporte[_datos[_abierto!].$1] ?? '',
+                    color: beige.withValues(alpha: 0.8),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: 16),
+      ],
+    );
+  }
 }
+
+// ── Potencial — tarjeta estilo "futuro" ───────────────────────────────────────
+class _PotencialCard extends StatelessWidget {
+  final String texto;
+  final Color beige;
+  final Color gold;
+  const _PotencialCard({required this.texto, required this.beige, required this.gold});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('SU POTENCIAL',
+            style: TextStyle(
+              fontFamily: 'PlayfairDisplay',
+              color: gold.withValues(alpha: 0.9),
+              fontSize: 22, letterSpacing: 2, fontWeight: FontWeight.w700,
+            )),
+        const SizedBox(height: 18),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: const Color(0xFF080808),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: gold.withValues(alpha: 0.2), width: 1),
+            boxShadow: [BoxShadow(color: gold.withValues(alpha: 0.07), blurRadius: 32)],
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                left: 0, top: 16, bottom: 16,
+                child: Container(
+                  width: 2,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(2),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        gold.withValues(alpha: 0.0),
+                        gold.withValues(alpha: 0.55),
+                        gold.withValues(alpha: 0.0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Lo que pueden construir',
+                        style: TextStyle(
+                          fontFamily: 'PlayfairDisplay',
+                          color: gold.withValues(alpha: 0.6),
+                          fontSize: 13, letterSpacing: 1.2, fontWeight: FontWeight.w400,
+                          fontStyle: FontStyle.italic,
+                        )),
+                    const SizedBox(height: 6),
+                    Divider(color: gold.withValues(alpha: 0.1), thickness: 0.5),
+                    const SizedBox(height: 14),
+                    _TextoReporte(texto: texto, color: beige.withValues(alpha: 0.82)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Divisor ornamental ────────────────────────────────────────────────────────
+class _DividerOro extends StatelessWidget {
+  final Color gold;
+  const _DividerOro({required this.gold});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 40),
+    child: Row(children: [
+      Expanded(child: Divider(color: gold.withValues(alpha: 0.25), thickness: 0.5)),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Text('✦', style: TextStyle(color: gold.withValues(alpha: 0.4), fontSize: 12)),
+      ),
+      Expanded(child: Divider(color: gold.withValues(alpha: 0.25), thickness: 0.5)),
+    ]),
+  );
+}
+
+// ── Clipper curvo para la despedida ───────────────────────────────────────────
+class _CierreClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    const arc = 40.0;
+    return Path()
+      ..moveTo(0, arc)
+      ..quadraticBezierTo(size.width / 2, -arc, size.width, arc)
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+  }
+  @override
+  bool shouldReclip(_CierreClipper old) => false;
+}
+
+// ── Texto con negritas y dorado aleatorio ─────────────────────────────────────
+class _TextoReporte extends StatefulWidget {
+  final String texto;
+  final Color color;
+  const _TextoReporte({required this.texto, required this.color});
+
+  @override
+  State<_TextoReporte> createState() => _TextoReporteState();
+}
+
+class _TextoReporteState extends State<_TextoReporte> {
+  late List<Set<int>> _negritaPorParrafo;
+  late List<int?> _doradoPorParrafo;
+
+  static const _gold = Color(0xFFB8973A);
+
+  @override
+  void initState() {
+    super.initState();
+    final rng = math.Random();
+    final parrafos = widget.texto.split(RegExp(r'\n\n+'));
+    _negritaPorParrafo = parrafos.map((p) {
+      final palabras = p.trim().split(RegExp(r'\s+'));
+      final candidatos = palabras.asMap().entries
+          .where((e) => e.value.replaceAll(RegExp(r'[^\wáéíóúüñÁÉÍÓÚÜÑ]'), '').length >= 6)
+          .map((e) => e.key)
+          .toList()..shuffle(rng);
+      return candidatos.take(3).toSet();
+    }).toList();
+    _doradoPorParrafo = parrafos.map((p) {
+      final palabras = p.trim().split(RegExp(r'\s+'));
+      final candidatos = palabras.asMap().entries
+          .where((e) => e.value.replaceAll(RegExp(r'[^\wáéíóúüñÁÉÍÓÚÜÑ]'), '').length >= 8)
+          .map((e) => e.key)
+          .toList()..shuffle(rng);
+      return candidatos.isNotEmpty ? candidatos.first : null;
+    }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final parrafos = widget.texto.split(RegExp(r'\n\n+'));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var pi = 0; pi < parrafos.length; pi++) ...[
+          if (pi > 0) const SizedBox(height: 14),
+          RichText(
+            text: TextSpan(
+              children: () {
+                final palabras = parrafos[pi].trim().split(RegExp(r'\s+'));
+                final negrita = _negritaPorParrafo[pi];
+                final dorado  = pi < _doradoPorParrafo.length ? _doradoPorParrafo[pi] : null;
+                return List.generate(palabras.length, (i) => TextSpan(
+                  text: i < palabras.length - 1 ? '${palabras[i]} ' : palabras[i],
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    color: i == dorado ? _gold : widget.color,
+                    fontSize: 14,
+                    fontWeight: negrita.contains(i) ? FontWeight.w700 : FontWeight.w300,
+                    height: 1.75,
+                  ),
+                ));
+              }(),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+

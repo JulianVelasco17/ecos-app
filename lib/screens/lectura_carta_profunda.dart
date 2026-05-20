@@ -17,6 +17,9 @@ class PantallaLecturaCartaProfunda extends StatefulWidget {
 class _PantallaLecturaCartaProfundaState extends State<PantallaLecturaCartaProfunda> {
   bool _cargando = true;
   Map<String, String> _lectura = {};
+  String? _signoSolar;
+  String? _signoLunar;
+  String? _ascendente;
 
   static const _beige = Color(0xFFE7D8C9);
   static const _gold  = Color(0xFFB8973A);
@@ -45,17 +48,6 @@ class _PantallaLecturaCartaProfundaState extends State<PantallaLecturaCartaProfu
       final cacheDoc = await FirebaseFirestore.instance
           .collection('lecturasProfundas').doc('${uid}_carta_v2').get();
 
-      if (cacheDoc.exists) {
-        final raw = cacheDoc.data()!;
-        if (mounted) {
-          setState(() {
-            _lectura = {for (final s in _secciones) s.$2: raw[s.$2] as String? ?? ''};
-            _cargando = false;
-          });
-        }
-        return;
-      }
-
       final userDoc = await FirebaseFirestore.instance.collection('usuarios').doc(uid).get();
       if (!mounted) return;
       if (!userDoc.exists) { setState(() => _cargando = false); return; }
@@ -71,6 +63,21 @@ class _PantallaLecturaCartaProfundaState extends State<PantallaLecturaCartaProfu
 
       final carta = CalculosAstrales.calcular(
           fechaNacimiento: fecha, hora: hora, minutos: min, latitud: lat, longitud: lon);
+
+      if (cacheDoc.exists) {
+        final raw = cacheDoc.data()!;
+        if (mounted) {
+          setState(() {
+            _lectura = {for (final s in _secciones) s.$2: raw[s.$2] as String? ?? ''};
+            _signoSolar  = carta.signoSolar;
+            _signoLunar  = carta.signoLunar;
+            _ascendente  = carta.ascendente;
+            _cargando = false;
+          });
+        }
+        return;
+      }
+
       final aspectos = AspectosNatales.calcular(fecha, hora, min);
       final etiquetas = aspectos.map((a) =>
           '${a.planeta1} ${a.tipo} ${a.planeta2} (orbe ${a.orbe.toStringAsFixed(1)}°)').toList();
@@ -100,7 +107,15 @@ class _PantallaLecturaCartaProfundaState extends State<PantallaLecturaCartaProfu
             .set({...lectura, 'fecha': FieldValue.serverTimestamp()});
       }
 
-      if (mounted) setState(() { _lectura = lectura; _cargando = false; });
+      if (mounted) {
+        setState(() {
+          _lectura     = lectura;
+          _signoSolar  = carta.signoSolar;
+          _signoLunar  = carta.signoLunar;
+          _ascendente  = carta.ascendente;
+          _cargando    = false;
+        });
+      }
     } catch (e) {
       if (mounted) setState(() => _cargando = false);
     }
@@ -147,6 +162,15 @@ class _PantallaLecturaCartaProfundaState extends State<PantallaLecturaCartaProfu
                     Container(width: 32, height: 1.5, color: _gold),
                     const SizedBox(height: 48),
 
+                    if (_signoSolar != null) ...[
+                      _Big3Row(
+                        solar:      _signoSolar!,
+                        lunar:      _signoLunar!,
+                        ascendente: _ascendente!,
+                      ),
+                      const SizedBox(height: 44),
+                    ],
+
                     ..._secciones.where((s) => (_lectura[s.$2] ?? '').isNotEmpty).map((s) =>
                       _Seccion(icono: s.$3, titulo: s.$1, texto: _lectura[s.$2]!),
                     ),
@@ -154,6 +178,77 @@ class _PantallaLecturaCartaProfundaState extends State<PantallaLecturaCartaProfu
                 ),
               ),
       ),
+    );
+  }
+}
+
+// ── Big 3 row ─────────────────────────────────────────────────────────────────
+
+class _Big3Row extends StatelessWidget {
+  final String solar;
+  final String lunar;
+  final String ascendente;
+
+  const _Big3Row({required this.solar, required this.lunar, required this.ascendente});
+
+  static const _beige = Color(0xFFE7D8C9);
+  static const _gold  = Color(0xFFB8973A);
+
+  static const _simbolos = {
+    'Aries': '♈', 'Tauro': '♉', 'Géminis': '♊', 'Geminis': '♊',
+    'Cáncer': '♋', 'Cancer': '♋', 'Leo': '♌', 'Virgo': '♍',
+    'Libra': '♎', 'Escorpio': '♏', 'Sagitario': '♐',
+    'Capricornio': '♑', 'Acuario': '♒', 'Piscis': '♓',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      ('☉', solar,      'SOL'),
+      ('☽', lunar,      'LUNA'),
+      ('↑', ascendente, 'ASC'),
+    ];
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: items.map((item) {
+        final simboloSigno = _simbolos[item.$2] ?? '✦';
+        return Column(
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: _gold.withValues(alpha: 0.45), width: 1),
+                color: Colors.white.withValues(alpha: 0.04),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(item.$1,
+                      style: TextStyle(color: _gold.withValues(alpha: 0.6), fontSize: 13)),
+                  const SizedBox(height: 4),
+                  Text(simboloSigno,
+                      style: TextStyle(color: _beige.withValues(alpha: 0.9), fontSize: 22)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(item.$3,
+                style: TextStyle(
+                    color: _beige.withValues(alpha: 0.3),
+                    fontSize: 9, letterSpacing: 2.5)),
+            const SizedBox(height: 3),
+            Text(item.$2,
+                style: TextStyle(
+                    color: _beige.withValues(alpha: 0.75),
+                    fontSize: 12,
+                    fontFamily: 'PlayfairDisplay',
+                    fontWeight: FontWeight.w400)),
+          ],
+        );
+      }).toList(),
     );
   }
 }

@@ -322,7 +322,12 @@ class BancoFrases {
     {'id': 318, 'frase': 'No todos los finales son pérdidas.',                             'area': 'duelo',     'intensidad': 'media'},
     {'id': 319, 'frase': 'A veces quedarte es lo que más te cuesta.',                      'area': 'cambio',    'intensidad': 'intensa'},
     {'id': 320, 'frase': 'No todo lo que extrañas te hace bien.',                          'area': 'duelo',     'intensidad': 'intensa'},
-    {'id': 321, 'frase': 'Puedes empezar de nuevo sin explicarte.',                        'area': 'cambio',    'intensidad': 'media'},
+    {'id': 321, 'frase': 'Puedes empezar de nuevo sin explicarte.',                                          'area': 'cambio',    'intensidad': 'media'},
+    {'id': 322, 'frase': 'Enséñale al mundo tu manera de amar.',                                            'area': 'amor',      'intensidad': 'suave'},
+    {'id': 323, 'frase': 'Se hizo más grande la planta que la maceta.',                                     'area': 'cambio',    'intensidad': 'media'},
+    {'id': 324, 'frase': 'Algo hermoso está por pasar.',                                                    'area': 'esperanza', 'intensidad': 'suave'},
+    {'id': 325, 'frase': 'Todavía estás vivo.',                                                             'area': 'tiempo',    'intensidad': 'intensa'},
+    {'id': 326, 'frase': 'En tiempos oscuros, ¿también deberían apagarse las estrellas?',                  'area': 'duelo',     'intensidad': 'intensa'},
   ];
 
 

@@ -6,12 +6,14 @@ class CartaRevealScreen extends StatefulWidget {
   final String remitente;
   final String mensaje;
   final String? imagenUrl;
+  final String? pregunta;
 
   const CartaRevealScreen({
     super.key,
     required this.remitente,
     required this.mensaje,
     this.imagenUrl,
+    this.pregunta,
   });
 
   @override
@@ -161,6 +163,7 @@ class _CartaRevealScreenState extends State<CartaRevealScreen>
                           remitente: widget.remitente,
                           mensaje:   widget.mensaje,
                           imagenUrl: widget.imagenUrl,
+                          pregunta:  widget.pregunta,
                           onCerrar:  () => Navigator.of(context).pop(),
                         ),
                       ),
@@ -221,12 +224,14 @@ class _ContenidoCarta extends StatelessWidget {
   final String remitente;
   final String mensaje;
   final String? imagenUrl;
+  final String? pregunta;
   final VoidCallback onCerrar;
 
   const _ContenidoCarta({
     required this.remitente,
     required this.mensaje,
     required this.imagenUrl,
+    this.pregunta,
     required this.onCerrar,
   });
 
@@ -258,6 +263,22 @@ class _ContenidoCarta extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 28),
+          if (pregunta != null && pregunta!.isNotEmpty) ...[
+            Text(
+              pregunta!,
+              style: const TextStyle(
+                fontFamily: 'PlayfairDisplay',
+                color: Color(0xFF2A2420),
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                height: 1.3,
+                letterSpacing: 0.2,
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Divider(color: Color(0xFFD8CEBC)),
+            const SizedBox(height: 20),
+          ],
           if (imagenUrl != null) ...[
             ClipRRect(
               borderRadius: BorderRadius.circular(4),

@@ -358,7 +358,6 @@ class _Enlazada extends StatefulWidget {
 
 class _EnlazadaState extends State<_Enlazada> {
   bool _cargando = true;
-  List<AspectoNatal> _aspectos = [];
   String _miNombre   = '';
   String _parejaName = '';
   String? _miFotoUrl;
@@ -505,7 +504,6 @@ class _EnlazadaState extends State<_Enlazada> {
 
     if (mounted) {
       setState(() {
-        _aspectos      = aspectos;
         _miNombre      = miNombre;
         _parejaName    = parejaName;
         _miFotoUrl     = miDatos['fotoUrl'] as String?;
@@ -559,6 +557,7 @@ class _EnlazadaState extends State<_Enlazada> {
                 final remitente = _cartaPendiente!['de'] as String? ?? _parejaName;
                 final mensaje   = _cartaPendiente!['mensaje'] as String? ?? '';
                 final imagenUrl = _cartaPendiente!['imagenUrl'] as String?;
+                final pregunta  = _cartaPendiente!['pregunta'] as String?;
                 final nav = Navigator.of(context);
                 await _marcarCartaLeida();
                 if (!mounted) return;
@@ -568,6 +567,7 @@ class _EnlazadaState extends State<_Enlazada> {
                       remitente: remitente,
                       mensaje:   mensaje,
                       imagenUrl: imagenUrl,
+                      pregunta:  pregunta,
                     ),
                     transitionsBuilder: (ctx, anim, a, child) =>
                         FadeTransition(opacity: anim, child: child),
@@ -646,9 +646,7 @@ class _EnlazadaState extends State<_Enlazada> {
             ),
           ),
 
-          const SizedBox(height: 40),
-          const Divider(color: Colors.black12),
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
 
           if (_cargando)
             const LoadingImages()
@@ -668,42 +666,26 @@ class _EnlazadaState extends State<_Enlazada> {
             const SizedBox(height: 12),
             if (_fraseCompat != null && _fraseCompat!.isNotEmpty) ...[
               Center(
-                child: Text(
-                  _fraseCompat!.replaceAll('tu pareja', _parejaName.split(' ').first),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontFamily: 'PlayfairDisplay',
-                    color: Color(0xFF222222),
-                    fontSize: 36,
-                    fontWeight: FontWeight.w400,
-                    height: 1.3,
-                    letterSpacing: 1.0,
-                  ),
+                child: _FraseDorada(
+                  texto: _fraseCompat!.replaceAll('tu pareja', _parejaName.split(' ').first),
                 ),
               ),
               const SizedBox(height: 16),
             ],
             if (_textoCompat != null && _textoCompat!.isNotEmpty) ...[
-              Text(
-                _textoCompat!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.black54,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w300,
-                  height: 1.7,
-                ),
-              ),
+              _TextoNegritas(texto: _textoCompat!),
               if (_cierreCompat != null && _cierreCompat!.isNotEmpty) ...[
                 const SizedBox(height: 14),
-                Text(
-                  _cierreCompat!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.black38,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w300,
-                    height: 1.7,
+                Center(
+                  child: Text(
+                    _cierreCompat!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.black38,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w300,
+                      height: 1.7,
+                    ),
                   ),
                 ),
               ],
@@ -720,55 +702,97 @@ class _EnlazadaState extends State<_Enlazada> {
               parejaName: _parejaName,
             ),
 
-            const SizedBox(height: 40),
-            const Divider(color: Colors.black12),
-            const SizedBox(height: 32),
-
-            // ── Aspectos de sinastría ───────────────────────────────────
-            const Text('SU SINASTRÍA',
-                style: TextStyle(color: Colors.black26, fontSize: 10, letterSpacing: 3)),
-            const SizedBox(height: 6),
-            const Text(
-              'Los ángulos entre sus cartas natales.',
-              style: TextStyle(color: Colors.black38, fontSize: 12, height: 1.6),
-            ),
-            const SizedBox(height: 24),
-
-            if (_aspectos.isEmpty)
-              const Text('Pocas tensiones — vuestras cartas se ignoran en su mayor parte.',
-                  style: TextStyle(color: Colors.black38, fontSize: 13, height: 1.6))
-            else
-              ..._aspectos.map((a) {
-                final corto = AspectosNatales.nombreCorto(a.tipo);
-                final sig   = AspectosNatales.significadoAleatorio(corto);
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 18),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(width: 3, height: 40, margin: const EdgeInsets.only(right: 14, top: 2), color: Colors.black12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('${a.planeta1}  ·  $corto  ·  ${a.planeta2}',
-                                style: const TextStyle(color: Colors.black, fontSize: 13, letterSpacing: 1, fontWeight: FontWeight.w300)),
-                            const SizedBox(height: 3),
-                            Text(sig, style: const TextStyle(color: Colors.black38, fontSize: 12, height: 1.5)),
-                          ],
-                        ),
-                      ),
-                      Text('${a.orbe.toStringAsFixed(1)}°',
-                          style: const TextStyle(color: Colors.black26, fontSize: 11)),
-                    ],
-                  ),
-                );
-              }),
-
             const SizedBox(height: 32),
           ],
         ],
       ),
+    );
+  }
+}
+
+// ── Frase con una palabra aleatoria (pero determinista) en dorado ─────────────
+class _FraseDorada extends StatelessWidget {
+  final String texto;
+  const _FraseDorada({required this.texto});
+
+  static const _gold = Color(0xFFB8973A);
+  static const _base = TextStyle(
+    fontFamily: 'PlayfairDisplay',
+    color: Color(0xFF222222),
+    fontSize: 36,
+    fontWeight: FontWeight.w400,
+    height: 1.3,
+    letterSpacing: 1.0,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final palabras = texto.split(' ');
+    if (palabras.isEmpty) return Text(texto, textAlign: TextAlign.center, style: _base);
+
+    // Elige índice determinista basado en el contenido de la frase
+    final idx = texto.codeUnits.fold<int>(0, (a, b) => a + b) % palabras.length;
+
+    return RichText(
+      textAlign: TextAlign.center,
+      text: TextSpan(
+        style: _base,
+        children: List.generate(palabras.length * 2 - 1, (i) {
+          if (i.isOdd) return const TextSpan(text: ' ');
+          final wi = i ~/ 2;
+          return TextSpan(
+            text: palabras[wi],
+            style: wi == idx ? _base.copyWith(color: _gold) : null,
+          );
+        }),
+      ),
+    );
+  }
+}
+
+// ── Texto con 2 palabras en negritas por párrafo ──────────────────────────────
+class _TextoNegritas extends StatelessWidget {
+  final String texto;
+  const _TextoNegritas({required this.texto});
+
+  @override
+  Widget build(BuildContext context) {
+    final parrafos = texto.split('\n\n');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: parrafos.map((p) {
+        final palabras = p.trim().split(' ');
+        // elige 2 índices deterministas basados en el contenido
+        final seed = p.codeUnits.fold<int>(0, (a, b) => a + b);
+        final elegibles = [
+          for (int i = 0; i < palabras.length; i++)
+            if (palabras[i].replaceAll(RegExp(r'[^\w]'), '').length >= 5) i
+        ];
+        final Set<int> negras = {};
+        if (elegibles.isNotEmpty) {
+          negras.add(elegibles[seed % elegibles.length]);
+          if (elegibles.length > 1) negras.add(elegibles[(seed ~/ 7 + 1) % elegibles.length]);
+        }
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: RichText(
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              style: const TextStyle(color: Colors.black54, fontSize: 13, fontWeight: FontWeight.w300, height: 1.7),
+              children: List.generate(palabras.length * 2 - 1, (i) {
+                if (i.isOdd) return const TextSpan(text: ' ');
+                final wi = i ~/ 2;
+                return TextSpan(
+                  text: palabras[wi],
+                  style: negras.contains(wi)
+                      ? const TextStyle(fontWeight: FontWeight.w600, color: Colors.black87)
+                      : null,
+                );
+              }),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }
