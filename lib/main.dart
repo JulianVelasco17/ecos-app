@@ -34,10 +34,12 @@ void main() async {
   ClimaAstralService.instance.precargar();
   await DebugConfig.instance.cargar();
   if (Platform.isIOS) {
-    await Purchases.setLogLevel(LogLevel.debug);
-    await Purchases.configure(
-      PurchasesConfiguration(dotenv.env['REVENUECAT_IOS_KEY']!),
-    );
+    try {
+      await Purchases.setLogLevel(LogLevel.debug);
+      await Purchases.configure(
+        PurchasesConfiguration(dotenv.env['REVENUECAT_IOS_KEY']!),
+      );
+    } catch (_) {}
   }
   runApp(const MyApp());
 }
