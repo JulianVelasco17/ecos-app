@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../services/debug_config.dart';
 import '../widgets/loading_images.dart';
+import '../widgets/fade_avatar.dart';
+import '../widgets/debug_boton_carga.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/aspectos_natales.dart';
@@ -182,6 +185,7 @@ class _PantallaVenusState extends State<PantallaVenus> {
               _EstadoVenus.solicitudRecibida  => _SolicitudRecibida(enlace: _enlace!, onAceptar: _aceptar, onRechazar: _cancelarORechar),
               _EstadoVenus.enlazado           => _Enlazada(enlace: _enlace!, onDisolver: _disolver),
             },
+            if (DebugConfig.instance.activo)
             Positioned(
               bottom: 16,
               right: 32,
@@ -254,11 +258,11 @@ class _SolicitudEnviada extends StatelessWidget {
           Center(
             child: Column(
               children: [
-                CircleAvatar(
+                FadeAvatar(
                   radius: 36,
                   backgroundColor: Colors.black12,
-                  backgroundImage: enlace['fotoUrl'] != null ? NetworkImage(enlace['fotoUrl']) : null,
-                  child: enlace['fotoUrl'] == null ? const Icon(Icons.person, color: Colors.black45, size: 36) : null,
+                  fotoUrl: enlace['fotoUrl'],
+                  fallbackChild: const Icon(Icons.person, color: Colors.black45, size: 36),
                 ),
                 const SizedBox(height: 20),
                 Text(enlace['nombre'] ?? '', style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w300, letterSpacing: 2)),
@@ -305,11 +309,11 @@ class _SolicitudRecibida extends StatelessWidget {
           Center(
             child: Column(
               children: [
-                CircleAvatar(
+                FadeAvatar(
                   radius: 36,
                   backgroundColor: Colors.black12,
-                  backgroundImage: enlace['fotoUrl'] != null ? NetworkImage(enlace['fotoUrl']) : null,
-                  child: enlace['fotoUrl'] == null ? const Icon(Icons.person, color: Colors.black45, size: 36) : null,
+                  fotoUrl: enlace['fotoUrl'],
+                  fallbackChild: const Icon(Icons.person, color: Colors.black45, size: 36),
                 ),
                 const SizedBox(height: 20),
                 Text(enlace['nombre'] ?? '', style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w300, letterSpacing: 2)),
@@ -518,6 +522,7 @@ class _EnlazadaState extends State<_Enlazada> {
 
   @override
   Widget build(BuildContext context) {
+    if (_cargando) return const LoadingImages();
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
       child: Column(
@@ -620,11 +625,11 @@ class _EnlazadaState extends State<_Enlazada> {
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  CircleAvatar(
+                  FadeAvatar(
                     radius: 40,
                     backgroundColor: Colors.black12,
-                    backgroundImage: _miFotoUrl != null ? NetworkImage(_miFotoUrl!) : null,
-                    child: _miFotoUrl == null ? const Icon(Icons.person, color: Colors.black38, size: 32) : null,
+                    fotoUrl: _miFotoUrl,
+                    fallbackChild: const Icon(Icons.person, color: Colors.black38, size: 32),
                   ),
                   Positioned(
                     left: 56,
@@ -633,11 +638,11 @@ class _EnlazadaState extends State<_Enlazada> {
                         shape: BoxShape.circle,
                         border: Border.all(color: const Color(0xFFF3EBD6), width: 2),
                       ),
-                      child: CircleAvatar(
+                      child: FadeAvatar(
                         radius: 40,
                         backgroundColor: Colors.black12,
-                        backgroundImage: _parejaFotoUrl != null ? NetworkImage(_parejaFotoUrl!) : null,
-                        child: _parejaFotoUrl == null ? const Icon(Icons.person, color: Colors.black38, size: 32) : null,
+                        fotoUrl: _parejaFotoUrl,
+                        fallbackChild: const Icon(Icons.person, color: Colors.black38, size: 32),
                       ),
                     ),
                   ),
@@ -648,11 +653,12 @@ class _EnlazadaState extends State<_Enlazada> {
 
           const SizedBox(height: 16),
 
-          if (_cargando)
-            const LoadingImages()
-          else ...[
+          DebugBotonCarga(onTap: () => setState(() => _cargando = true)),
+
+          ...[
 
             // ── Frase de compatibilidad ─────────────────────────────────
+            if (DebugConfig.instance.activo)
             GestureDetector(
               onTap: _regenerando ? null : _regenerarCompat,
               behavior: HitTestBehavior.opaque,

@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../widgets/fade_avatar.dart';
+import '../services/debug_config.dart';
+import '../widgets/debug_boton_carga.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
@@ -113,7 +116,7 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
           child: _TarjetaCompartirBeige(frase: _frase!),
         ),
         pixelRatio: 1.0,
-        targetSize: const Size(1080, 3000),
+        targetSize: const Size(1080, 1080),
       );
       final dir  = await getTemporaryDirectory();
       final file = File('${dir.path}/ecos_frase.png');
@@ -537,7 +540,7 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
               if (!_cargando) ...[
                 _buildBlob(),
                 const SizedBox(height: 8),
-                // DEBUG — borrar antes de publicar
+                if (DebugConfig.instance.activo) ...[
               GestureDetector(
                 onTap: () => setState(() => _mostrarDebug = !_mostrarDebug),
                 behavior: HitTestBehavior.opaque,
@@ -620,9 +623,12 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                   ),
                 ),
               ],
-              ],
+              ], // end if DebugConfig
+              ], // end if !_cargando
 
               const SizedBox(height: 24),
+
+              DebugBotonCarga(onTap: () => setState(() => _cargando = true)),
 
               // ── Tarjeta de lectura del día ──────────────────────────────────
               if (_cargando)
@@ -778,6 +784,7 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                         letterSpacing: 3,
                       ),
                     ),
+                    if (DebugConfig.instance.activo)
                     GestureDetector(
                       onTap: _refrescarCompatibilidades,
                       behavior: HitTestBehavior.opaque,
@@ -825,15 +832,11 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                           children: [
                             Row(
                               children: [
-                                CircleAvatar(
+                                FadeAvatar(
                                   radius: 26,
                                   backgroundColor: Colors.black.withValues(alpha: 0.06),
-                                  backgroundImage: amigo['fotoUrl'] != null
-                                      ? NetworkImage(amigo['fotoUrl'] as String)
-                                      : null,
-                                  child: amigo['fotoUrl'] == null
-                                      ? const Icon(Icons.person, color: Colors.black26, size: 22)
-                                      : null,
+                                  fotoUrl: amigo['fotoUrl'] as String?,
+                                  fallbackChild: const Icon(Icons.person, color: Colors.black26, size: 22),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
@@ -1087,41 +1090,57 @@ class _TarjetaCompartirBeige extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 1080,
-      color: const Color(0xFFF3EBD6),
-      padding: const EdgeInsets.fromLTRB(96, 120, 96, 96),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            frase,
-            style: const TextStyle(
-              fontFamily: 'PlayfairDisplay',
-              color: Color(0xFF222222),
-              fontSize: 36,
-              fontWeight: FontWeight.w400,
-              height: 1.2,
-              letterSpacing: 1.0,
-            ),
-          ),
-          const SizedBox(height: 56),
-          const Divider(color: Color(0x22000000), thickness: 1),
-          const SizedBox(height: 32),
-          const Align(
-            alignment: Alignment.centerRight,
-            child: Text(
+    const size = 1080.0;
+    const pad  = 96.0;
+
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Container(
+        color: const Color(0xFFF3EBD6),
+        padding: const EdgeInsets.all(pad),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // marca superior
+            const Text(
               'ecos',
               style: TextStyle(
-                color: Color(0x44000000),
-                fontSize: 32,
-                letterSpacing: 12,
+                color: Color(0x55000000),
+                fontSize: 28,
+                letterSpacing: 10,
                 fontWeight: FontWeight.w300,
               ),
             ),
-          ),
-        ],
+            const Spacer(),
+            // frase — limitada para no desbordar
+            Text(
+              frase,
+              maxLines: 10,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: 'PlayfairDisplay',
+                color: Color(0xFF222222),
+                fontSize: 52,
+                fontWeight: FontWeight.w400,
+                height: 1.25,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const Spacer(),
+            const Divider(color: Color(0x22000000), thickness: 1),
+            const SizedBox(height: 32),
+            const Text(
+              'ecos · carta astral del día',
+              style: TextStyle(
+                color: Color(0x44000000),
+                fontSize: 24,
+                letterSpacing: 4,
+                fontWeight: FontWeight.w300,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

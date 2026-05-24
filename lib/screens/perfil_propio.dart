@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../widgets/fade_avatar.dart';
+import '../services/debug_config.dart';
 import '../widgets/loading_images.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -217,13 +219,11 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio>
                             onTap: _cambiarFoto,
                             child: Stack(
                               children: [
-                                CircleAvatar(
+                                FadeAvatar(
                                   radius: 36,
                                   backgroundColor: Colors.black12,
-                                  backgroundImage: _datos?['fotoUrl'] != null
-                                      ? NetworkImage(_datos!['fotoUrl'])
-                                      : null,
-                                  child: _datos?['fotoUrl'] == null
+                                  fotoUrl: _datos?['fotoUrl'],
+                                  fallbackChild: _datos?['fotoUrl'] == null
                                       ? Text(
                                           (_datos?['nombre'] ?? '?')[0].toLowerCase(),
                                           style: const TextStyle(
@@ -527,6 +527,7 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio>
                         ),
                       ),
                     ),
+                    if (DebugConfig.instance.activo) ...[
                     GestureDetector(
                       onTap: () => Navigator.push(context,
                           MaterialPageRoute(builder: (_) => const PantallaCompraCarta())),
@@ -557,6 +558,7 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio>
                                 fontSize: 11, letterSpacing: 1.5)),
                       ),
                     ),
+                    ],
                     const SizedBox(height: 48),
 
                     ], // end carta tab

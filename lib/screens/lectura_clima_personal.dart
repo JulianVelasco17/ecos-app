@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../services/debug_config.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
 import '../widgets/ouroboros_loader.dart';
+import '../widgets/debug_boton_carga.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/calculos_astrales.dart';
@@ -273,15 +275,11 @@ class _PantallaLecturaClimaPersonalState extends State<PantallaLecturaClimaPerso
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                GestureDetector(
+                                DebugBotonCarga(
                                   onTap: () => setState(() => _cargando = true),
-                                  behavior: HitTestBehavior.opaque,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                    child: Text('debug: ver animación',
-                                        style: TextStyle(color: _beige.withValues(alpha: 0.12), fontSize: 10, letterSpacing: 1.5)),
-                                  ),
+                                  color: _beige.withValues(alpha: 0.25),
                                 ),
+                                if (DebugConfig.instance.activo) ...[
                                 Text('·', style: TextStyle(color: _beige.withValues(alpha: 0.12), fontSize: 10)),
                                 GestureDetector(
                                   onTap: () {
@@ -295,6 +293,7 @@ class _PantallaLecturaClimaPersonalState extends State<PantallaLecturaClimaPerso
                                         style: TextStyle(color: _beige.withValues(alpha: 0.12), fontSize: 10, letterSpacing: 1.5)),
                                   ),
                                 ),
+                                ],
                               ],
                             ),
                           ),

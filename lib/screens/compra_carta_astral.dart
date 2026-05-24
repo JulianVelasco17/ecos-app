@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:video_player/video_player.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
+import '../services/debug_config.dart';
 import 'lectura_carta_astral.dart';
 import 'home.dart';
 import 'login.dart';
@@ -24,6 +26,17 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
   Offset _tapOrigin = Offset.zero;
   VideoPlayerController? _videoPropio;
   VideoPlayerController? _videoSolin;
+  String _precioStr = r'$59';
+  String _unidadStr = 'pago único';
+
+  Future<void> _cargarPrecio() async {
+    try {
+      final productos = await Purchases.getProducts(['com.ecos.astroapp.carta_profunda']);
+      if (mounted && productos.isNotEmpty) {
+        setState(() { _precioStr = productos.first.priceString; });
+      }
+    } catch (_) {}
+  }
 
   static const _url =
       'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Fonboard.mp4?alt=media&token=4dc6d672-2bb1-43b5-933b-47fda187ac9c';
@@ -47,6 +60,7 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
       ..setLooping(false)
       ..setVolume(0)
       ..initialize();
+    _cargarPrecio();
   }
 
   @override
@@ -61,12 +75,28 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
     if (uid == null) return;
     setState(() => _activando = true);
     try {
-      await FirebaseFirestore.instance
-          .collection('usuarios').doc(uid)
-          .set({'cartaActiva': true}, SetOptions(merge: true));
+      if (DebugConfig.instance.activo) {
+        await FirebaseFirestore.instance
+            .collection('usuarios').doc(uid)
+            .set({'cartaActiva': true}, SetOptions(merge: true));
+      } else {
+        final products = await Purchases.getProducts(['com.ecos.astroapp.carta_profunda']);
+        if (products.isEmpty) throw Exception('producto no disponible');
+        await Purchases.purchaseStoreProduct(products.first);
+        await FirebaseFirestore.instance
+            .collection('usuarios').doc(uid)
+            .set({'cartaActiva': true}, SetOptions(merge: true));
+      }
       if (!mounted) return;
       PantallaLecturaCartaAstral.navigateTo(context, _tapOrigin, videoPreload: _videoSolin);
-      _videoSolin = null; // ownership transferred
+      _videoSolin = null;
+    } on PurchasesErrorCode catch (e) {
+      if (e != PurchasesErrorCode.purchaseCancelledError && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo completar el pago. Intenta de nuevo.')),
+        );
+      }
+      if (mounted) setState(() => _activando = false);
     } catch (e) {
       if (!mounted) return;
       setState(() => _activando = false);
@@ -186,19 +216,19 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.baseline,
                           textBaseline: TextBaseline.alphabetic,
-                          children: const [
+                          children: [
                             Text(
-                              '\$59',
-                              style: TextStyle(
+                              _precioStr,
+                              style: const TextStyle(
                                 color: Colors.black,
                                 fontSize: 40,
                                 fontWeight: FontWeight.w300,
                               ),
                             ),
-                            SizedBox(width: 8),
+                            const SizedBox(width: 8),
                             Text(
-                              'MXN · pago único',
-                              style: TextStyle(color: Colors.black45, fontSize: 13, letterSpacing: 0.5),
+                              _unidadStr,
+                              style: const TextStyle(color: Colors.black45, fontSize: 13, letterSpacing: 0.5),
                             ),
                           ],
                         ),
@@ -307,6 +337,24 @@ class _PantallaDescuentoState extends State<_PantallaDescuento> {
   Offset _tapOrigin = Offset.zero;
   VideoPlayerController? _videoPropio;
   VideoPlayerController? _videoSolin;
+  String _precioStr = r'$39';
+  String _precioOrigStr = r'$59';
+
+  Future<void> _cargarPrecio() async {
+    try {
+      final productos = await Purchases.getProducts([
+        'com.ecos.astroapp.carta_profunda_descuento',
+        'com.ecos.astroapp.carta_profunda',
+      ]);
+      if (!mounted) return;
+      setState(() {
+        final desc = productos.where((p) => p.identifier.contains('descuento')).firstOrNull;
+        final orig = productos.where((p) => !p.identifier.contains('descuento')).firstOrNull;
+        if (desc != null) _precioStr = desc.priceString;
+        if (orig != null) _precioOrigStr = orig.priceString;
+      });
+    } catch (_) {}
+  }
 
   static const _url =
       'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Fonboard.mp4?alt=media&token=4dc6d672-2bb1-43b5-933b-47fda187ac9c';
@@ -333,6 +381,7 @@ class _PantallaDescuentoState extends State<_PantallaDescuento> {
       ..setLooping(false)
       ..setVolume(0)
       ..initialize();
+    _cargarPrecio();
   }
 
   @override
@@ -347,12 +396,28 @@ class _PantallaDescuentoState extends State<_PantallaDescuento> {
     if (uid == null) return;
     setState(() => _activando = true);
     try {
-      await FirebaseFirestore.instance
-          .collection('usuarios').doc(uid)
-          .set({'cartaActiva': true}, SetOptions(merge: true));
+      if (DebugConfig.instance.activo) {
+        await FirebaseFirestore.instance
+            .collection('usuarios').doc(uid)
+            .set({'cartaActiva': true}, SetOptions(merge: true));
+      } else {
+        final products = await Purchases.getProducts(['com.ecos.astroapp.carta_profunda_descuento']);
+        if (products.isEmpty) throw Exception('producto no disponible');
+        await Purchases.purchaseStoreProduct(products.first);
+        await FirebaseFirestore.instance
+            .collection('usuarios').doc(uid)
+            .set({'cartaActiva': true}, SetOptions(merge: true));
+      }
       if (!mounted) return;
       PantallaLecturaCartaAstral.navigateTo(context, _tapOrigin, videoPreload: _videoSolin);
       _videoSolin = null;
+    } on PurchasesErrorCode catch (e) {
+      if (e != PurchasesErrorCode.purchaseCancelledError && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo completar el pago. Intenta de nuevo.')),
+        );
+      }
+      if (mounted) setState(() => _activando = false);
     } catch (e) {
       if (!mounted) return;
       setState(() => _activando = false);
@@ -445,28 +510,28 @@ class _PantallaDescuentoState extends State<_PantallaDescuento> {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.baseline,
                           textBaseline: TextBaseline.alphabetic,
-                          children: const [
+                          children: [
                             Text(
-                              '\$39',
-                              style: TextStyle(
+                              _precioStr,
+                              style: const TextStyle(
                                 color: Colors.black,
                                 fontSize: 40,
                                 fontWeight: FontWeight.w300,
                               ),
                             ),
-                            SizedBox(width: 8),
-                            Text(
-                              'MXN · pago único',
+                            const SizedBox(width: 8),
+                            const Text(
+                              'pago único',
                               style: TextStyle(color: Colors.black45, fontSize: 13, letterSpacing: 0.5),
                             ),
                           ],
                         ),
                         const SizedBox(height: 4),
                         Row(
-                          children: const [
+                          children: [
                             Text(
-                              '\$59',
-                              style: TextStyle(
+                              _precioOrigStr,
+                              style: const TextStyle(
                                 color: Colors.black26,
                                 fontSize: 13,
                                 decoration: TextDecoration.lineThrough,

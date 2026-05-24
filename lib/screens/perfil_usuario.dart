@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/fade_avatar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -127,13 +128,11 @@ class _PantallaPerfilUsuarioState extends State<PantallaPerfilUsuario> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircleAvatar(
+              FadeAvatar(
                 radius: 48,
                 backgroundColor: Colors.black12,
-                backgroundImage: widget.fotoUrl != null ? NetworkImage(widget.fotoUrl!) : null,
-                child: widget.fotoUrl == null
-                    ? const Icon(Icons.person, color: Colors.black45, size: 48)
-                    : null,
+                fotoUrl: widget.fotoUrl,
+                fallbackChild: const Icon(Icons.person, color: Colors.black45, size: 48),
               ),
 
               const SizedBox(height: 24),

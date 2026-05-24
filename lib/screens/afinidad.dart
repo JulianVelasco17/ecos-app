@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/fade_avatar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'pago_romantico.dart';
@@ -199,18 +200,14 @@ class _PantallaAfinidadState extends State<PantallaAfinidad>
               Center(
                 child: Column(
                   children: [
-                    CircleAvatar(
+                    FadeAvatar(
                       radius: 58,
                       backgroundColor: Colors.black12,
-                      backgroundImage: widget.amigoFotoUrl != null
-                          ? NetworkImage(widget.amigoFotoUrl!)
-                          : null,
-                      child: widget.amigoFotoUrl == null
-                          ? Text(
-                              widget.amigoNombre[0].toLowerCase(),
-                              style: const TextStyle(color: Colors.black54, fontSize: 24, fontWeight: FontWeight.w300),
-                            )
-                          : null,
+                      fotoUrl: widget.amigoFotoUrl,
+                      fallbackChild: Text(
+                        widget.amigoNombre[0].toLowerCase(),
+                        style: const TextStyle(color: Colors.black54, fontSize: 24, fontWeight: FontWeight.w300),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Row(
@@ -846,13 +843,11 @@ class _VennAfinidad extends StatelessWidget {
                   // Foto A — orillada a la izquierda
                   Positioned(
                     left: cAx - r * 0.65, top: cy - 30,
-                    child: CircleAvatar(
+                    child: FadeAvatar(
                       radius: 30,
                       backgroundColor: Colors.black12,
-                      backgroundImage: fotoUrlA != null ? NetworkImage(fotoUrlA!) : null,
-                      child: fotoUrlA == null
-                          ? Text(nombreA[0], style: const TextStyle(color: Colors.black45, fontSize: 22, fontWeight: FontWeight.w300))
-                          : null,
+                      fotoUrl: fotoUrlA,
+                      fallbackChild: Text(nombreA[0], style: const TextStyle(color: Colors.black45, fontSize: 22, fontWeight: FontWeight.w300)),
                     ),
                   ),
                   // Nombre A
@@ -872,13 +867,11 @@ class _VennAfinidad extends StatelessWidget {
                   // Foto B — orillada a la derecha
                   Positioned(
                     left: cBx + r * 0.65 - 30, top: cy - 30,
-                    child: CircleAvatar(
+                    child: FadeAvatar(
                       radius: 30,
                       backgroundColor: Colors.black12,
-                      backgroundImage: fotoUrlB != null ? NetworkImage(fotoUrlB!) : null,
-                      child: fotoUrlB == null
-                          ? Text(nombreB[0], style: const TextStyle(color: Colors.black45, fontSize: 22, fontWeight: FontWeight.w300))
-                          : null,
+                      fotoUrl: fotoUrlB,
+                      fallbackChild: Text(nombreB[0], style: const TextStyle(color: Colors.black45, fontSize: 22, fontWeight: FontWeight.w300)),
                     ),
                   ),
                   // Nombre B

@@ -2,6 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../widgets/fade_avatar.dart';
+import '../services/debug_config.dart';
+import '../widgets/debug_boton_carga.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -503,14 +506,11 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
                                   shape: BoxShape.circle,
                                   border: Border.all(color: Colors.black, width: 2),
                                 ),
-                                child: CircleAvatar(
+                                child: FadeAvatar(
                                   radius: 52,
                                   backgroundColor: Colors.white10,
-                                  backgroundImage: widget.amigoFotoUrl != null
-                                      ? NetworkImage(widget.amigoFotoUrl!) : null,
-                                  child: widget.amigoFotoUrl == null
-                                      ? const Icon(Icons.person, color: Colors.white38, size: 32)
-                                      : null,
+                                  fotoUrl: widget.amigoFotoUrl,
+                                  fallbackChild: const Icon(Icons.person, color: Colors.white38, size: 32),
                                 ),
                               ),
                             ),
@@ -677,13 +677,11 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
                             Stack(
                               clipBehavior: Clip.none,
                               children: [
-                                CircleAvatar(
+                                FadeAvatar(
                                   radius: 18,
                                   backgroundColor: Colors.white10,
-                                  backgroundImage: _miFotoUrlResolved != null
-                                      ? NetworkImage(_miFotoUrlResolved!) : null,
-                                  child: _miFotoUrlResolved == null
-                                      ? const Icon(Icons.person, color: Colors.white38, size: 16) : null,
+                                  fotoUrl: _miFotoUrlResolved,
+                                  fallbackChild: const Icon(Icons.person, color: Colors.white38, size: 16),
                                 ),
                                 Positioned(
                                   left: 22,
@@ -692,13 +690,11 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
                                       shape: BoxShape.circle,
                                       border: Border.all(color: Colors.black, width: 1.5),
                                     ),
-                                    child: CircleAvatar(
+                                    child: FadeAvatar(
                                       radius: 18,
                                       backgroundColor: Colors.white10,
-                                      backgroundImage: widget.amigoFotoUrl != null
-                                          ? NetworkImage(widget.amigoFotoUrl!) : null,
-                                      child: widget.amigoFotoUrl == null
-                                          ? const Icon(Icons.person, color: Colors.white38, size: 16) : null,
+                                      fotoUrl: widget.amigoFotoUrl,
+                                      fallbackChild: const Icon(Icons.person, color: Colors.white38, size: 16),
                                     ),
                                   ),
                                 ),
@@ -843,7 +839,12 @@ class _PantallaReporteRomaticoState extends State<PantallaReporteRomantico>
                           color: Color(0x66F3EBD6), size: 18),
                     ),
                   ),
+                  DebugBotonCarga(
+                    onTap: () => setState(() => _cargando = true),
+                    color: Color(0x44F3EBD6),
+                  ),
                   const Spacer(),
+                  if (DebugConfig.instance.activo)
                   GestureDetector(
                     onTap: _mostrarDebugMenu,
                     behavior: HitTestBehavior.opaque,
@@ -1496,6 +1497,7 @@ class _ReporteContenido extends StatelessWidget {
                     ),
 
                     // Debug
+                    if (DebugConfig.instance.activo) ...[
                     const SizedBox(height: 40),
                     GestureDetector(
                       onTap: onDebug,
@@ -1515,6 +1517,7 @@ class _ReporteContenido extends StatelessWidget {
                       ),
                     ),
                   ],
+                  ], // end if DebugConfig
                 ),
               ),
             ),

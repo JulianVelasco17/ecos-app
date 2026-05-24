@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/fade_avatar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -125,10 +126,11 @@ class _PantallaVenusBuscarParejaState extends State<PantallaVenusBuscarPareja> {
   Widget _buildUsuarioTile(Map<String, dynamic> u) {
     final enviando = _enviandoA == u['uid'];
     return ListTile(
-      leading: CircleAvatar(
+      leading: FadeAvatar(
+        radius: 20,
         backgroundColor: Colors.black12,
-        backgroundImage: u['fotoUrl'] != null ? NetworkImage(u['fotoUrl']) : null,
-        child: u['fotoUrl'] == null ? const Icon(Icons.person, color: Colors.black45) : null,
+        fotoUrl: u['fotoUrl'],
+        fallbackChild: const Icon(Icons.person, color: Colors.black45),
       ),
       title: Text(u['nombre'] ?? '', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w300, letterSpacing: 1)),
       subtitle: Text('@${u['usuario'] ?? ''}', style: const TextStyle(color: Colors.black45, fontSize: 12, letterSpacing: 1)),

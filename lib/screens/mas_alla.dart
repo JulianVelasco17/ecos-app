@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../widgets/ouroboros_loader.dart';
+import '../widgets/debug_boton_carga.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:screenshot/screenshot.dart';
@@ -351,17 +352,9 @@ class _PantallaMasAllaState extends State<PantallaMasAlla> {
                                     color: _beige.withValues(alpha: 0.72),
                                   ),
                                   const SizedBox(height: 12),
-                                  GestureDetector(
+                                  DebugBotonCarga(
                                     onTap: () => setState(() => _cargando = true),
-                                    behavior: HitTestBehavior.opaque,
-                                    child: Text(
-                                      'debug: ver animación →',
-                                      style: TextStyle(
-                                        color: _gold.withValues(alpha: 0.3),
-                                        fontSize: 10,
-                                        letterSpacing: 1.5,
-                                      ),
-                                    ),
+                                    color: _gold.withValues(alpha: 0.35),
                                   ),
                                 ],
                               ),

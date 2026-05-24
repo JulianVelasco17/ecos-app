@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/fade_avatar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -282,11 +283,11 @@ class _AmigoTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
-            CircleAvatar(
+            FadeAvatar(
               radius: 24,
               backgroundColor: Colors.black.withValues(alpha: 0.08),
-              backgroundImage: amigo.fotoUrl != null ? NetworkImage(amigo.fotoUrl!) : null,
-              child: amigo.fotoUrl == null
+              fotoUrl: amigo.fotoUrl,
+              fallbackChild: amigo.fotoUrl == null
                   ? Text(
                       amigo.nombre.isNotEmpty ? amigo.nombre[0].toUpperCase() : '?',
                       style: TextStyle(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../services/debug_config.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 
 class PantallaVenusSuscripcion extends StatefulWidget {
   // Cuando se pasa, la pantalla está embebida en Venus (sin flecha de regresar)
@@ -13,6 +15,25 @@ class PantallaVenusSuscripcion extends StatefulWidget {
 
 class _PantallaVenusSuscripcionState extends State<PantallaVenusSuscripcion> {
   bool _activando = false;
+  String _precioStr = r'$99 / mes';
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarPrecio();
+  }
+
+  Future<void> _cargarPrecio() async {
+    try {
+      final productos = await Purchases.getProducts(
+        ['com.ecos.astroapp.venus_mensual'],
+        productCategory: ProductCategory.subscription,
+      );
+      if (mounted && productos.isNotEmpty) {
+        setState(() => _precioStr = '${productos.first.priceString} / mes');
+      }
+    } catch (_) {}
+  }
 
   Future<void> _activarDebug() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -116,8 +137,8 @@ class _PantallaVenusSuscripcionState extends State<PantallaVenusSuscripcion> {
                   const SizedBox(height: 14),
                   const _Beneficio(
                     icono: Icons.auto_awesome_outlined,
-                    titulo: 'lectura de pareja',
-                    descripcion: 'una lectura breve para entender lo que hay entre ustedes',
+                    titulo: 'reporte de compatibilidad',
+                    descripcion: 'una lectura profunda para entender lo que hay entre ustedes',
                   ),
                   const SizedBox(height: 14),
                   const _Beneficio(
@@ -125,15 +146,15 @@ class _PantallaVenusSuscripcionState extends State<PantallaVenusSuscripcion> {
                     titulo: 'idea del día',
                     descripcion: 'una idea al día para acercarse sin pensarlo tanto',
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 80),
 
                   // Precio
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        '\$99 MXN / mes',
-                        style: TextStyle(color: Colors.black87, fontSize: 30, fontWeight: FontWeight.w200, letterSpacing: 1),
+                      Text(
+                        _precioStr,
+                        style: const TextStyle(color: Colors.black87, fontSize: 30, fontWeight: FontWeight.w200, letterSpacing: 1),
                       ),
                       const SizedBox(height: 4),
                       const Text(
@@ -177,7 +198,7 @@ class _PantallaVenusSuscripcionState extends State<PantallaVenusSuscripcion> {
 
                   const SizedBox(height: 12),
 
-                  // Botón debug
+                  if (DebugConfig.instance.activo)
                   Center(
                     child: _activando
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.black26, strokeWidth: 1.5))
@@ -192,35 +213,6 @@ class _PantallaVenusSuscripcionState extends State<PantallaVenusSuscripcion> {
                               ),
                             ),
                           ),
-                  ),
-
-                  const SizedBox(height: 48),
-
-                  // Screenshots
-                  const Text(
-                    'screenshots',
-                    style: TextStyle(color: Colors.black45, fontSize: 12, letterSpacing: 2, fontWeight: FontWeight.w300),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    height: 420,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: 3,
-                      separatorBuilder: (_, _) => const SizedBox(width: 12),
-                      itemBuilder: (_, i) => Container(
-                        width: 200,
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.06),
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: Colors.black12),
-                        ),
-                        child: const Center(
-                          child: Text('placeholder', style: TextStyle(color: Colors.black26, fontSize: 12, letterSpacing: 1.5)),
-                        ),
-                      ),
-                    ),
                   ),
 
                   const SizedBox(height: 40),

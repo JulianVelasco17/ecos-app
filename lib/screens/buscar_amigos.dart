@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/fade_avatar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'perfil_usuario.dart';
@@ -111,14 +112,11 @@ class _PantallaBuscarAmigosState extends State<PantallaBuscarAmigos> {
                           ),
                         );
                       },
-                      leading: CircleAvatar(
+                      leading: FadeAvatar(
+                        radius: 20,
                         backgroundColor: Colors.black12,
-                        backgroundImage: usuario['fotoUrl'] != null
-                            ? NetworkImage(usuario['fotoUrl'])
-                            : null,
-                        child: usuario['fotoUrl'] == null
-                            ? const Icon(Icons.person, color: Colors.black45)
-                            : null,
+                        fotoUrl: usuario['fotoUrl'],
+                        fallbackChild: const Icon(Icons.person, color: Colors.black45),
                       ),
                       title: Text(
                         usuario['nombre'] ?? '',

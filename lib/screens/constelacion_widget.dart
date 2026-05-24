@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../services/debug_config.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
@@ -870,6 +871,7 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
           ),
 
           // ── Botón debug (esquina superior derecha) ───────────────────────
+          if (DebugConfig.instance.activo)
           Positioned(
             top: 48, right: 16,
             child: GestureDetector(
@@ -1115,6 +1117,7 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ── debug ────────────────────────────────────────────────
+                  if (DebugConfig.instance.activo)
                   Align(
                     alignment: Alignment.centerRight,
                     child: GestureDetector(

@@ -54,7 +54,7 @@ class _LoadingImagesState extends State<LoadingImages> {
         maxHeight: alto + 40,
         alignment: widget.pegadoDerecha ? Alignment.bottomRight : Alignment.bottomLeft,
         child: Transform.translate(
-          offset: widget.pegadoDerecha ? const Offset(30, 40) : const Offset(-30, 40),
+          offset: widget.pegadoDerecha ? const Offset(10, 40) : const Offset(-31, 40),
           child: imagen,
         ),
       ),

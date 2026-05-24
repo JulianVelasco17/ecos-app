@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -14,6 +15,7 @@ import 'services/auth_service.dart';
 import 'services/notification_service.dart';
 import 'services/ouroboros_service.dart';
 import 'services/clima_astral_service.dart';
+import 'services/debug_config.dart';
 // Shader cargado una sola vez al arranque y compartido globalmente
 FragmentShader? shaderMarble;
 
@@ -30,6 +32,13 @@ void main() async {
   // Precargar video ouroboros de forma independiente
   OuroborosService.instance.precargar();
   ClimaAstralService.instance.precargar();
+  await DebugConfig.instance.cargar();
+  if (Platform.isIOS) {
+    await Purchases.setLogLevel(LogLevel.debug);
+    await Purchases.configure(
+      PurchasesConfiguration(dotenv.env['REVENUECAT_IOS_KEY']!),
+    );
+  }
   runApp(const MyApp());
 }
 

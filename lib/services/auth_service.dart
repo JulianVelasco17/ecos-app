@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:math';
+import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -40,18 +43,31 @@ class AuthService {
     }
   }
 
+  static String _generarNonce([int length = 32]) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._';
+    final rng = Random.secure();
+    return List.generate(length, (_) => chars[rng.nextInt(chars.length)]).join();
+  }
+
+  static String _sha256Nonce(String nonce) =>
+      sha256.convert(utf8.encode(nonce)).toString();
+
   static Future<User?> loginConApple() async {
     try {
+      final rawNonce = _generarNonce();
       final credencial = await SignInWithApple.getAppleIDCredential(
         scopes: [AppleIDAuthorizationScopes.email, AppleIDAuthorizationScopes.fullName],
+        nonce: _sha256Nonce(rawNonce),
       );
       final oauthCred = OAuthProvider('apple.com').credential(
         idToken: credencial.identityToken,
         accessToken: credencial.authorizationCode,
+        rawNonce: rawNonce,
       );
       final resultado = await _auth.signInWithCredential(oauthCred);
       return resultado.user;
     } catch (e) {
+      print('ERROR loginConApple: $e');
       return null;
     }
   }
@@ -75,12 +91,15 @@ class AuthService {
 
   static Future<bool> vincularConApple() async {
     try {
+      final rawNonce = _generarNonce();
       final credencial = await SignInWithApple.getAppleIDCredential(
         scopes: [AppleIDAuthorizationScopes.email, AppleIDAuthorizationScopes.fullName],
+        nonce: _sha256Nonce(rawNonce),
       );
       final oauthCred = OAuthProvider('apple.com').credential(
         idToken: credencial.identityToken,
         accessToken: credencial.authorizationCode,
+        rawNonce: rawNonce,
       );
       await _auth.currentUser!.linkWithCredential(oauthCred);
       return true;

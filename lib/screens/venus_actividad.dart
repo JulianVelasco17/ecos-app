@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../services/debug_config.dart';
+import '../widgets/debug_boton_carga.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -473,6 +475,7 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // ── Debug: selector de día ─────────────────────────────────────────
+        if (DebugConfig.instance.activo) ...[
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -553,6 +556,8 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria>
             ),
           ],
         ),
+        ], // end if DebugConfig
+        DebugBotonCarga(onTap: () => setState(() => _cargando = true)),
         const SizedBox(height: 12),
 
         switch (_diaSemana) {
@@ -607,7 +612,7 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria>
   // ── Martes: dinámica astral de la pareja ─────────────────────────────────────
   Widget _buildMartes() {
     return _TarjetaActividad(
-      etiqueta: 'SU DINÁMICA HOY',
+      etiqueta: 'SU DINÁMICA ESTA SEMANA',
       contenido: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:video_player/video_player.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
+import '../services/debug_config.dart';
 
 const _beige = Color(0xFFF2E8D5);
 
@@ -55,12 +57,29 @@ class _PantallaCompraEcosPlusState extends State<PantallaCompraEcosPlus>
     if (uid == null) return;
     setState(() => _activando = true);
     try {
-      await FirebaseFirestore.instance
-          .collection('usuarios')
-          .doc(uid)
-          .set({'ecosPlusActivo': true}, SetOptions(merge: true));
+      if (DebugConfig.instance.activo) {
+        await FirebaseFirestore.instance
+            .collection('usuarios')
+            .doc(uid)
+            .set({'ecosPlusActivo': true}, SetOptions(merge: true));
+      } else {
+        final products = await Purchases.getProducts(['com.ecos.astroapp.trascender_mensual']);
+        if (products.isEmpty) throw Exception('producto no disponible');
+        await Purchases.purchaseStoreProduct(products.first);
+        await FirebaseFirestore.instance
+            .collection('usuarios')
+            .doc(uid)
+            .set({'ecosPlusActivo': true}, SetOptions(merge: true));
+      }
       if (!mounted) return;
       Navigator.pop(context);
+    } on PurchasesErrorCode catch (e) {
+      if (e != PurchasesErrorCode.purchaseCancelledError && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo completar el pago. Intenta de nuevo.')),
+        );
+      }
+      if (mounted) setState(() => _activando = false);
     } catch (e) {
       if (!mounted) return;
       setState(() => _activando = false);
@@ -253,20 +272,6 @@ class _PantallaCompraEcosPlusState extends State<PantallaCompraEcosPlus>
                           child: Text(
                             'ahora no',
                             style: TextStyle(color: Color(0xFFAA9878), fontSize: 12, letterSpacing: 1),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    Center(
-                      child: GestureDetector(
-                        onTap: _activarDebug,
-                        behavior: HitTestBehavior.opaque,
-                        child: const Padding(
-                          padding: EdgeInsets.all(12),
-                          child: Text(
-                            'debug: activar ecos+ →',
-                            style: TextStyle(color: Color(0xFFAA9878), fontSize: 11, letterSpacing: 2),
                           ),
                         ),
                       ),

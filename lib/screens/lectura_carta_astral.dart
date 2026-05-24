@@ -3,10 +3,12 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
+import '../services/debug_config.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
 import '../widgets/ouroboros_loader.dart';
+import '../widgets/debug_boton_carga.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/calculos_astrales.dart';
@@ -321,6 +323,19 @@ class _PantallaLecturaCartaAstralState extends State<PantallaLecturaCartaAstral>
                     ),
 
                     // Debug button
+                    if (DebugConfig.instance.activo)
+                    Positioned(
+                      top: 40, right: 20,
+                      child: DebugBotonCarga(
+                        onTap: () => setState(() {
+                          _cargando = true; _lectura = {}; _errorMsg = '';
+                          _videoTerminado = false; _fadeNegroOpacity = 0.0;
+                          _fraseOpacity = 0.0; _arrowOpacity = 1.0;
+                        }),
+                        color: Color(0x66D4AF37),
+                      ),
+                    ),
+                    if (DebugConfig.instance.activo)
                     Positioned(
                       top: 12, right: 20,
                       child: GestureDetector(

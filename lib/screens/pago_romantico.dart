@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/debug_config.dart';
 import 'reporte_romantico.dart';
 
 class PantallaPagoRomantico extends StatefulWidget {
@@ -215,13 +216,13 @@ class _PantallaPagoRomanticoState extends State<PantallaPagoRomantico>
                   const SizedBox(height: 16),
 
                   GestureDetector(
-                    onTap: _simularPago,
+                    onTap: DebugConfig.instance.activo ? _simularPago : null,
                     behavior: HitTestBehavior.opaque,
                     child: Center(
                       child: Padding(
                         padding: const EdgeInsets.all(12),
                         child: Text(
-                          'debug: simular cobro',
+                          DebugConfig.instance.activo ? 'debug: simular cobro' : '',
                           style: TextStyle(
                             color: const Color(0xFFF3EBD6).withValues(alpha: 0.2),
                             fontSize: 11,

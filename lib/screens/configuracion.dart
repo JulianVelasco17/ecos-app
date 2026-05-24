@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
+import '../services/debug_config.dart';
 import '../main.dart';
 import 'ajustes_notificaciones.dart';
 import 'debug_notificaciones.dart';
@@ -14,6 +15,7 @@ class PantallaConfiguracion extends StatefulWidget {
 
 class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
   bool _vinculando = false;
+  bool _debugActivo = DebugConfig.instance.activo;
 
   Future<void> _cerrarSesion(BuildContext context) async {
     final confirmar = await showDialog<bool>(
@@ -126,6 +128,36 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
                 subtitulo: 'prueba cada tipo de push',
                 onTap: () => Navigator.push(context,
                     MaterialPageRoute(builder: (_) => const PantallaDebugNotificaciones())),
+              ),
+
+              const Divider(color: Colors.black12),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                child: Row(
+                  children: [
+                    const Icon(Icons.science_outlined, color: Colors.black45, size: 18),
+                    const SizedBox(width: 16),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('modo debug', style: TextStyle(color: Colors.black87, fontSize: 13, letterSpacing: 1, fontWeight: FontWeight.w300)),
+                          SizedBox(height: 2),
+                          Text('salta pagos y activa funciones de prueba', style: TextStyle(color: Colors.black26, fontSize: 11, letterSpacing: 0.5)),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: _debugActivo,
+                      onChanged: (v) async {
+                        await DebugConfig.instance.toggle();
+                        setState(() => _debugActivo = DebugConfig.instance.activo);
+                      },
+                      activeThumbColor: Colors.black87,
+                    ),
+                  ],
+                ),
               ),
 
               const Divider(color: Colors.black12),
