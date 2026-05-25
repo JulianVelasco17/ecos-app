@@ -39,7 +39,9 @@ void main() async {
       await Purchases.configure(
         PurchasesConfiguration(dotenv.env['REVENUECAT_IOS_KEY']!),
       );
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('RevenueCat init error: $e');
+    }
   }
   runApp(const MyApp());
 }

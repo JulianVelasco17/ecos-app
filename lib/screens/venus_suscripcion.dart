@@ -27,7 +27,6 @@ class _PantallaVenusSuscripcionState extends State<PantallaVenusSuscripcion> {
     try {
       final productos = await Purchases.getProducts(
         ['com.ecos.astroapp.venus_mensual'],
-        productCategory: ProductCategory.subscription,
       );
       if (mounted && productos.isNotEmpty) {
         setState(() => _precioStr = '${productos.first.priceString} / mes');
