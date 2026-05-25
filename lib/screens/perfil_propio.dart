@@ -13,7 +13,6 @@ import '../services/calculos_astrales.dart';
 import '../services/aspectos_natales.dart';
 import '../services/claude_service.dart';
 import '../widgets/rueda_zodiacal.dart';
-import 'carta_presentacion.dart';
 import 'lectura_carta_astral.dart';
 import 'compra_carta_astral.dart';
 
@@ -491,7 +490,7 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio>
                           MaterialPageRoute(
                             builder: (_) => cartaActiva
                                 ? const PantallaLecturaCartaAstral()
-                                : const PantallaCartaPresentacion(),
+                                : const PantallaCompraCarta(),
                           ),
                         );
                       },

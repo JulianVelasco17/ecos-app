@@ -169,7 +169,7 @@ class _PantallaClimaAstralState extends State<PantallaClimaAstral> {
                       ),
                     ),
 
-                    if (_ecosPlusActivo) ...[
+                    ...[
                       const SizedBox(height: 20),
                       AnimatedScale(
                         scale: _pressedNavegar ? 0.96 : 1.0,
@@ -182,7 +182,11 @@ class _PantallaClimaAstralState extends State<PantallaClimaAstral> {
                             final nav = Navigator.of(context);
                             await Future.delayed(const Duration(milliseconds: 80));
                             if (!mounted) return;
-                            nav.push(MaterialPageRoute(builder: (_) => const PantallaLecturaClimaPersonal()));
+                            if (_ecosPlusActivo) {
+                              nav.push(MaterialPageRoute(builder: (_) => const PantallaLecturaClimaPersonal()));
+                            } else {
+                              nav.push(MaterialPageRoute(builder: (_) => const PantallaCompraEcosPlus()));
+                            }
                           },
                           onTapCancel: () => setState(() => _pressedNavegar = false),
                           child: Container(
@@ -410,65 +414,6 @@ class _PantallaClimaAstralState extends State<PantallaClimaAstral> {
                       const SizedBox(height: 24),
                     ],
 
-                    // ── Lectura profunda / paywall ──────────────────────────
-                    if (!_ecosPlusActivo) ...[
-                      const Divider(color: Colors.black26),
-                      const SizedBox(height: 28),
-
-                      const Text(
-                        'LECTURA PROFUNDA',
-                        style: TextStyle(color: Colors.black26, fontSize: 10, letterSpacing: 3),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Cómo afecta el clima de hoy a tu carta natal.',
-                        style: TextStyle(
-                          color: Colors.black87,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w300,
-                          letterSpacing: 0.5,
-                          height: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Descubre qué casas están activadas, qué tránsitos te tocan directamente y cómo navegar el día con tu carta como mapa.',
-                        style: TextStyle(
-                          color: Colors.black45,
-                          fontSize: 13,
-                          height: 1.7,
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            await Navigator.push(context, MaterialPageRoute(
-                                builder: (_) => const PantallaCompraEcosPlus()));
-                            if (!mounted) return;
-                            final uid = FirebaseAuth.instance.currentUser?.uid;
-                            if (uid != null) {
-                              final doc = await FirebaseFirestore.instance
-                                  .collection('usuarios').doc(uid).get();
-                              if (!mounted) return;
-                              if (doc.data()?['ecosPlusActivo'] != true) return;
-                              setState(() => _ecosPlusActivo = true);
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
-                            foregroundColor: const Color(0xFFF3EBD6),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                            elevation: 0,
-                          ),
-                          child: const Text('DESBLOQUEAR CON ECOS+', style: TextStyle(letterSpacing: 2, fontSize: 12)),
-                        ),
-                      ),
-                    ],
 
                     const SizedBox(height: 48),
                   ],

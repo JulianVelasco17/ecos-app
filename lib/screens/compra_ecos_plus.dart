@@ -63,6 +63,7 @@ class _PantallaCompraEcosPlusState extends State<PantallaCompraEcosPlus>
             .doc(uid)
             .set({'ecosPlusActivo': true}, SetOptions(merge: true));
       } else {
+        if (!await Purchases.isConfigured) throw Exception('pagos no disponibles');
         final products = await Purchases.getProducts(['com.ecos.astroapp.trascender_mensual']);
         if (products.isEmpty) throw Exception('producto no disponible');
         await Purchases.purchaseStoreProduct(products.first);

@@ -31,6 +31,7 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
 
   Future<void> _cargarPrecio() async {
     try {
+      if (!await Purchases.isConfigured) return;
       final productos = await Purchases.getProducts(['com.ecos.astroapp.carta_profunda']);
       if (mounted && productos.isNotEmpty) {
         setState(() { _precioStr = productos.first.priceString; });
