@@ -16,6 +16,7 @@ import 'services/notification_service.dart';
 import 'services/ouroboros_service.dart';
 import 'services/clima_astral_service.dart';
 import 'services/debug_config.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 // Shader cargado una sola vez al arranque y compartido globalmente
 FragmentShader? shaderMarble;
 
@@ -33,6 +34,14 @@ void main() async {
   OuroborosService.instance.precargar();
   ClimaAstralService.instance.precargar();
   await DebugConfig.instance.cargar();
+
+  // Crashlytics: captura errores de Flutter y errores no manejados
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true;
+  };
+
   if (Platform.isIOS) {
     final rcKey = dotenv.env['REVENUECAT_IOS_KEY'];
     if (rcKey != null && rcKey.isNotEmpty && !await Purchases.isConfigured) {

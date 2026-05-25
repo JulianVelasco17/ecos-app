@@ -23,6 +23,46 @@ class _PantallaVenusSuscripcionState extends State<PantallaVenusSuscripcion> {
     _cargarPrecio();
   }
 
+  Future<void> _suscribirse() async {
+    setState(() => _activando = true);
+    try {
+      if (!await Purchases.isConfigured) {
+        throw Exception('pagos no disponibles');
+      }
+      final products = await Purchases.getProducts(['com.ecos.astroapp.venus_mensual']);
+      if (products.isEmpty) throw Exception('producto no disponible');
+      await Purchases.purchaseStoreProduct(products.first);
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        await FirebaseFirestore.instance.collection('usuarios').doc(uid).update({
+          'venusActivo': true,
+          'venusPagador': uid,
+        });
+      }
+      if (!mounted) return;
+      setState(() => _activando = false);
+      if (widget.onSuscrito != null) {
+        widget.onSuscrito!();
+      } else {
+        Navigator.pop(context, true);
+      }
+    } on PurchasesErrorCode catch (e) {
+      if (mounted) setState(() => _activando = false);
+      if (e != PurchasesErrorCode.purchaseCancelledError && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo completar el pago. Intenta de nuevo.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _activando = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
   Future<void> _cargarPrecio() async {
     try {
       if (!await Purchases.isConfigured) return;
@@ -168,22 +208,7 @@ class _PantallaVenusSuscripcionState extends State<PantallaVenusSuscripcion> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (_) => AlertDialog(
-                            backgroundColor: Colors.black87,
-                            title: const Text('próximamente', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w300, letterSpacing: 2)),
-                            content: const Text('Los pagos estarán disponibles pronto.', style: TextStyle(color: Colors.white54)),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text('ok', style: TextStyle(color: Colors.white38)),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
+                      onPressed: _activando ? null : _suscribirse,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
                         foregroundColor: Colors.white,

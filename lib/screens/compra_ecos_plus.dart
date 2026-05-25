@@ -84,6 +84,9 @@ class _PantallaCompraEcosPlusState extends State<PantallaCompraEcosPlus>
     } catch (e) {
       if (!mounted) return;
       setState(() => _activando = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     }
   }
 

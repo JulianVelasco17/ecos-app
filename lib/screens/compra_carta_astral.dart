@@ -81,6 +81,7 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
             .collection('usuarios').doc(uid)
             .set({'cartaActiva': true}, SetOptions(merge: true));
       } else {
+        if (!await Purchases.isConfigured) throw Exception('pagos no disponibles');
         final products = await Purchases.getProducts(['com.ecos.astroapp.carta_profunda']);
         if (products.isEmpty) throw Exception('producto no disponible');
         await Purchases.purchaseStoreProduct(products.first);
@@ -101,6 +102,9 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _activando = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     }
   }
 
@@ -402,6 +406,7 @@ class _PantallaDescuentoState extends State<_PantallaDescuento> {
             .collection('usuarios').doc(uid)
             .set({'cartaActiva': true}, SetOptions(merge: true));
       } else {
+        if (!await Purchases.isConfigured) throw Exception('pagos no disponibles');
         final products = await Purchases.getProducts(['com.ecos.astroapp.carta_profunda_descuento']);
         if (products.isEmpty) throw Exception('producto no disponible');
         await Purchases.purchaseStoreProduct(products.first);
@@ -422,6 +427,9 @@ class _PantallaDescuentoState extends State<_PantallaDescuento> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _activando = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     }
   }
 
