@@ -3,6 +3,7 @@ import '../services/debug_config.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import '../services/purchases_service.dart';
 
 class PantallaVenusSuscripcion extends StatefulWidget {
   // Cuando se pasa, la pantalla está embebida en Venus (sin flecha de regresar)
@@ -26,9 +27,7 @@ class _PantallaVenusSuscripcionState extends State<PantallaVenusSuscripcion> {
   Future<void> _suscribirse() async {
     setState(() => _activando = true);
     try {
-      if (!await Purchases.isConfigured) {
-        throw Exception('pagos no disponibles');
-      }
+      await PurchasesService.ensureConfigured();
       final products = await Purchases.getProducts(['com.ecos.astroapp.venus_mensual']);
       if (products.isEmpty) throw Exception('producto no disponible');
       await Purchases.purchaseStoreProduct(products.first);

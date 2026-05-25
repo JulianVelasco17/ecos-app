@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:video_player/video_player.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import '../services/debug_config.dart';
+import '../services/purchases_service.dart';
 
 const _beige = Color(0xFFF2E8D5);
 
@@ -63,7 +64,7 @@ class _PantallaCompraEcosPlusState extends State<PantallaCompraEcosPlus>
             .doc(uid)
             .set({'ecosPlusActivo': true}, SetOptions(merge: true));
       } else {
-        if (!await Purchases.isConfigured) throw Exception('pagos no disponibles');
+        await PurchasesService.ensureConfigured();
         final products = await Purchases.getProducts(['com.ecos.astroapp.trascender_mensual']);
         if (products.isEmpty) throw Exception('producto no disponible');
         await Purchases.purchaseStoreProduct(products.first);

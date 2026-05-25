@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:video_player/video_player.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import '../services/debug_config.dart';
+import '../services/purchases_service.dart';
 import 'lectura_carta_astral.dart';
 import 'home.dart';
 import 'login.dart';
@@ -81,7 +82,7 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
             .collection('usuarios').doc(uid)
             .set({'cartaActiva': true}, SetOptions(merge: true));
       } else {
-        if (!await Purchases.isConfigured) throw Exception('pagos no disponibles');
+        await PurchasesService.ensureConfigured();
         final products = await Purchases.getProducts(['com.ecos.astroapp.carta_profunda']);
         if (products.isEmpty) throw Exception('producto no disponible');
         await Purchases.purchaseStoreProduct(products.first);
@@ -406,7 +407,7 @@ class _PantallaDescuentoState extends State<_PantallaDescuento> {
             .collection('usuarios').doc(uid)
             .set({'cartaActiva': true}, SetOptions(merge: true));
       } else {
-        if (!await Purchases.isConfigured) throw Exception('pagos no disponibles');
+        await PurchasesService.ensureConfigured();
         final products = await Purchases.getProducts(['com.ecos.astroapp.carta_profunda_descuento']);
         if (products.isEmpty) throw Exception('producto no disponible');
         await Purchases.purchaseStoreProduct(products.first);
