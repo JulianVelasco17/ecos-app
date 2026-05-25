@@ -44,13 +44,19 @@ void main() async {
 
   if (Platform.isIOS) {
     final rcKey = dotenv.env['REVENUECAT_IOS_KEY'];
+    debugPrint('[RC] key presente: ${rcKey != null && rcKey.isNotEmpty}');
+    debugPrint('[RC] ya configurado: ${await Purchases.isConfigured}');
     if (rcKey != null && rcKey.isNotEmpty && !await Purchases.isConfigured) {
       try {
         await Purchases.setLogLevel(LogLevel.debug);
         await Purchases.configure(PurchasesConfiguration(rcKey));
+        debugPrint('[RC] configurado OK');
       } catch (e) {
-        debugPrint('RevenueCat init error: $e');
+        debugPrint('[RC] error al configurar: $e');
+        FirebaseCrashlytics.instance.recordError(e, null, reason: 'RevenueCat init failed');
       }
+    } else {
+      debugPrint('[RC] omitido (key vacía o ya configurado)');
     }
   }
   runApp(const MyApp());
