@@ -34,10 +34,15 @@ void main() async {
   ClimaAstralService.instance.precargar();
   await DebugConfig.instance.cargar();
   if (Platform.isIOS) {
-    await Purchases.setLogLevel(LogLevel.debug);
-    await Purchases.configure(
-      PurchasesConfiguration(dotenv.env['REVENUECAT_IOS_KEY']!),
-    );
+    final rcKey = dotenv.env['REVENUECAT_IOS_KEY'];
+    if (rcKey != null && rcKey.isNotEmpty && !await Purchases.isConfigured) {
+      try {
+        await Purchases.setLogLevel(LogLevel.debug);
+        await Purchases.configure(PurchasesConfiguration(rcKey));
+      } catch (e) {
+        debugPrint('RevenueCat init error: $e');
+      }
+    }
   }
   runApp(const MyApp());
 }
