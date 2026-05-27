@@ -644,14 +644,14 @@ class _LecturaCompleta extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 18),
                       decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFFB8973A).withValues(alpha: 0.3)),
+                        color: Colors.black,
                         borderRadius: BorderRadius.circular(2),
                       ),
-                      child: Center(
+                      child: const Center(
                         child: Text(
                           'CERRAR',
                           style: TextStyle(
-                            color: const Color(0xFFF3EBD6).withValues(alpha: 0.5),
+                            color: Colors.white,
                             fontSize: 12,
                             letterSpacing: 3,
                           ),
