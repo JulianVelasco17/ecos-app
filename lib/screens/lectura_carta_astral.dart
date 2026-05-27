@@ -42,8 +42,9 @@ class _PantallaLecturaCartaAstralState extends State<PantallaLecturaCartaAstral>
   String? _signoLunar;
   String? _ascendente;
 
-  bool _videoTerminado = false;
-  bool _saltarVideo    = false;
+  bool _videoTerminado     = false;
+  bool _saltarVideo        = false;
+  bool _listoParaRevelar   = false;
   double _fadeNegroOpacity = 0.0;
   double _fraseOpacity = 0.0;
 
@@ -127,7 +128,8 @@ class _PantallaLecturaCartaAstralState extends State<PantallaLecturaCartaAstral>
 
       if (cache.exists) {
         final extraido = _extraer(cache.data()!);
-        if (extraido.values.any((v) => v.isNotEmpty)) {
+        final esFallback = extraido.values.any((v) => v.contains('El cielo guarda silencio'));
+        if (!esFallback && extraido.values.any((v) => v.isNotEmpty)) {
           if (mounted) setState(() {
             _lectura    = extraido;
             _planetas   = carta.planetas;
@@ -180,12 +182,13 @@ class _PantallaLecturaCartaAstralState extends State<PantallaLecturaCartaAstral>
 
       if (mounted) {
         setState(() {
-          _lectura    = lectura;
-          _planetas   = carta.planetas;
-          _signoSolar = carta.signoSolar;
-          _signoLunar = carta.signoLunar;
-          _ascendente = carta.ascendente;
-          _cargando   = false;
+          _lectura          = lectura;
+          _planetas         = carta.planetas;
+          _signoSolar       = carta.signoSolar;
+          _signoLunar       = carta.signoLunar;
+          _ascendente       = carta.ascendente;
+          _cargando         = false;
+          _listoParaRevelar = !_saltarVideo;
         });
       }
     } catch (e) {
@@ -223,6 +226,33 @@ class _PantallaLecturaCartaAstralState extends State<PantallaLecturaCartaAstral>
               duration: const Duration(milliseconds: 1000),
               child: const ColoredBox(color: Colors.black),
             ),
+            if (_listoParaRevelar)
+              Positioned(
+                bottom: 60,
+                left: 40,
+                right: 40,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() => _listoParaRevelar = false);
+                    _onVideoTerminado();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    color: Colors.black,
+                    child: const Center(
+                      child: Text(
+                        'REVELAR LECTURA',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          letterSpacing: 3,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
 
           if (_videoTerminado)
@@ -282,10 +312,24 @@ class _PantallaLecturaCartaAstralState extends State<PantallaLecturaCartaAstral>
                                                       style: TextStyle(color: _beige.withValues(alpha: 0.25), fontSize: 11)),
                                                 ],
                                                 const SizedBox(height: 28),
-                                                TextButton(
-                                                  onPressed: () { setState(() { _cargando = true; _errorMsg = ''; }); _cargar(); },
-                                                  child: Text('intentar de nuevo',
-                                                      style: TextStyle(color: _gold, letterSpacing: 1.5, fontSize: 12)),
+                                                GestureDetector(
+                                                  onTap: () async {
+                                                    final uid = FirebaseAuth.instance.currentUser?.uid;
+                                                    if (uid != null) {
+                                                      await FirebaseFirestore.instance
+                                                          .collection('lecturasProfundas')
+                                                          .doc('${uid}_carta_v3')
+                                                          .delete();
+                                                    }
+                                                    if (mounted) setState(() { _cargando = true; _errorMsg = ''; });
+                                                    _cargar();
+                                                  },
+                                                  child: Container(
+                                                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 28),
+                                                    color: Colors.black,
+                                                    child: const Text('volver a consultar',
+                                                        style: TextStyle(color: Colors.white, letterSpacing: 1.5, fontSize: 12)),
+                                                  ),
                                                 ),
                                               ])
                                             : Text(
@@ -1532,7 +1576,7 @@ class _CartaVideoState extends State<_CartaVideo> {
   Timer? _hapticTimer;
 
   static const _url =
-      'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Fsolinvert.mov?alt=media&token=459f6a7d-0890-4f3a-8656-9937d323b7fa';
+      'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Fonboard.mp4?alt=media&token=4dc6d672-2bb1-43b5-933b-47fda187ac9c';
 
   @override
   void initState() {

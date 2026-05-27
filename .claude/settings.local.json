@@ -42,7 +42,8 @@
       "Bash(del \"c:\\\\Users\\\\julia\\\\mi_primera_app\\\\lib\\\\widget_background.dart\")",
       "Bash(gh repo *)",
       "PowerShell(python --version 2>&1)",
-      "PowerShell(uv --version 2>&1)"
+      "PowerShell(uv --version 2>&1)",
+      "PowerShell(Get-ChildItem c:\\\\Users\\\\julia\\\\mi_primera_app\\\\functions\\\\ | Where-Object { $_.Name -ne 'node_modules' })"
     ]
   }
 }

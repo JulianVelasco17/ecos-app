@@ -35,7 +35,7 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
       await PurchasesService.ensureConfigured();
       final productos = await Purchases.getProducts(['com.ecos.astroapp.carta_profunda']);
       if (mounted && productos.isNotEmpty) {
-        setState(() { _precioStr = productos.first.priceString; });
+        setState(() { _precioStr = '${productos.first.priceString} ${productos.first.currencyCode}'; });
       }
     } catch (_) {}
   }
@@ -348,8 +348,8 @@ class _PantallaDescuentoState extends State<_PantallaDescuento> {
       setState(() {
         final desc = productos.where((p) => p.identifier.contains('descuento')).firstOrNull;
         final orig = productos.where((p) => !p.identifier.contains('descuento')).firstOrNull;
-        if (desc != null) _precioStr = desc.priceString;
-        if (orig != null) _precioOrigStr = orig.priceString;
+        if (desc != null) _precioStr = '${desc.priceString} ${desc.currencyCode}';
+        if (orig != null) _precioOrigStr = '${orig.priceString} ${orig.currencyCode}';
       });
     } catch (_) {}
   }
