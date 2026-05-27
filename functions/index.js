@@ -621,9 +621,11 @@ exports.limpiarImagenesCartas = onSchedule(
     const usuariosSnap = await db.collection("venus_cartas").get();
 
     for (const usuarioDoc of usuariosSnap.docs) {
+      const ayer = new Date(Date.now() - 24 * 60 * 60 * 1000);
       const cartasSnap = await usuarioDoc.ref
         .collection("cartas")
         .where("leida", "==", true)
+        .where("timestamp", "<=", ayer)
         .get();
 
       for (const cartaDoc of cartasSnap.docs) {

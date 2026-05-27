@@ -5,6 +5,7 @@ import 'package:video_player/video_player.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import '../services/debug_config.dart';
 import '../services/purchases_service.dart';
+import '../services/ecos_plus_video_service.dart';
 
 const _beige = Color(0xFFF2E8D5);
 
@@ -18,6 +19,7 @@ class PantallaCompraEcosPlus extends StatefulWidget {
 class _PantallaCompraEcosPlusState extends State<PantallaCompraEcosPlus>
     with SingleTickerProviderStateMixin {
   bool _activando = false;
+  String? _precioStr;
   late VideoPlayerController _video;
   late AnimationController _fadeCtrl;
   late Animation<double> _fadeAnim;
@@ -30,27 +32,48 @@ class _PantallaCompraEcosPlusState extends State<PantallaCompraEcosPlus>
     super.initState();
     _fadeCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 2500),
     );
-    _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeIn);
+    _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeInOut);
 
-    _video = VideoPlayerController.networkUrl(Uri.parse(_videoUrl))
-      ..setLooping(true)
-      ..setVolume(0)
-      ..initialize().then((_) {
-        if (mounted) {
-          setState(() {});
-          _video.play();
-          _fadeCtrl.forward();
-        }
-      });
+    _cargarPrecio();
+    final precargado = EcosPlusVideoService.instance.controller;
+    if (precargado != null && precargado.value.isInitialized) {
+      _video = precargado;
+      _video.play();
+      _fadeCtrl.forward();
+    } else {
+      _video = VideoPlayerController.networkUrl(Uri.parse(_videoUrl))
+        ..setLooping(true)
+        ..setVolume(0)
+        ..initialize().then((_) {
+          if (mounted) {
+            setState(() {});
+            _video.play();
+            _fadeCtrl.forward();
+          }
+        });
+    }
   }
 
   @override
   void dispose() {
     _fadeCtrl.dispose();
-    _video.dispose();
+    // Solo dispose si no es el controller precargado del servicio
+    if (_video != EcosPlusVideoService.instance.controller) {
+      _video.dispose();
+    }
     super.dispose();
+  }
+
+  Future<void> _cargarPrecio() async {
+    try {
+      await PurchasesService.ensureConfigured();
+      final products = await Purchases.getProducts(['com.ecos.astroapp.trascender_mensual']);
+      if (products.isNotEmpty && mounted) {
+        setState(() => _precioStr = products.first.priceString);
+      }
+    } catch (_) {}
   }
 
   Future<void> _activarDebug() async {
@@ -75,19 +98,10 @@ class _PantallaCompraEcosPlusState extends State<PantallaCompraEcosPlus>
       }
       if (!mounted) return;
       Navigator.pop(context);
-    } on PurchasesErrorCode catch (e) {
-      if (e != PurchasesErrorCode.purchaseCancelledError && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo completar el pago. Intenta de nuevo.')),
-        );
-      }
+    } on PurchasesErrorCode catch (_) {
       if (mounted) setState(() => _activando = false);
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _activando = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+    } catch (_) {
+      if (mounted) setState(() => _activando = false);
     }
   }
 
@@ -221,18 +235,18 @@ class _PantallaCompraEcosPlusState extends State<PantallaCompraEcosPlus>
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
-                      children: const [
+                      children: [
                         Text(
-                          '\$79',
-                          style: TextStyle(
+                          _precioStr ?? '—',
+                          style: const TextStyle(
                             color: Color(0xFF2C2015),
                             fontSize: 40,
                             fontWeight: FontWeight.w300,
                           ),
                         ),
-                        SizedBox(width: 8),
-                        Text(
-                          'MXN · mes',
+                        const SizedBox(width: 8),
+                        const Text(
+                          'mes',
                           style: TextStyle(color: Color(0xFF7A6A52), fontSize: 13, letterSpacing: 0.5),
                         ),
                       ],

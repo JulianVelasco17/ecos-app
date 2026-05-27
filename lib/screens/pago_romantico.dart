@@ -55,10 +55,9 @@ class _PantallaPagoRomanticoState extends State<PantallaPagoRomantico>
     super.initState();
     _fadeCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1800),
+      duration: const Duration(milliseconds: 2500),
     );
-    _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeIn);
-    _fadeCtrl.forward();
+    _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeInOut);
   }
 
   @override
@@ -109,7 +108,14 @@ class _PantallaPagoRomanticoState extends State<PantallaPagoRomantico>
                 children: [
                   RotatedBox(
                     quarterTurns: 1,
-                    child: Image.network(_gifUrl, fit: BoxFit.cover),
+                    child: Image.network(
+                      _gifUrl,
+                      fit: BoxFit.cover,
+                      frameBuilder: (ctx, child, frame, _) {
+                        if (frame == 0) _fadeCtrl.forward();
+                        return child;
+                      },
+                    ),
                   ),
                   const ColoredBox(color: Color(0xA6000000)),
                   Container(

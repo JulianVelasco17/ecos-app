@@ -7,11 +7,13 @@ import '../widgets/debug_boton_carga.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/aspectos_natales.dart';
+import '../services/calculos_astrales.dart';
 import '../services/claude_service.dart';
 import 'venus_buscar_pareja.dart';
 import 'venus_suscripcion.dart';
 import 'venus_actividad.dart';
 import 'venus_carta_reveal.dart';
+import 'reporte_romantico.dart';
 
 enum _EstadoVenus { cargando, sinSuscripcion, sinPareja, solicitudEnviada, solicitudRecibida, enlazado }
 
@@ -371,6 +373,13 @@ class _EnlazadaState extends State<_Enlazada> {
   String? _cierreCompat;
   bool _regenerando = false;
 
+  // Datos astrales para reporte romántico
+  String _miSolar = ''; String _miLunar = ''; String _miAsc = '';
+  String _parejaUid = '';
+  String _parejaSolar = ''; String _parejaLunar = ''; String _parejaAsc = '';
+  Map<String, String> _miPlanetas = {}; Map<String, String> _parejaPlanetas = {};
+  String _arquetipo = '';
+
   // Carta no leída
   Map<String, dynamic>? _cartaPendiente;
   String? _cartaDocId;
@@ -506,16 +515,30 @@ class _EnlazadaState extends State<_Enlazada> {
           .set({'frase': fraseCompat, 'cuerpo': textoCompat, 'cierre': cierreCompat, 'fecha': FieldValue.serverTimestamp()});
     }
 
+    final miCarta     = CalculosAstrales.calcular(fechaNacimiento: fechaDe(miDatos), hora: mH, minutos: mM, latitud: (miDatos['latitud'] as num?)?.toDouble() ?? 0, longitud: (miDatos['longitud'] as num?)?.toDouble() ?? 0);
+    final parejaCarta = CalculosAstrales.calcular(fechaNacimiento: fechaDe(parejaDatos), hora: pH, minutos: pM, latitud: (parejaDatos['latitud'] as num?)?.toDouble() ?? 0, longitud: (parejaDatos['longitud'] as num?)?.toDouble() ?? 0);
+    final arquetipo   = calcularArquetipo(miSolar: miCarta.signoSolar, amigoSolar: parejaCarta.signoSolar, miLunar: miCarta.signoLunar, amigoLunar: parejaCarta.signoLunar, miAsc: miCarta.ascendente, amigoAsc: parejaCarta.ascendente, miPlanetas: miCarta.planetas, amigoPlanetas: parejaCarta.planetas);
+
     if (mounted) {
       setState(() {
-        _miNombre      = miNombre;
-        _parejaName    = parejaName;
-        _miFotoUrl     = miDatos['fotoUrl'] as String?;
-        _parejaFotoUrl = parejaDatos['fotoUrl'] as String?;
-        _fraseCompat   = fraseCompat;
-        _textoCompat   = textoCompat;
-        _cierreCompat  = cierreCompat;
-        _cargando      = false;
+        _miNombre       = miNombre;
+        _parejaName     = parejaName;
+        _miFotoUrl      = miDatos['fotoUrl'] as String?;
+        _parejaFotoUrl  = parejaDatos['fotoUrl'] as String?;
+        _fraseCompat    = fraseCompat;
+        _textoCompat    = textoCompat;
+        _cierreCompat   = cierreCompat;
+        _miSolar        = miCarta.signoSolar;
+        _miLunar        = miCarta.signoLunar;
+        _miAsc          = miCarta.ascendente;
+        _miPlanetas     = miCarta.planetas;
+        _parejaUid      = parejaUid;
+        _parejaSolar    = parejaCarta.signoSolar;
+        _parejaLunar    = parejaCarta.signoLunar;
+        _parejaAsc      = parejaCarta.ascendente;
+        _parejaPlanetas = parejaCarta.planetas;
+        _arquetipo      = arquetipo;
+        _cargando       = false;
       });
     }
   }
@@ -617,37 +640,96 @@ class _EnlazadaState extends State<_Enlazada> {
             const SizedBox(height: 24),
           ],
 
-          // ── Avatares centrados ──────────────────────────────────────────
-          Center(
-            child: SizedBox(
-              height: 80,
-              width: 136,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  FadeAvatar(
-                    radius: 40,
-                    backgroundColor: Colors.black12,
-                    fotoUrl: _miFotoUrl,
-                    fallbackChild: const Icon(Icons.person, color: Colors.black38, size: 32),
-                  ),
-                  Positioned(
-                    left: 56,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFFF3EBD6), width: 2),
-                      ),
-                      child: FadeAvatar(
+          // ── Avatares + buzón ───────────────────────────────────────────
+          SizedBox(
+            height: 80,
+            width: double.infinity,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Fotos centradas
+                SizedBox(
+                  width: 136,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      FadeAvatar(
                         radius: 40,
                         backgroundColor: Colors.black12,
-                        fotoUrl: _parejaFotoUrl,
+                        fotoUrl: _miFotoUrl,
                         fallbackChild: const Icon(Icons.person, color: Colors.black38, size: 32),
+                      ),
+                      Positioned(
+                        left: 56,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: const Color(0xFFF3EBD6), width: 2),
+                          ),
+                          child: FadeAvatar(
+                            radius: 40,
+                            backgroundColor: Colors.black12,
+                            fotoUrl: _parejaFotoUrl,
+                            fallbackChild: const Icon(Icons.person, color: Colors.black38, size: 32),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Buzón posicionado a la derecha de las fotos
+                Positioned(
+                  right: 0,
+                  child: GestureDetector(
+                    onTap: () {
+                      final miUid = FirebaseAuth.instance.currentUser?.uid;
+                      if (miUid == null) return;
+                      Navigator.push(context, MaterialPageRoute(
+                        builder: (_) => PantallaCartasAmor(miUid: miUid),
+                      ));
+                    },
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('venus_cartas')
+                            .doc(FirebaseAuth.instance.currentUser?.uid)
+                            .collection('cartas')
+                            .where('leida', isEqualTo: false)
+                            .snapshots(),
+                        builder: (context, snap) {
+                          final count = snap.data?.docs.length ?? 0;
+                          return Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              const Icon(Icons.markunread_mailbox_outlined, color: Colors.black38, size: 26),
+                              if (count > 0)
+                                Positioned(
+                                  top: -4,
+                                  right: -4,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(3),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black87,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                    child: Text(
+                                      '$count',
+                                      style: const TextStyle(color: Color(0xFFF3EBD6), fontSize: 9, fontWeight: FontWeight.w600),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
 
@@ -709,6 +791,48 @@ class _EnlazadaState extends State<_Enlazada> {
             ),
 
             const SizedBox(height: 32),
+            const Divider(color: Colors.black12),
+            const SizedBox(height: 32),
+
+            // ── Reporte de compatibilidad romántica ─────────────────────
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  final miUid = FirebaseAuth.instance.currentUser?.uid;
+                  if (miUid == null) return;
+                  Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => PantallaReporteRomantico(
+                      miNombre:      _miNombre,
+                      miFotoUrl:     _miFotoUrl,
+                      miSolar:       _miSolar,
+                      miLunar:       _miLunar,
+                      miAsc:         _miAsc,
+                      miPlanetas:    _miPlanetas,
+                      amigoNombre:   _parejaName,
+                      amigoFotoUrl:  _parejaFotoUrl,
+                      amigoSolar:    _parejaSolar,
+                      amigoLunar:    _parejaLunar,
+                      amigoAsc:      _parejaAsc,
+                      amigoPlanetas: _parejaPlanetas,
+                      arquetipo:     _arquetipo,
+                      miUid:         miUid,
+                      amigoUid:      _parejaUid,
+                    ),
+                  ));
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: const Color(0xFFF3EBD6),
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                  elevation: 0,
+                ),
+                child: const Text('COMPATIBILIDAD ROMÁNTICA', style: TextStyle(letterSpacing: 3, fontSize: 11)),
+              ),
+            ),
+
+            const SizedBox(height: 40),
           ],
         ],
       ),
@@ -799,6 +923,111 @@ class _TextoNegritas extends StatelessWidget {
           ),
         );
       }).toList(),
+    );
+  }
+}
+
+// ─── Pantalla de cartas de amor ───────────────────────────────────────────────
+
+class PantallaCartasAmor extends StatelessWidget {
+  final String miUid;
+  const PantallaCartasAmor({super.key, required this.miUid});
+
+  static const _beige = Color(0xFFF3EBD6);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: _beige,
+      appBar: AppBar(
+        backgroundColor: _beige,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.black54, size: 18),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'cartas de amor',
+          style: TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w300, letterSpacing: 2),
+        ),
+      ),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('venus_cartas')
+            .doc(miUid)
+            .collection('cartas')
+            .where('leida', isEqualTo: false)
+            .orderBy('timestamp', descending: true)
+            .snapshots(),
+        builder: (context, snap) {
+          if (snap.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator(color: Colors.black26, strokeWidth: 1.5));
+          }
+          final docs = snap.data?.docs ?? [];
+          if (docs.isEmpty) {
+            return const Center(
+              child: Text(
+                'ya has leído todas las cartas',
+                style: TextStyle(color: Colors.black26, fontSize: 13, letterSpacing: 1.5),
+              ),
+            );
+          }
+          return GridView.builder(
+            padding: const EdgeInsets.all(24),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+            ),
+            itemCount: docs.length,
+            itemBuilder: (context, i) {
+              final data = docs[i].data() as Map<String, dynamic>;
+              final ts = data['timestamp'] as Timestamp?;
+              final fecha = ts != null
+                  ? '${ts.toDate().day}/${ts.toDate().month}'
+                  : '';
+              return GestureDetector(
+                onTap: () async {
+                  await FirebaseFirestore.instance
+                      .collection('venus_cartas')
+                      .doc(miUid)
+                      .collection('cartas')
+                      .doc(docs[i].id)
+                      .delete();
+                  if (!context.mounted) return;
+                  Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => CartaRevealScreen(
+                      remitente: data['de'] as String? ?? '',
+                      mensaje:   data['mensaje'] as String? ?? '',
+                      imagenUrl: data['imagenUrl'] as String?,
+                      pregunta:  data['pregunta'] as String?,
+                    ),
+                  ));
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.black12),
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.mail_outline, color: Colors.black38, size: 28),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(fecha, style: const TextStyle(color: Colors.black26, fontSize: 10)),
+                  ],
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }

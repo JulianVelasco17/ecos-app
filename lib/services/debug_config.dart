@@ -1,22 +1,15 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class DebugConfig {
   DebugConfig._();
   static final DebugConfig instance = DebugConfig._();
 
-  static const _key = 'debug_mode';
-  bool _activo = false;
+  static const _uidsAutorizados = {'RNd1s8hhnlVgmYj4Gzhgknx5h3T2'};
 
-  bool get activo => _activo;
-
-  Future<void> cargar() async {
-    final prefs = await SharedPreferences.getInstance();
-    _activo = prefs.getBool(_key) ?? false;
+  bool get activo {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    return uid != null && _uidsAutorizados.contains(uid);
   }
 
-  Future<void> toggle() async {
-    _activo = !_activo;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_key, _activo);
-  }
+  Future<void> cargar() async {}
 }

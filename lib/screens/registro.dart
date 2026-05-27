@@ -58,7 +58,7 @@ class _PantallaRegistroState extends State<PantallaRegistro>
     super.initState();
     _camaraCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1800),
+      duration: const Duration(milliseconds: 700),
     );
     _offsetAnim = AlwaysStoppedAnimation(Offset.zero);
   }
@@ -120,7 +120,7 @@ class _PantallaRegistroState extends State<PantallaRegistro>
     final hasta = _estaciones[idx];
 
     _offsetAnim = Tween<Offset>(begin: desde.posicion, end: hasta.posicion)
-        .animate(CurvedAnimation(parent: _camaraCtrl, curve: Curves.easeInOutCubic));
+        .animate(CurvedAnimation(parent: _camaraCtrl, curve: Curves.easeOutCubic));
 
     setState(() {});
     _camaraCtrl.forward(from: 0).then((_) {
@@ -494,7 +494,7 @@ class _PantallaRegistroState extends State<PantallaRegistro>
                     return Transform.translate(
                       offset: relOffset,
                       child: AnimatedOpacity(
-                        duration: const Duration(milliseconds: 350),
+                        duration: const Duration(milliseconds: 180),
                         opacity: esCurrent ? 1.0 : 0.0,
                         child: SizedBox(
                           width: 320,

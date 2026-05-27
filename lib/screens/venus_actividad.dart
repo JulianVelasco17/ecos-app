@@ -913,27 +913,11 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria>
   }
 
   Widget _respuestaEnviada(String texto) {
-    final esImagen = texto.contains('||IMG||');
-    final imgUrl = esImagen ? texto.split('||IMG||')[1] : null;
-    final textoMostrar = esImagen ? texto.split('||IMG||')[0] : texto;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return const Row(
       children: [
-        const Text('TU RESPUESTA',
-            style: TextStyle(color: Colors.black26, fontSize: 10, letterSpacing: 3)),
-        const SizedBox(height: 12),
-        if (imgUrl != null)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(2),
-            child: Image.network(imgUrl, fit: BoxFit.cover, width: double.infinity),
-          )
-        else
-          Text(textoMostrar,
-              style: const TextStyle(color: Colors.black87, fontSize: 14,
-                  fontWeight: FontWeight.w300, height: 1.6)),
-        const SizedBox(height: 8),
-        const Text('✓ enviado',
-            style: TextStyle(color: Colors.black26, fontSize: 11, letterSpacing: 2)),
+        Icon(Icons.check_circle_outline, size: 14, color: Colors.black38),
+        SizedBox(width: 6),
+        Text('enviado', style: TextStyle(color: Colors.black38, fontSize: 12, letterSpacing: 1.5)),
       ],
     );
   }

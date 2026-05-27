@@ -589,6 +589,7 @@ usar lenguaje concreto y literal
 usar acciones observables (responder, hablar, ignorar, proponer, cancelar)
 
 no usar estructuras del tipo "no es X, sino Y"
+no usar oraciones adversativas del tipo "no es X, es Y" / "no es que X, es que Y" / "no X, sino Y"
 no reformular ideas para hacerlas más profundas o elegantes
 
 no centrar la escena en mensajes, chats o llamadas a menos que sea necesario
