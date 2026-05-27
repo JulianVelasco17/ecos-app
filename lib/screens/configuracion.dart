@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/auth_service.dart';
 import '../main.dart';
 import 'ajustes_notificaciones.dart';
-import 'debug_notificaciones.dart';
 
 class PantallaConfiguracion extends StatefulWidget {
   const PantallaConfiguracion({super.key});
@@ -121,20 +121,13 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
               const Divider(color: Colors.black12),
 
               _Opcion(
-                icono: Icons.bug_report_outlined,
-                titulo: 'debug notificaciones',
-                subtitulo: 'prueba cada tipo de push',
-                onTap: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const PantallaDebugNotificaciones())),
-              ),
-
-              const Divider(color: Colors.black12),
-
-              _Opcion(
                 icono: Icons.lock_outline,
                 titulo: 'privacidad',
-                subtitulo: 'próximamente',
-                onTap: () {},
+                subtitulo: 'política de privacidad',
+                onTap: () => launchUrl(
+                  Uri.parse('https://www.termsfeed.com/live/e160706a-c79b-4db6-839a-f69fe29be91a'),
+                  mode: LaunchMode.externalApplication,
+                ),
               ),
 
               const Divider(color: Colors.black12),
