@@ -45,20 +45,10 @@ class _PantallaVenusSuscripcionState extends State<PantallaVenusSuscripcion> {
       } else {
         Navigator.pop(context, true);
       }
-    } on PurchasesErrorCode catch (e) {
+    } on PurchasesErrorCode catch (_) {
       if (mounted) setState(() => _activando = false);
-      if (e != PurchasesErrorCode.purchaseCancelledError && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo completar el pago. Intenta de nuevo.')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _activando = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
-      }
+    } catch (_) {
+      if (mounted) setState(() => _activando = false);
     }
   }
 

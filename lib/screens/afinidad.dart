@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../widgets/fade_avatar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'pago_romantico.dart';
+import 'reporte_romantico.dart';
 import '../services/calculos_astrales.dart';
 import '../widgets/rueda_zodiacal.dart';
 
@@ -478,28 +480,58 @@ class _PantallaAfinidadState extends State<PantallaAfinidad>
 
         // CTA premium
         GestureDetector(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => PantallaPagoRomantico(
-                miNombre:      widget.miNombre,
-                miFotoUrl:     widget.miFotoUrl,
-                miSolar:       widget.miSolar,
-                miLunar:       widget.miLunar,
-                miAsc:         widget.miAsc,
-                miPlanetas:    widget.miPlanetas,
-                amigoNombre:   widget.amigoNombre,
-                amigoFotoUrl:  widget.amigoFotoUrl,
-                amigoSolar:    widget.amigoSolar,
-                amigoLunar:    widget.amigoLunar,
-                amigoAsc:      widget.amigoAsc,
-                amigoPlanetas: widget.amigoPlanetas,
-                arquetipo:     arquetipo,
-                miUid:         widget.miUid,
-                amigoUid:      widget.amigoUid,
-              ),
-            ),
-          ),
+          onTap: () async {
+            final uid = FirebaseAuth.instance.currentUser?.uid;
+            final key = uid != null ? '${uid}_${widget.amigoUid}' : null;
+            bool yaPago = false;
+            if (key != null) {
+              final doc = await FirebaseFirestore.instance
+                  .collection('reportes_romanticos').doc(key).get();
+              yaPago = doc.exists;
+            }
+            if (!mounted) return;
+            if (yaPago) {
+              Navigator.push(context, MaterialPageRoute(
+                builder: (_) => PantallaReporteRomantico(
+                  miNombre:      widget.miNombre,
+                  miFotoUrl:     widget.miFotoUrl,
+                  miSolar:       widget.miSolar,
+                  miLunar:       widget.miLunar,
+                  miAsc:         widget.miAsc,
+                  miPlanetas:    widget.miPlanetas,
+                  amigoNombre:   widget.amigoNombre,
+                  amigoFotoUrl:  widget.amigoFotoUrl,
+                  amigoSolar:    widget.amigoSolar,
+                  amigoLunar:    widget.amigoLunar,
+                  amigoAsc:      widget.amigoAsc,
+                  amigoPlanetas: widget.amigoPlanetas,
+                  arquetipo:     arquetipo,
+                  miUid:         widget.miUid,
+                  amigoUid:      widget.amigoUid,
+                ),
+              ));
+            } else {
+              Navigator.push(context, MaterialPageRoute(
+                builder: (_) => PantallaPagoRomantico(
+                  miNombre:      widget.miNombre,
+                  miFotoUrl:     widget.miFotoUrl,
+                  miSolar:       widget.miSolar,
+                  miLunar:       widget.miLunar,
+                  miAsc:         widget.miAsc,
+                  miPlanetas:    widget.miPlanetas,
+                  amigoNombre:   widget.amigoNombre,
+                  amigoFotoUrl:  widget.amigoFotoUrl,
+                  amigoSolar:    widget.amigoSolar,
+                  amigoLunar:    widget.amigoLunar,
+                  amigoAsc:      widget.amigoAsc,
+                  amigoPlanetas: widget.amigoPlanetas,
+                  arquetipo:     arquetipo,
+                  miUid:         widget.miUid,
+                  amigoUid:      widget.amigoUid,
+                ),
+              ));
+            }
+          },
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),

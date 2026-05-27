@@ -18,7 +18,7 @@ class PantallaCartaAstral extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Calculamos la carta astral con los datos reales del usuario
+    // Calculamos la carta natal con los datos reales del usuario
     // Por ahora usamos latitud/longitud 0 — cuando integremos geocodificación
     // del lugar de nacimiento, esto será preciso también para el ascendente
     final carta = CalculosAstrales.calcular(
@@ -47,7 +47,7 @@ class PantallaCartaAstral extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                'esta es tu carta astral',
+                'esta es tu carta natal',
                 style: TextStyle(
                   color: Colors.black45,
                   fontSize: 13,

@@ -1131,7 +1131,7 @@ class _TarjetaCompartirBeige extends StatelessWidget {
             const Divider(color: Color(0x22000000), thickness: 1),
             const SizedBox(height: 32),
             const Text(
-              'ecos · carta astral del día',
+              'ecos · carta natal del día',
               style: TextStyle(
                 color: Color(0x44000000),
                 fontSize: 24,

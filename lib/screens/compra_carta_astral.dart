@@ -93,19 +93,10 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
       if (!mounted) return;
       PantallaLecturaCartaAstral.navigateTo(context, _tapOrigin, videoPreload: _videoSolin);
       _videoSolin = null;
-    } on PurchasesErrorCode catch (e) {
-      if (e != PurchasesErrorCode.purchaseCancelledError && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo completar el pago. Intenta de nuevo.')),
-        );
-      }
+    } on PurchasesErrorCode catch (_) {
       if (mounted) setState(() => _activando = false);
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _activando = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+    } catch (_) {
+      if (mounted) setState(() => _activando = false);
     }
   }
 
@@ -165,7 +156,7 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
                       ),
                       const Expanded(
                         child: Text(
-                          'tu carta\nastral',
+                          'tu carta\nnatal',
                           style: TextStyle(
                             fontFamily: 'PlayfairDisplay',
                             color: Color(0xFFE8DFD0),
@@ -418,19 +409,10 @@ class _PantallaDescuentoState extends State<_PantallaDescuento> {
       if (!mounted) return;
       PantallaLecturaCartaAstral.navigateTo(context, _tapOrigin, videoPreload: _videoSolin);
       _videoSolin = null;
-    } on PurchasesErrorCode catch (e) {
-      if (e != PurchasesErrorCode.purchaseCancelledError && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo completar el pago. Intenta de nuevo.')),
-        );
-      }
+    } on PurchasesErrorCode catch (_) {
       if (mounted) setState(() => _activando = false);
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _activando = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+    } catch (_) {
+      if (mounted) setState(() => _activando = false);
     }
   }
 
@@ -501,7 +483,7 @@ class _PantallaDescuentoState extends State<_PantallaDescuento> {
 
                   const SizedBox(height: 16),
                   const Text(
-                    'por ser tu primera carta astral, te dejamos un precio especial.\nsolo por esta vez ;)',
+                    'por ser tu primera carta natal, te dejamos un precio especial.\nsolo por esta vez ;)',
                     style: TextStyle(color: Colors.white38, fontSize: 15, letterSpacing: 0.3, height: 1.8),
                   ),
 

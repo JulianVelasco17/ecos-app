@@ -217,7 +217,7 @@ class _PantallaLecturaCartaAstralState extends State<PantallaLecturaCartaAstral>
         children: [
           const Positioned.fill(child: CieloEstrellado()),
           if (!_saltarVideo) ...[
-            _CartaVideo(onTerminado: _onVideoTerminado, preload: widget.videoPreload),
+            _CartaVideo(onTerminado: _onVideoTerminado, preload: widget.videoPreload, esperarCarga: _cargando),
             AnimatedOpacity(
               opacity: _fadeNegroOpacity,
               duration: const Duration(milliseconds: 1000),
@@ -319,6 +319,19 @@ class _PantallaLecturaCartaAstralState extends State<PantallaLecturaCartaAstral>
                               ascendente: _ascendente,
                             ),
                         ],
+                      ),
+                    ),
+
+                    // Botón cerrar
+                    Positioned(
+                      top: 8, left: 8,
+                      child: GestureDetector(
+                        onTap: () => Navigator.of(context).popUntil((r) => r.isFirst),
+                        behavior: HitTestBehavior.opaque,
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Icon(Icons.close, color: _beige.withValues(alpha: 0.5), size: 20),
+                        ),
                       ),
                     ),
 
@@ -624,6 +637,29 @@ class _LecturaCompleta extends StatelessWidget {
                         letterSpacing: 2,
                         fontWeight: FontWeight.w300),
                   ),
+                  const SizedBox(height: 48),
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).popUntil((r) => r.isFirst),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: const Color(0xFFB8973A).withValues(alpha: 0.3)),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'CERRAR',
+                          style: TextStyle(
+                            color: const Color(0xFFF3EBD6).withValues(alpha: 0.5),
+                            fontSize: 12,
+                            letterSpacing: 3,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 48),
                 ],
               ),
             ),
@@ -1482,7 +1518,8 @@ class _DespedidaClipper extends CustomClipper<Path> {
 class _CartaVideo extends StatefulWidget {
   final VoidCallback onTerminado;
   final VideoPlayerController? preload;
-  const _CartaVideo({required this.onTerminado, this.preload});
+  final bool esperarCarga;
+  const _CartaVideo({required this.onTerminado, this.preload, this.esperarCarga = false});
 
   @override
   State<_CartaVideo> createState() => _CartaVideoState();
@@ -1532,6 +1569,11 @@ class _CartaVideoState extends State<_CartaVideo> {
     if (c == null) return;
     if (c.value.duration > Duration.zero &&
         c.value.position >= c.value.duration - const Duration(milliseconds: 700)) {
+      if (widget.esperarCarga) {
+        c.seekTo(Duration.zero);
+        c.play();
+        return;
+      }
       _llamado = true;
       _hapticTimer?.cancel();
       widget.onTerminado();

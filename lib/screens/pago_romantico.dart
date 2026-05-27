@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import '../services/debug_config.dart';
+import '../services/purchases_service.dart';
 import 'reporte_romantico.dart';
 
 class PantallaPagoRomantico extends StatefulWidget {
@@ -46,6 +48,8 @@ class _PantallaPagoRomanticoState extends State<PantallaPagoRomantico>
     with SingleTickerProviderStateMixin {
   late AnimationController _fadeCtrl;
   late Animation<double> _fadeAnim;
+  String? _precioStr;
+  bool _comprando = false;
 
   static const _gifUrl =
       'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Ffondo2.gif?alt=media&token=ef484e31-3c7d-4873-93bf-707188cd687c';
@@ -58,6 +62,17 @@ class _PantallaPagoRomanticoState extends State<PantallaPagoRomantico>
       duration: const Duration(milliseconds: 2500),
     );
     _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeInOut);
+    _cargarPrecio();
+  }
+
+  Future<void> _cargarPrecio() async {
+    try {
+      await PurchasesService.ensureConfigured();
+      final products = await Purchases.getProducts(['com.ecos.astroapp.reporte_romantico']);
+      if (products.isNotEmpty && mounted) {
+        setState(() => _precioStr = products.first.priceString);
+      }
+    } catch (_) {}
   }
 
   @override
@@ -66,7 +81,24 @@ class _PantallaPagoRomanticoState extends State<PantallaPagoRomantico>
     super.dispose();
   }
 
-  void _simularPago() {
+  Future<void> _comprar() async {
+    if (_comprando) return;
+    setState(() => _comprando = true);
+    try {
+      await PurchasesService.ensureConfigured();
+      final products = await Purchases.getProducts(['com.ecos.astroapp.reporte_romantico']);
+      if (products.isEmpty) throw Exception('producto no disponible');
+      await Purchases.purchaseStoreProduct(products.first);
+      if (!mounted) return;
+      _irAlReporte();
+    } on PurchasesErrorCode catch (_) {
+      if (mounted) setState(() => _comprando = false);
+    } catch (_) {
+      if (mounted) setState(() => _comprando = false);
+    }
+  }
+
+  void _irAlReporte() {
     final nav = Navigator.of(context);
     nav.pushReplacement(
       MaterialPageRoute(
@@ -175,9 +207,9 @@ class _PantallaPagoRomanticoState extends State<PantallaPagoRomantico>
 
                   const Spacer(),
 
-                  const Text(
-                    '\$29',
-                    style: TextStyle(
+                  Text(
+                    _precioStr ?? '—',
+                    style: const TextStyle(
                       color: Color(0xFFF3EBD6),
                       fontSize: 42,
                       fontWeight: FontWeight.w200,
@@ -197,7 +229,7 @@ class _PantallaPagoRomanticoState extends State<PantallaPagoRomantico>
                   const SizedBox(height: 32),
 
                   GestureDetector(
-                    onTap: _simularPago,
+                    onTap: _comprando ? null : _comprar,
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 18),
@@ -222,7 +254,7 @@ class _PantallaPagoRomanticoState extends State<PantallaPagoRomantico>
                   const SizedBox(height: 16),
 
                   GestureDetector(
-                    onTap: DebugConfig.instance.activo ? _simularPago : null,
+                    onTap: DebugConfig.instance.activo ? _irAlReporte : null,
                     behavior: HitTestBehavior.opaque,
                     child: Center(
                       child: Padding(

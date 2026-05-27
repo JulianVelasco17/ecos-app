@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'lectura_carta_astral.dart';
+import 'compra_carta_astral.dart';
 
 class PantallaCartaPresentacion extends StatefulWidget {
   const PantallaCartaPresentacion({super.key});
@@ -48,12 +49,18 @@ class _PantallaCartaPresentacionState extends State<PantallaCartaPresentacion>
     if (uid == null) return;
     setState(() => _activando = true);
     try {
-      await FirebaseFirestore.instance
-          .collection('usuarios').doc(uid)
-          .set({'cartaActiva': true}, SetOptions(merge: true));
+      final doc = await FirebaseFirestore.instance
+          .collection('usuarios').doc(uid).get();
+      final tieneAcceso = doc.data()?['cartaActiva'] == true;
       if (!mounted) return;
-      Navigator.pushReplacement(context,
-          MaterialPageRoute(builder: (_) => const PantallaLecturaCartaAstral()));
+      if (tieneAcceso) {
+        Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (_) => const PantallaLecturaCartaAstral()));
+      } else {
+        setState(() => _activando = false);
+        Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (_) => const PantallaCompraCarta()));
+      }
     } catch (_) {
       if (mounted) setState(() => _activando = false);
     }
@@ -113,7 +120,7 @@ class _PantallaCartaPresentacionState extends State<PantallaCartaPresentacion>
           Container(width: 28, height: 1.5, color: _gold),
           const SizedBox(height: 20),
           const Text(
-            'Tu carta astral es un mapa de lo que ya eres. Estas 3 lecturas lo ponen en palabras.',
+            'Tu carta natal es un mapa de lo que ya eres. Estas 3 lecturas lo ponen en palabras.',
             style: TextStyle(
               color: Color(0x88E8DFD0),
               fontSize: 15,
