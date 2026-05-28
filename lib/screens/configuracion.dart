@@ -24,15 +24,15 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFFF3EBD6),
         title: const Text('eliminar cuenta', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w300, letterSpacing: 1)),
-        content: const Text('Se borrarán tu perfil y todos tus datos. Esta acción no se puede deshacer.', style: TextStyle(color: Colors.black54)),
+        content: const Text('¿Estás seguro de que quieres eliminar tu cuenta? Se borrarán tu perfil y todos tus datos. Esta acción no se puede deshacer.', style: TextStyle(color: Colors.black54)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('cancelar', style: TextStyle(color: Colors.black45)),
+            child: const Text('no', style: TextStyle(color: Colors.black45)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('eliminar', style: TextStyle(color: Colors.red)),
+            child: const Text('sí, eliminar', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -46,6 +46,22 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
       if (!context.mounted) return;
       await FirebaseFirestore.instance.collection('usuarios').doc(user.uid).delete();
       await user.delete();
+      if (!context.mounted) return;
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => AlertDialog(
+          backgroundColor: const Color(0xFFF3EBD6),
+          title: const Text('hasta pronto', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w300, letterSpacing: 1)),
+          content: const Text('Gracias por haber sido parte de ecos. Esperamos verte de nuevo pronto.', style: TextStyle(color: Colors.black54)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('cerrar', style: TextStyle(color: Colors.black45)),
+            ),
+          ],
+        ),
+      );
       if (!context.mounted) return;
       Navigator.pushAndRemoveUntil(
         context,

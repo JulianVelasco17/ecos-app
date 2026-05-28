@@ -53,23 +53,26 @@ class AuthService {
   static String sha256Nonce(String nonce) =>
       sha256.convert(utf8.encode(nonce)).toString();
 
-  static Future<User?> loginConApple() async {
+  static Future<(User?, String?)> loginConApple() async {
     try {
       final rawNonce = generarNonce();
       final credencial = await SignInWithApple.getAppleIDCredential(
         scopes: [AppleIDAuthorizationScopes.email, AppleIDAuthorizationScopes.fullName],
         nonce: sha256Nonce(rawNonce),
       );
+      final nombre = [credencial.givenName, credencial.familyName]
+          .where((s) => s != null && s.isNotEmpty)
+          .join(' ');
       final oauthCred = OAuthProvider('apple.com').credential(
         idToken: credencial.identityToken,
         accessToken: credencial.authorizationCode,
         rawNonce: rawNonce,
       );
       final resultado = await _auth.signInWithCredential(oauthCred);
-      return resultado.user;
+      return (resultado.user, nombre.isNotEmpty ? nombre : null);
     } catch (e) {
       print('ERROR loginConApple: $e');
-      return null;
+      return (null, null);
     }
   }
 

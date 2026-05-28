@@ -224,7 +224,7 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
 
   Future<void> _loginConApple() async {
     setState(() => _procesandoApple = true);
-    final usuario = await AuthService.loginConApple();
+    final (usuario, nombreApple) = await AuthService.loginConApple();
     if (!mounted) return;
     setState(() => _procesandoApple = false);
     if (usuario == null) return;
@@ -239,8 +239,14 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
         builder: (_) => PantallaHome(nombre: datos['nombre'] ?? 'viajero'),
       ));
     } else {
+      final emailBase = usuario.email?.split('@').first;
+      final nombre = nombreApple?.isNotEmpty == true
+          ? nombreApple
+          : (emailBase != null && emailBase.isNotEmpty
+              ? '${emailBase[0].toUpperCase()}${emailBase.substring(1)}'
+              : 'viajero');
       Navigator.pushReplacement(context, MaterialPageRoute(
-        builder: (_) => PantallaRegistro(nombreInicial: usuario.displayName),
+        builder: (_) => PantallaRegistro(nombreInicial: nombre, omitirNombre: true),
       ));
     }
   }
