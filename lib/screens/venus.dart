@@ -133,7 +133,6 @@ class _PantallaVenusState extends State<PantallaVenus> {
 
     final parejaUid = _enlace!['uid'] as String;
     final miDoc = await FirebaseFirestore.instance.collection('usuarios').doc(uid).get();
-    final miNombre = miDoc.data()?['nombre'] ?? '';
     final miUsuario = miDoc.data()?['usuario'] ?? '';
     final miFoto = miDoc.data()?['fotoUrl'];
 
@@ -144,7 +143,6 @@ class _PantallaVenusState extends State<PantallaVenus> {
     await FirebaseFirestore.instance.collection('usuarios').doc(parejaUid).update({
       'venusEnlace': {
         'uid': uid,
-        'nombre': miNombre,
         'usuario': miUsuario,
         'fotoUrl': miFoto,
         'estado': 'activo',
@@ -267,7 +265,7 @@ class _SolicitudEnviada extends StatelessWidget {
                   fallbackChild: const Icon(Icons.person, color: Colors.black45, size: 36),
                 ),
                 const SizedBox(height: 20),
-                Text(enlace['nombre'] ?? '', style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w300, letterSpacing: 2)),
+                Text(enlace['usuario'] ?? '', style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w300, letterSpacing: 2)),
                 const SizedBox(height: 8),
                 Text('@${enlace['usuario'] ?? ''}', style: const TextStyle(color: Colors.black45, fontSize: 13, letterSpacing: 1)),
                 const SizedBox(height: 32),
@@ -318,7 +316,7 @@ class _SolicitudRecibida extends StatelessWidget {
                   fallbackChild: const Icon(Icons.person, color: Colors.black45, size: 36),
                 ),
                 const SizedBox(height: 20),
-                Text(enlace['nombre'] ?? '', style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w300, letterSpacing: 2)),
+                Text(enlace['usuario'] ?? '', style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w300, letterSpacing: 2)),
                 const SizedBox(height: 8),
                 Text('@${enlace['usuario'] ?? ''}', style: const TextStyle(color: Colors.black45, fontSize: 13, letterSpacing: 1)),
                 const SizedBox(height: 32),
@@ -464,8 +462,8 @@ class _EnlazadaState extends State<_Enlazada> {
     final parejaDatos = parejaDoc.data()!;
     final (mH, mM)    = horaDe(miDatos);
     final (pH, pM)    = horaDe(parejaDatos);
-    final miNombre    = miDatos['nombre'] as String? ?? '';
-    final parejaName  = parejaDatos['nombre'] as String? ?? widget.enlace['nombre'] as String? ?? '';
+    final miNombre    = miDatos['usuario'] as String? ?? '';
+    final parejaName  = parejaDatos['usuario'] as String? ?? widget.enlace['usuario'] as String? ?? '';
 
     final aspectos = AspectosNatales.calcularSinastria(
       fechaDe(miDatos), mH, mM,

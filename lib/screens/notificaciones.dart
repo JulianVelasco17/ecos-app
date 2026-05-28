@@ -112,7 +112,7 @@ class PantallaNotificaciones extends StatelessWidget {
 
                         final datos =
                             userSnap.data!.data() as Map<String, dynamic>?;
-                        final nombre = datos?['nombre'] ?? 'alguien';
+                        final nombre = datos?['usuario'] ?? 'alguien';
                         final usuario = datos?['usuario'] ?? '';
                         final fotoUrl = datos?['fotoUrl'];
 

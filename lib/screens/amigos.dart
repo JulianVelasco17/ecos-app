@@ -53,7 +53,7 @@ class _PantallaAmigosState extends State<PantallaAmigos> {
         final data = doc.data()!;
         return _AmigoData(
           uid:      uid,
-          nombre:   data['nombre'] as String? ?? '',
+          nombre:   data['usuario'] as String? ?? '',
           usuario:  data['usuario'] as String? ?? '',
           fotoUrl:  data['fotoUrl'] as String?,
           rawData:  data,
@@ -107,7 +107,7 @@ class _PantallaAmigosState extends State<PantallaAmigos> {
     Navigator.push(context, MaterialPageRoute(
       builder: (_) => PantallaAfinidad(
         miUid:         miUid,
-        miNombre:      mi['nombre'] ?? '',
+        miNombre:      mi['usuario'] ?? '',
         miFotoUrl:     (mi['fotoUrl'] as String?) ?? FirebaseAuth.instance.currentUser?.photoURL,
         miSolar:       cartaDe(mi).signoSolar,
         miLunar:       cartaDe(mi).signoLunar,

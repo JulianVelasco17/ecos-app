@@ -322,7 +322,7 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
           latitud:  (ad['latitud']  as num?)?.toDouble() ?? 0.0,
           longitud: (ad['longitud'] as num?)?.toDouble() ?? 0.0,
         );
-        final amigoNombre = ad['nombre'] as String? ?? 'alguien';
+        final amigoNombre = ad['usuario'] as String? ?? 'alguien';
 
         final compatRef = FirebaseFirestore.instance
             .collection('usuarios').doc(miUid)
@@ -361,8 +361,8 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                 .set({'texto': desarrolloConPlaceholders});
           }
 
-          final miNombre = widget.nombre.split(' ').first;
-          final suNombre = amigoNombre.split(' ').first;
+          final miNombre = widget.nombre;
+          final suNombre = amigoNombre;
           final titulo = frasePlaceholder.replaceAll('[USUARIO]', miNombre).replaceAll('[AMIGO]', suNombre);
           final texto  = desarrolloConPlaceholders.replaceAll('[USUARIO]', miNombre).replaceAll('[AMIGO]', suNombre);
           compatibilidad = jsonEncode({'titulo': titulo, 'texto': texto});
@@ -804,7 +804,7 @@ class _PantallaAstrosHoyState extends State<PantallaAstrosHoy> {
                 ...List.generate(_amigos.length, (i) {
                   final amigo = _amigos[i];
                   final uid      = amigo['uid']      as String;
-                  final nombre   = amigo['nombre']   as String;
+                  final nombre   = amigo['nombre'] as String;
                   final username = amigo['username'] as String;
                   final solar    = amigo['solar']    as String;
                   final lunar    = amigo['lunar']    as String;

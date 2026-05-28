@@ -105,7 +105,7 @@ class _PantallaBuscarAmigosState extends State<PantallaBuscarAmigos> {
                           MaterialPageRoute(
                             builder: (_) => PantallaPerfilUsuario(
                               uid: usuario['uid'],
-                              nombre: usuario['nombre'] ?? '',
+                              nombre: usuario['usuario'] ?? '',
                               nombreUsuario: usuario['usuario'] ?? '',
                               fotoUrl: usuario['fotoUrl'],
                             ),
@@ -119,7 +119,7 @@ class _PantallaBuscarAmigosState extends State<PantallaBuscarAmigos> {
                         fallbackChild: const Icon(Icons.person, color: Colors.black45),
                       ),
                       title: Text(
-                        usuario['nombre'] ?? '',
+                        usuario['usuario'] ?? '',
                         style: const TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.w300,

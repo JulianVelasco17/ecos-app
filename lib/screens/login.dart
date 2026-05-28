@@ -53,7 +53,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (_) => PantallaHome(nombre: doc.data()?['nombre'] ?? 'viajero'),
+          builder: (_) => PantallaHome(nombre: doc.data()?['usuario'] ?? 'viajero'),
         ),
         (_) => false,
       );

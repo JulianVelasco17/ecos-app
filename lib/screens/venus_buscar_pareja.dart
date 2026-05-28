@@ -40,7 +40,7 @@ class _PantallaVenusBuscarParejaState extends State<PantallaVenusBuscarPareja> {
       final userDoc = await FirebaseFirestore.instance.collection('usuarios').doc(uid).get();
       if (!userDoc.exists) continue;
       final d = userDoc.data()!;
-      amigos.add({'uid': uid, 'nombre': d['nombre'], 'usuario': d['usuario'], 'fotoUrl': d['fotoUrl']});
+      amigos.add({'uid': uid, 'usuario': d['usuario'], 'fotoUrl': d['fotoUrl']});
     }
 
     if (mounted) setState(() { _amigos = amigos; _cargandoAmigos = false; });
@@ -80,8 +80,6 @@ class _PantallaVenusBuscarParejaState extends State<PantallaVenusBuscarPareja> {
     setState(() => _enviandoA = pareja['uid']);
 
     final miDoc = await FirebaseFirestore.instance.collection('usuarios').doc(miUid).get();
-    final miNombre = miDoc.data()?['nombre'] ?? '';
-
     final parejaUid = pareja['uid'] as String;
     final parejaDoc = await FirebaseFirestore.instance.collection('usuarios').doc(parejaUid).get();
     final parejaEnlace = parejaDoc.data()?['venusEnlace'];
@@ -101,7 +99,6 @@ class _PantallaVenusBuscarParejaState extends State<PantallaVenusBuscarPareja> {
     await FirebaseFirestore.instance.collection('usuarios').doc(miUid).update({
       'venusEnlace': {
         'uid': parejaUid,
-        'nombre': pareja['nombre'] ?? '',
         'usuario': pareja['usuario'] ?? '',
         'fotoUrl': pareja['fotoUrl'],
         'estado': 'pendiente_enviada',
@@ -111,7 +108,6 @@ class _PantallaVenusBuscarParejaState extends State<PantallaVenusBuscarPareja> {
     await FirebaseFirestore.instance.collection('usuarios').doc(parejaUid).update({
       'venusEnlace': {
         'uid': miUid,
-        'nombre': miNombre,
         'usuario': miDoc.data()?['usuario'] ?? '',
         'fotoUrl': miDoc.data()?['fotoUrl'],
         'estado': 'pendiente_recibida',
@@ -132,7 +128,7 @@ class _PantallaVenusBuscarParejaState extends State<PantallaVenusBuscarPareja> {
         fotoUrl: u['fotoUrl'],
         fallbackChild: const Icon(Icons.person, color: Colors.black45),
       ),
-      title: Text(u['nombre'] ?? '', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w300, letterSpacing: 1)),
+      title: Text(u['usuario'] ?? '', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w300, letterSpacing: 1)),
       subtitle: Text('@${u['usuario'] ?? ''}', style: const TextStyle(color: Colors.black45, fontSize: 12, letterSpacing: 1)),
       trailing: enviando
           ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.black26, strokeWidth: 1.5))

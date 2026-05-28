@@ -146,7 +146,7 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio>
       final etiquetas = aspectos.map((a) =>
           '${a.planeta1} ${a.tipo} ${a.planeta2} (orbe ${a.orbe.toStringAsFixed(1)}°)').toList();
       final rawStr = await ClaudeService.generarLecturaProfunda(
-        nombre:     datos['nombre'] as String? ?? '',
+        nombre:     datos['usuario'] as String? ?? '',
         signoSolar: carta.signoSolar,
         signoLunar: carta.signoLunar,
         ascendente: carta.ascendente,
@@ -224,7 +224,7 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio>
                                   fotoUrl: _datos?['fotoUrl'],
                                   fallbackChild: _datos?['fotoUrl'] == null
                                       ? Text(
-                                          (_datos?['nombre'] ?? '?')[0].toLowerCase(),
+                                          (_datos?['usuario'] ?? '?')[0].toLowerCase(),
                                           style: const TextStyle(
                                             color: Colors.black54,
                                             fontSize: 24,
@@ -259,7 +259,7 @@ class _PantallaPerfilPropioState extends State<PantallaPerfilPropio>
                             textBaseline: TextBaseline.alphabetic,
                             children: [
                               Text(
-                                _datos?['nombre'] ?? '',
+                                _datos?['usuario'] ?? '',
                                 style: const TextStyle(
                                   color: Color(0xFF222222),
                                   fontSize: 28,

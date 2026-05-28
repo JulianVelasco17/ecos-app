@@ -164,8 +164,8 @@ Responde SOLO con el texto, sin JSON, sin comillas.
     required String signoLunar2,
     required String ascendente2,
   }) async {
-    final n1 = nombre1.split(' ').first;
-    final n2 = nombre2.split(' ').first;
+    final n1 = nombre1;
+    final n2 = nombre2;
     final prompt = '''
 Eres la voz de una app de astrología para parejas.
 
@@ -186,7 +186,7 @@ Escribe 1 oración en español sobre cómo funciona esta pareja según sus carta
     required String venus,
     required String marte,
   }) async {
-    final n = nombre.split(' ').first;
+    final n = nombre;
     final prompt = '''
 You are writing a birth chart reading for $n. Their chart: Sun in $signoSolar, Moon in $signoLunar, Ascendant in $ascendente, Venus in $venus, Mars in $marte.
 
@@ -322,7 +322,7 @@ Genera el texto siguiendo estrictamente este estilo. No incluyas nada más, solo
     required String ascendente,
     required List<String> aspectos,
   }) async {
-    final n = nombre.split(' ').first;
+    final n = nombre;
     final prompt = '''
 Eres la voz de una app de astrología. Carta natal de $n: Sol en $signoSolar, Luna en $signoLunar, Ascendente en $ascendente. Aspectos dominantes: ${aspectos.join('; ')}.
 
@@ -349,7 +349,7 @@ Responde SOLO con este JSON sin nada más:
     required List<String> aspectos,
     required Map<String, String> planetas,
   }) async {
-    final n = nombre.split(' ').first;
+    final n = nombre;
     final planetasStr = planetas.entries.map((e) => '${e.key} en ${e.value}').join(', ');
     final prompt = '''
 Eres un astrólogo que escribe lecturas de carta natal para una app. Carta de $n: Sol en $signoSolar, Luna en $signoLunar, Ascendente en $ascendente. Planetas: $planetasStr. Aspectos: ${aspectos.take(8).join('; ')}.
@@ -535,7 +535,7 @@ Responde SOLO con este JSON:
     required String parejaName,
   }) async {
     final frase = _frasesVenus[Random().nextInt(_frasesVenus.length)];
-    final pareja = parejaName.split(' ').first;
+    final pareja = parejaName;
     final prompt = '''
 Eres la voz de una app de relaciones. Escribes como una voz externa que describe situaciones de pareja de forma objetiva, sin involucrarse, no como una persona ni como un horóscopo.
 
@@ -639,8 +639,8 @@ Responde SOLO con este JSON. "cierre" debe ser exactamente una sola frase:
     required String nombre2,
     required List<String> aspectos,
   }) async {
-    final n1 = nombre1.split(' ').first;
-    final n2 = nombre2.split(' ').first;
+    final n1 = nombre1;
+    final n2 = nombre2;
     final prompt = '''
 Eres la voz de una app de astrología. Escribe una lectura de sinastría entre $n1 y $n2.
 
@@ -656,8 +656,8 @@ Escribe exactamente 2 oraciones en español. La primera habla de lo que los une 
     required String miNombre,
     required String parejaName,
   }) async {
-    final n1 = miNombre.split(' ').first;
-    final n2 = parejaName.split(' ').first;
+    final n1 = miNombre;
+    final n2 = parejaName;
     final prompt = '''
 Escribe exactamente 1 oración en español que $n1 podría decirle a $n2 hoy para hacerle sentir valorado. No hagas preguntas ni pidas más información — inventa algo concreto y cálido ahora. Sin "energía", "vibra", "universo". Sin guiones largos. Sin comillas. Sin saludos.
 ''';
@@ -671,8 +671,8 @@ Escribe exactamente 1 oración en español que $n1 podría decirle a $n2 hoy par
     required String nombre2,
     required String plan2,
   }) async {
-    final n1 = nombre1.split(' ').first;
-    final n2 = nombre2.split(' ').first;
+    final n1 = nombre1;
+    final n2 = nombre2;
     final prompt = '''
 $n1 quiere: "$plan1". $n2 quiere: "$plan2".
 Escribe exactamente 2 oraciones en español sugiriendo un plan de fin de semana que combine ambas ideas de forma creativa. Tono: concreto, cálido, divertido. Sin "energía", "vibra". Sin guiones largos.
@@ -884,8 +884,8 @@ Responde SOLO con este JSON:
     required String asc2,
     required String arquetipo,
   }) async {
-    final n1 = nombre1.split(' ').first;
-    final n2 = nombre2.split(' ').first;
+    final n1 = nombre1;
+    final n2 = nombre2;
     final descripcion = _descripcionesArquetipo[arquetipo] ?? 'Una conexión única entre dos personas.';
     final prompt = '''
 Eres la voz de una app de astrología. Escribe un reporte de compatibilidad romántica entre $n1 y $n2.
@@ -919,8 +919,8 @@ Responde SOLO con este JSON:
     required Map<String, String> planetas1,
     required Map<String, String> planetas2,
   }) async {
-    final n1 = nombre1.split(' ').first;
-    final n2 = nombre2.split(' ').first;
+    final n1 = nombre1;
+    final n2 = nombre2;
     final prompt = '''
 Eres la voz de una app de astrología. Compara estos 6 planetas entre $n1 y $n2. Para cada uno escribe UNA sola oración directa, concreta y sin clichés que describa cómo se complementan o contrastan en esa dimensión. Sin mencionar signos explícitamente. Tono honesto, moderno, tipo Co-Star.
 
@@ -956,8 +956,8 @@ Responde SOLO con este JSON:
     required Map<String, String> planetas2,
     required String arquetipo,
   }) async {
-    final n1 = nombre1.split(' ').first;
-    final n2 = nombre2.split(' ').first;
+    final n1 = nombre1;
+    final n2 = nombre2;
     final prompt = '''
 Eres la voz de una app de astrología estilo Co-Star. Basándote en la sinastría entre $n1 y $n2, escribe 6 escenarios de vida futura concretos, visuales y originales. Cada uno: 2-3 oraciones que pinten una imagen específica de cómo serían juntos en esa situación. Tono: honesto, directo, cinematográfico. Sin clichés, sin "energía", sin "universo". Pueden ser tiernos, tensos o graciosos según lo que diga la sinastría. Usa los nombres $n1 y $n2.
 

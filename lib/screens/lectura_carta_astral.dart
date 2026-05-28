@@ -103,7 +103,7 @@ class _PantallaLecturaCartaAstralState extends State<PantallaLecturaCartaAstral>
         return;
       }
       final datos = userDoc.data()!;
-      _nombre = (datos['nombre'] as String? ?? '').split(' ').first;
+      _nombre = datos['usuario'] as String? ?? '';
 
       final cache = await FirebaseFirestore.instance
           .collection('lecturasProfundas').doc('${uid}_carta_v3').get();
@@ -149,7 +149,7 @@ class _PantallaLecturaCartaAstralState extends State<PantallaLecturaCartaAstral>
           '${a.planeta1} ${a.tipo} ${a.planeta2} (orbe ${a.orbe.toStringAsFixed(1)}°)').toList();
 
       final rawStr = await ClaudeService.generarLecturaCartaProfunda(
-        nombre:     datos['nombre'] as String? ?? '',
+        nombre:     datos['usuario'] as String? ?? '',
         signoSolar: carta.signoSolar,
         signoLunar: carta.signoLunar,
         ascendente: carta.ascendente,

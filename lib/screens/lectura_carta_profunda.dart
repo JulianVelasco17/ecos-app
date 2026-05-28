@@ -83,7 +83,7 @@ class _PantallaLecturaCartaProfundaState extends State<PantallaLecturaCartaProfu
           '${a.planeta1} ${a.tipo} ${a.planeta2} (orbe ${a.orbe.toStringAsFixed(1)}°)').toList();
 
       final rawStr = await ClaudeService.generarLecturaCartaProfunda(
-        nombre:     datos['nombre'] as String? ?? '',
+        nombre:     datos['usuario'] as String? ?? '',
         signoSolar: carta.signoSolar,
         signoLunar: carta.signoLunar,
         ascendente: carta.ascendente,

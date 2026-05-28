@@ -24,9 +24,7 @@ const _estaciones = [
 ];
 
 class PantallaRegistro extends StatefulWidget {
-  final String? nombreInicial;
-  final bool omitirNombre;
-  const PantallaRegistro({super.key, this.nombreInicial, this.omitirNombre = false});
+  const PantallaRegistro({super.key});
 
   @override
   State<PantallaRegistro> createState() => _PantallaRegistroState();
@@ -35,20 +33,18 @@ class PantallaRegistro extends StatefulWidget {
 class _PantallaRegistroState extends State<PantallaRegistro>
     with SingleTickerProviderStateMixin {
 
-  final _focusNombre  = FocusNode();
   final _focusUsuario = FocusNode();
 
   late AnimationController _camaraCtrl;
   late Animation<Offset>   _offsetAnim;
 
-  int _estacionActual = 0;
+  int _estacionActual = 1;
   bool _verificandoUsuario = false;
   String? _errorUsuario;
   bool _intentoAvanzarSinFecha  = false;
   bool _intentoAvanzarSinHora   = false;
   bool _intentoAvanzarSinLugar  = false;
 
-  final _nombreCtrl  = TextEditingController();
   final _usuarioCtrl = TextEditingController();
   final _lugarCtrl   = TextEditingController();
   DateTime?  _fecha;
@@ -58,10 +54,6 @@ class _PantallaRegistroState extends State<PantallaRegistro>
   @override
   void initState() {
     super.initState();
-    if (widget.nombreInicial != null && widget.nombreInicial!.isNotEmpty) {
-      _nombreCtrl.text = widget.nombreInicial!;
-      if (widget.omitirNombre) _estacionActual = 1;
-    }
     _camaraCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
@@ -72,10 +64,8 @@ class _PantallaRegistroState extends State<PantallaRegistro>
   @override
   void dispose() {
     _camaraCtrl.dispose();
-    _nombreCtrl.dispose();
     _usuarioCtrl.dispose();
     _lugarCtrl.dispose();
-    _focusNombre.dispose();
     _focusUsuario.dispose();
     super.dispose();
   }
@@ -131,7 +121,6 @@ class _PantallaRegistroState extends State<PantallaRegistro>
     setState(() {});
     _camaraCtrl.forward(from: 0).then((_) {
       setState(() => _estacionActual = idx);
-      if (idx == 0) _focusNombre.requestFocus();
       if (idx == 1) _focusUsuario.requestFocus();
     });
   }
@@ -147,14 +136,13 @@ class _PantallaRegistroState extends State<PantallaRegistro>
       latitud:  _lat ?? 0.0,
       longitud: _lon ?? 0.0,
     );
-    final nombre = _nombreCtrl.text.trim().isNotEmpty ? _nombreCtrl.text.trim() : 'viajero';
+    final usuario = _usuarioCtrl.text.toLowerCase().replaceAll(' ', '');
 
     // Guardar perfil en Firestore con uid anónimo para que la carta astral funcione
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
       await FirebaseFirestore.instance.collection('usuarios').doc(uid).set({
-        'nombre':           nombre,
-        'usuario':          _usuarioCtrl.text.toLowerCase().replaceAll(' ', ''),
+        'usuario':          usuario,
         'fechaNacimiento':  Timestamp.fromDate(_fecha!),
         'horaNacimiento':   '${hora.toString().padLeft(2,'0')}:${minutos.toString().padLeft(2,'0')}',
         'lugarNacimiento':  _lugarCtrl.text,
@@ -174,7 +162,7 @@ class _PantallaRegistroState extends State<PantallaRegistro>
         transitionDuration: const Duration(milliseconds: 700),
         pageBuilder: (_, __, ___) => PantallaConstelacion(
           signo:           carta.signoSolar,
-          nombre:          nombre,
+          nombre:          usuario,
           signoSolar:      carta.signoSolar,
           signoLunar:      carta.signoLunar,
           ascendente:      carta.ascendente,
@@ -188,8 +176,8 @@ class _PantallaRegistroState extends State<PantallaRegistro>
               ctx,
               MaterialPageRoute(
                 builder: (_) => PantallaCrearCredenciales(
-                  nombre: nombre,
-                  usuario: _usuarioCtrl.text.toLowerCase().replaceAll(' ', ''),
+                  nombre: usuario,
+                  usuario: usuario,
                   fechaNacimiento: _fecha!,
                   horaNacimiento: _hora ?? const TimeOfDay(hour: 12, minute: 0),
                   lugarNacimiento: _lugarCtrl.text,
@@ -231,13 +219,6 @@ class _PantallaRegistroState extends State<PantallaRegistro>
 
   Widget _contenido(int idx, BuildContext ctx) {
     switch (idx) {
-      case 0:
-        return _Tarjeta(
-          etiqueta: 'NOMBRE',
-          pregunta: '¿cómo\nte llamas?',
-          onSiguiente: _avanzar,
-          child: _campo(_nombreCtrl, 'tu nombre', onSubmit: _avanzar, autofocus: true, focusNode: _focusNombre),
-        );
       case 1:
         return _Tarjeta(
           etiqueta: 'USUARIO',
@@ -546,8 +527,7 @@ class _PantallaRegistroState extends State<PantallaRegistro>
               child: IconButton(
                 icon: const Icon(Icons.arrow_back_ios, color: Color(0x66F3EBD6), size: 18),
                 onPressed: () {
-                  final minEstacion = widget.omitirNombre ? 1 : 0;
-                  if (_estacionActual > minEstacion) {
+                  if (_estacionActual > 1) {
                     _moverA(_estacionActual - 1);
                   } else {
                     Navigator.pop(context);

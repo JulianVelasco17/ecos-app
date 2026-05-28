@@ -79,7 +79,7 @@ class _PantallaPerfilUsuarioState extends State<PantallaPerfilUsuario> {
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFFF3EBD6),
         title: Text(
-          '¿eliminar a ${widget.nombre}?',
+          '¿eliminar a @${widget.nombreUsuario}?',
           style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w300, letterSpacing: 1),
         ),
         content: const Text(
@@ -138,7 +138,7 @@ class _PantallaPerfilUsuarioState extends State<PantallaPerfilUsuario> {
               const SizedBox(height: 24),
 
               Text(
-                widget.nombre,
+                widget.nombreUsuario,
                 style: const TextStyle(
                   color: Colors.black,
                   fontSize: 22,

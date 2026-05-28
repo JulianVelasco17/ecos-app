@@ -412,7 +412,7 @@ class _VenusActividadDiariaState extends State<VenusActividadDiaria>
         .doc(widget.miUid)
         .set({
           'respuesta': respuesta,
-          'nombre':    widget.miNombre,
+          'usuario':   widget.miNombre,
           'timestamp': FieldValue.serverTimestamp(),
         });
 

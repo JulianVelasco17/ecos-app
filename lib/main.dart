@@ -197,7 +197,7 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
     final msg = results[1] as RemoteMessage?;
     if (doc.exists) {
       NotificationService.guardarTokenFCM();
-      final nombre = doc.data()?['nombre'] ?? 'viajero';
+      final nombre = doc.data()?['usuario'] ?? 'viajero';
       final pagina = msg != null ? (_paginaDesdeDatos(msg.data) ?? 2) : 2;
       Navigator.pushReplacement(context, MaterialPageRoute(
         builder: (_) => PantallaHome(nombre: nombre, paginaInicial: pagina),
@@ -224,7 +224,7 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
 
   Future<void> _loginConApple() async {
     setState(() => _procesandoApple = true);
-    final (usuario, nombreApple) = await AuthService.loginConApple();
+    final (usuario, _) = await AuthService.loginConApple();
     if (!mounted) return;
     setState(() => _procesandoApple = false);
     if (usuario == null) return;
@@ -236,17 +236,11 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
       final datos = doc.data()!;
       NotificationService.guardarTokenFCM();
       Navigator.pushReplacement(context, MaterialPageRoute(
-        builder: (_) => PantallaHome(nombre: datos['nombre'] ?? 'viajero'),
+        builder: (_) => PantallaHome(nombre: datos['usuario'] ?? 'viajero'),
       ));
     } else {
-      final emailBase = usuario.email?.split('@').first;
-      final nombre = nombreApple?.isNotEmpty == true
-          ? nombreApple
-          : (emailBase != null && emailBase.isNotEmpty
-              ? '${emailBase[0].toUpperCase()}${emailBase.substring(1)}'
-              : 'viajero');
       Navigator.pushReplacement(context, MaterialPageRoute(
-        builder: (_) => PantallaRegistro(nombreInicial: nombre, omitirNombre: true),
+        builder: (_) => const PantallaRegistro(),
       ));
     }
   }
@@ -265,7 +259,7 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
       final datos = doc.data()!;
       NotificationService.guardarTokenFCM();
       Navigator.pushReplacement(context, MaterialPageRoute(
-        builder: (_) => PantallaHome(nombre: datos['nombre'] ?? 'viajero'),
+        builder: (_) => PantallaHome(nombre: datos['usuario'] ?? 'viajero'),
       ));
     } else {
       final fotoUrl = usuario.photoURL;

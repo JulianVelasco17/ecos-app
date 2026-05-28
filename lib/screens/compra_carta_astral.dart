@@ -618,7 +618,7 @@ class _PantallaGracias extends StatelessWidget {
     if (tieneSocial || tienePassword) {
       // Ya tiene cuenta vinculada → ir al feed
       final doc = await FirebaseFirestore.instance.collection('usuarios').doc(user.uid).get();
-      final nombre = doc.data()?['nombre'] ?? 'viajero';
+      final nombre = doc.data()?['usuario'] ?? 'viajero';
       if (context.mounted) {
         Navigator.pushAndRemoveUntil(
           context,
@@ -637,7 +637,7 @@ class _PantallaGracias extends StatelessWidget {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => PantallaCrearCredenciales(
-          nombre:          d['nombre'] as String? ?? '',
+          nombre:          d['usuario'] as String? ?? '',
           usuario:         d['usuario'] as String? ?? '',
           fechaNacimiento: fecha,
           horaNacimiento:  TimeOfDay(

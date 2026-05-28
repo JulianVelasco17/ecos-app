@@ -1727,7 +1727,7 @@ class _PantallaVideoRevealState extends State<_PantallaVideoReveal> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
-                            '${widget.nombre.split(' ').first} tiene',
+                            '${widget.nombre} tiene',
                             style: GoogleFonts.manrope(
                               color: const Color(0xFFF3EBD6),
                               fontSize: 20,
