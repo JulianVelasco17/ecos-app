@@ -239,7 +239,9 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
         builder: (_) => PantallaHome(nombre: datos['nombre'] ?? 'viajero'),
       ));
     } else {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const PantallaRegistro()));
+      Navigator.pushReplacement(context, MaterialPageRoute(
+        builder: (_) => PantallaRegistro(nombreInicial: usuario.displayName),
+      ));
     }
   }
 

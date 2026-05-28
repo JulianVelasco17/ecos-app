@@ -7,8 +7,6 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class AuthService {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
-  static const _serverClientId = '424940223395-9t9r7fcma2slfmstcbp314enmkkmj28l.apps.googleusercontent.com';
-  static const _iosClientId    = '424940223395-tlh06k38h4mi8fdivhir7407i7ju43a9.apps.googleusercontent.com';
 
   // Usuario actualmente loggeado (null si no hay sesión)
   static User? get usuarioActual => _auth.currentUser;
@@ -17,8 +15,8 @@ class AuthService {
   static Future<User?> loginConGoogle() async {
     try {
       await GoogleSignIn.instance.initialize(
-        clientId: _iosClientId,
-        serverClientId: _serverClientId,
+        clientId: iosClientId,
+        serverClientId: serverClientId,
       );
       final cuenta = await GoogleSignIn.instance.authenticate();
       final auth = cuenta.authentication;
@@ -43,21 +41,24 @@ class AuthService {
     }
   }
 
-  static String _generarNonce([int length = 32]) {
+  static const serverClientId = '424940223395-9t9r7fcma2slfmstcbp314enmkkmj28l.apps.googleusercontent.com';
+  static const iosClientId    = '424940223395-tlh06k38h4mi8fdivhir7407i7ju43a9.apps.googleusercontent.com';
+
+  static String generarNonce([int length = 32]) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._';
     final rng = Random.secure();
     return List.generate(length, (_) => chars[rng.nextInt(chars.length)]).join();
   }
 
-  static String _sha256Nonce(String nonce) =>
+  static String sha256Nonce(String nonce) =>
       sha256.convert(utf8.encode(nonce)).toString();
 
   static Future<User?> loginConApple() async {
     try {
-      final rawNonce = _generarNonce();
+      final rawNonce = generarNonce();
       final credencial = await SignInWithApple.getAppleIDCredential(
         scopes: [AppleIDAuthorizationScopes.email, AppleIDAuthorizationScopes.fullName],
-        nonce: _sha256Nonce(rawNonce),
+        nonce: sha256Nonce(rawNonce),
       );
       final oauthCred = OAuthProvider('apple.com').credential(
         idToken: credencial.identityToken,
@@ -75,8 +76,8 @@ class AuthService {
   static Future<bool> vincularConGoogle() async {
     try {
       await GoogleSignIn.instance.initialize(
-        clientId: _iosClientId,
-        serverClientId: _serverClientId,
+        clientId: iosClientId,
+        serverClientId: serverClientId,
       );
       final cuenta = await GoogleSignIn.instance.authenticate();
       final auth = cuenta.authentication;
@@ -91,10 +92,10 @@ class AuthService {
 
   static Future<bool> vincularConApple() async {
     try {
-      final rawNonce = _generarNonce();
+      final rawNonce = generarNonce();
       final credencial = await SignInWithApple.getAppleIDCredential(
         scopes: [AppleIDAuthorizationScopes.email, AppleIDAuthorizationScopes.fullName],
-        nonce: _sha256Nonce(rawNonce),
+        nonce: sha256Nonce(rawNonce),
       );
       final oauthCred = OAuthProvider('apple.com').credential(
         idToken: credencial.identityToken,

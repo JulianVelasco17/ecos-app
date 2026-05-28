@@ -24,7 +24,8 @@ const _estaciones = [
 ];
 
 class PantallaRegistro extends StatefulWidget {
-  const PantallaRegistro({super.key});
+  final String? nombreInicial;
+  const PantallaRegistro({super.key, this.nombreInicial});
 
   @override
   State<PantallaRegistro> createState() => _PantallaRegistroState();
@@ -56,6 +57,10 @@ class _PantallaRegistroState extends State<PantallaRegistro>
   @override
   void initState() {
     super.initState();
+    if (widget.nombreInicial != null && widget.nombreInicial!.isNotEmpty) {
+      _nombreCtrl.text = widget.nombreInicial!;
+      _estacionActual = 1;
+    }
     _camaraCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),

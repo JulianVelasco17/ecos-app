@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/auth_service.dart';
 import '../main.dart';
@@ -14,6 +17,86 @@ class PantallaConfiguracion extends StatefulWidget {
 
 class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
   bool _vinculando = false;
+
+  Future<void> _eliminarCuenta(BuildContext context) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFFF3EBD6),
+        title: const Text('eliminar cuenta', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w300, letterSpacing: 1)),
+        content: const Text('Se borrarán tu perfil y todos tus datos. Esta acción no se puede deshacer.', style: TextStyle(color: Colors.black54)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('cancelar', style: TextStyle(color: Colors.black45)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('eliminar', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirmar != true) return;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      await _reautenticar(user);
+      if (!context.mounted) return;
+      await FirebaseFirestore.instance.collection('usuarios').doc(user.uid).delete();
+      await user.delete();
+      if (!context.mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const PantallaBienvenida()),
+        (_) => false,
+      );
+    } on FirebaseAuthException catch (e) {
+      if (!context.mounted) return;
+      final msg = e.code == 'requires-recent-login'
+          ? 'vuelve a iniciar sesión e intenta de nuevo'
+          : 'no se pudo eliminar la cuenta, intenta de nuevo';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: Colors.black87,
+        content: Text(msg, style: const TextStyle(color: Color(0xFFF3EBD6), fontSize: 12)),
+      ));
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        backgroundColor: Colors.black87,
+        content: Text('no se pudo eliminar la cuenta, intenta de nuevo',
+            style: TextStyle(color: Color(0xFFF3EBD6), fontSize: 12)),
+      ));
+    }
+  }
+
+  Future<void> _reautenticar(User user) async {
+    final proveedores = user.providerData.map((p) => p.providerId).toSet();
+    if (proveedores.contains('apple.com')) {
+      final rawNonce = AuthService.generarNonce();
+      final credencial = await SignInWithApple.getAppleIDCredential(
+        scopes: [AppleIDAuthorizationScopes.email, AppleIDAuthorizationScopes.fullName],
+        nonce: AuthService.sha256Nonce(rawNonce),
+      );
+      final oauthCred = OAuthProvider('apple.com').credential(
+        idToken: credencial.identityToken,
+        accessToken: credencial.authorizationCode,
+        rawNonce: rawNonce,
+      );
+      await user.reauthenticateWithCredential(oauthCred);
+    } else if (proveedores.contains('google.com')) {
+      await GoogleSignIn.instance.initialize(
+        clientId: AuthService.iosClientId,
+        serverClientId: AuthService.serverClientId,
+      );
+      final cuenta = await GoogleSignIn.instance.authenticate();
+      final auth = cuenta.authentication;
+      final credencial = GoogleAuthProvider.credential(idToken: auth.idToken);
+      await user.reauthenticateWithCredential(credencial);
+    }
+    // usuarios anónimos o email/password no requieren reautenticación para delete
+  }
 
   Future<void> _cerrarSesion(BuildContext context) async {
     final confirmar = await showDialog<bool>(
@@ -184,6 +267,26 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
                       Text(
                         'cerrar sesión',
                         style: TextStyle(color: Colors.black45, fontSize: 13, letterSpacing: 2),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              GestureDetector(
+                onTap: () => _eliminarCuenta(context),
+                behavior: HitTestBehavior.opaque,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline, color: Colors.red, size: 16),
+                      SizedBox(width: 12),
+                      Text(
+                        'eliminar cuenta',
+                        style: TextStyle(color: Colors.red, fontSize: 13, letterSpacing: 2),
                       ),
                     ],
                   ),
