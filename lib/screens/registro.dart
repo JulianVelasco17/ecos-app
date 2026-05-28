@@ -229,7 +229,7 @@ class _PantallaRegistroState extends State<PantallaRegistro>
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _campo(_usuarioCtrl, 'tunombre', prefijo: '@', onSubmit: _avanzar, focusNode: _focusUsuario),
+              _campo(_usuarioCtrl, '@usuario', prefijo: '@', onSubmit: _avanzar, focusNode: _focusUsuario),
               if (_errorUsuario != null) ...[
                 const SizedBox(height: 10),
                 Text(_errorUsuario!,
@@ -505,13 +505,13 @@ class _PantallaRegistroState extends State<PantallaRegistro>
                 padding: const EdgeInsets.only(top: 16),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: List.generate(_estaciones.length, (i) => AnimatedContainer(
+                  children: List.generate(_estaciones.length - 1, (i) => AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     margin: const EdgeInsets.symmetric(horizontal: 3),
-                    width: i == _estacionActual ? 18 : 6,
+                    width: (i + 1) == _estacionActual ? 18 : 6,
                     height: 6,
                     decoration: BoxDecoration(
-                      color: i == _estacionActual ? const Color(0xFFF3EBD6) : const Color(0x33F3EBD6),
+                      color: (i + 1) == _estacionActual ? const Color(0xFFF3EBD6) : const Color(0x33F3EBD6),
                       borderRadius: BorderRadius.circular(3),
                     ),
                   )),
@@ -568,7 +568,7 @@ class _Tarjeta extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(etiqueta, style: const TextStyle(color: Color(0x55F3EBD6), fontSize: 10, letterSpacing: 3)),
+          Text(etiqueta, style: const TextStyle(color: Color(0xAAF3EBD6), fontSize: 11, letterSpacing: 3)),
           const SizedBox(height: 20),
           Text(pregunta, style: const TextStyle(
             color: Color(0xFFF3EBD6), fontSize: 28,

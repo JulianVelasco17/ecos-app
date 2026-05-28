@@ -18,10 +18,18 @@ class _PantallaVenusSuscripcionState extends State<PantallaVenusSuscripcion> {
   bool _activando = false;
   String _precioStr = r'$99 / mes';
 
+  static const _imgUrl = 'https://res.cloudinary.com/dwemowboc/image/upload/v1777590407/07fa4b06a8763df8b8dfac0d4ddb1977_a07dje.jpg';
+
   @override
   void initState() {
     super.initState();
     _cargarPrecio();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    precacheImage(const NetworkImage(_imgUrl), context);
   }
 
   Future<void> _suscribirse() async {
@@ -90,9 +98,18 @@ class _PantallaVenusSuscripcionState extends State<PantallaVenusSuscripcion> {
             child: ColorFiltered(
               colorFilter: ColorFilter.mode(Colors.black.withValues(alpha: 0.65), BlendMode.darken),
               child: Image.network(
-                'https://res.cloudinary.com/dwemowboc/image/upload/v1777590407/07fa4b06a8763df8b8dfac0d4ddb1977_a07dje.jpg',
+                _imgUrl,
                 fit: BoxFit.cover,
                 alignment: Alignment.centerRight,
+                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                  if (wasSynchronouslyLoaded) return child;
+                  return AnimatedOpacity(
+                    opacity: frame == null ? 0.0 : 1.0,
+                    duration: const Duration(milliseconds: 600),
+                    curve: Curves.easeIn,
+                    child: child,
+                  );
+                },
               ),
             ),
           ),

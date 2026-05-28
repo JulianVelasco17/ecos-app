@@ -197,7 +197,17 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida>
     final msg = results[1] as RemoteMessage?;
     if (doc.exists) {
       NotificationService.guardarTokenFCM();
-      final nombre = doc.data()?['usuario'] ?? 'viajero';
+      final datos = doc.data()!;
+      // Migración silenciosa: cuentas antiguas tienen 'nombre' pero no 'usuario'
+      if ((datos['usuario'] == null || (datos['usuario'] as String).isEmpty) &&
+          datos['nombre'] != null) {
+        await FirebaseFirestore.instance
+            .collection('usuarios').doc(usuario.uid)
+            .set({'usuario': datos['nombre']}, SetOptions(merge: true));
+        datos['usuario'] = datos['nombre'];
+      }
+      if (!mounted) return;
+      final nombre = datos['usuario'] ?? 'viajero';
       final pagina = msg != null ? (_paginaDesdeDatos(msg.data) ?? 2) : 2;
       Navigator.pushReplacement(context, MaterialPageRoute(
         builder: (_) => PantallaHome(nombre: nombre, paginaInicial: pagina),
