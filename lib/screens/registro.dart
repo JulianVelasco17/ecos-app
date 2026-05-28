@@ -8,6 +8,7 @@ import 'dart:convert';
 import '../services/calculos_astrales.dart';
 import 'constelacion_widget.dart';
 import 'crear_credenciales.dart';
+import 'home.dart';
 
 // ─── Posición de cada estación en el mundo 2D ─────────────────────────────────
 class _Estacion {
@@ -172,18 +173,22 @@ class _PantallaRegistroState extends State<PantallaRegistro>
           hora:            hora,
           minutos:         minutos,
           onContinuar: (ctx) {
+            final user = FirebaseAuth.instance.currentUser;
+            final tieneSocial = user != null && !user.isAnonymous;
             Navigator.pushReplacement(
               ctx,
               MaterialPageRoute(
-                builder: (_) => PantallaCrearCredenciales(
-                  nombre: usuario,
-                  usuario: usuario,
-                  fechaNacimiento: _fecha!,
-                  horaNacimiento: _hora ?? const TimeOfDay(hour: 12, minute: 0),
-                  lugarNacimiento: _lugarCtrl.text,
-                  latitud: _lat ?? 0.0,
-                  longitud: _lon ?? 0.0,
-                ),
+                builder: (_) => tieneSocial
+                    ? PantallaHome(nombre: usuario)
+                    : PantallaCrearCredenciales(
+                        nombre: usuario,
+                        usuario: usuario,
+                        fechaNacimiento: _fecha!,
+                        horaNacimiento: _hora ?? const TimeOfDay(hour: 12, minute: 0),
+                        lugarNacimiento: _lugarCtrl.text,
+                        latitud: _lat ?? 0.0,
+                        longitud: _lon ?? 0.0,
+                      ),
               ),
             );
           },

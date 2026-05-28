@@ -15,6 +15,7 @@ import '../services/calculos_astrales.dart';
 import '../services/aspectos_natales.dart';
 import '../services/claude_service.dart';
 import 'constelacion_widget.dart';
+import 'home.dart';
 
 class PantallaLecturaCartaAstral extends StatefulWidget {
   final VideoPlayerController? videoPreload;
@@ -358,6 +359,7 @@ class _PantallaLecturaCartaAstralState extends State<PantallaLecturaCartaAstral>
                               planetas:   _planetas,
                               beige:      _beige,
                               gold:       _gold,
+                              nombre:     _nombre,
                               signoSolar: _signoSolar,
                               signoLunar: _signoLunar,
                               ascendente: _ascendente,
@@ -370,7 +372,10 @@ class _PantallaLecturaCartaAstralState extends State<PantallaLecturaCartaAstral>
                     Positioned(
                       top: 8, left: 8,
                       child: GestureDetector(
-                        onTap: () => Navigator.of(context).popUntil((r) => r.isFirst),
+                        onTap: () => Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (_) => PantallaHome(nombre: _nombre)),
+                          (_) => false,
+                        ),
                         behavior: HitTestBehavior.opaque,
                         child: Padding(
                           padding: const EdgeInsets.all(12),
@@ -464,12 +469,14 @@ class _LecturaCompleta extends StatelessWidget {
   final String? signoSolar;
   final String? signoLunar;
   final String? ascendente;
+  final String nombre;
 
   const _LecturaCompleta({
     required this.lectura,
     required this.planetas,
     required this.beige,
     required this.gold,
+    required this.nombre,
     this.signoSolar,
     this.signoLunar,
     this.ascendente,
@@ -683,7 +690,10 @@ class _LecturaCompleta extends StatelessWidget {
                   ),
                   const SizedBox(height: 48),
                   GestureDetector(
-                    onTap: () => Navigator.of(context).popUntil((r) => r.isFirst),
+                    onTap: () => Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (_) => PantallaHome(nombre: nombre)),
+                          (_) => false,
+                        ),
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 18),

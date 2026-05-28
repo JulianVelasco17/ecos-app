@@ -17,6 +17,22 @@ class PantallaConfiguracion extends StatefulWidget {
 
 class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
   bool _vinculando = false;
+  String _usuario = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarUsuario();
+  }
+
+  Future<void> _cargarUsuario() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final doc = await FirebaseFirestore.instance.collection('usuarios').doc(uid).get();
+    if (mounted && doc.exists) {
+      setState(() => _usuario = doc.data()?['usuario'] as String? ?? '');
+    }
+  }
 
   Future<void> _eliminarCuenta(BuildContext context) async {
     final confirmar = await showDialog<bool>(
@@ -164,7 +180,6 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-    final email = user?.email ?? user?.displayName ?? 'invitado';
 
     final proveedores = user?.providerData.map((p) => p.providerId).toSet() ?? {};
     final esEmailPassword = proveedores.contains('password');
@@ -200,10 +215,11 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
 
               const SizedBox(height: 8),
 
-              Text(
-                email,
-                style: const TextStyle(color: Colors.black26, fontSize: 12, letterSpacing: 1),
-              ),
+              if (_usuario.isNotEmpty)
+                Text(
+                  '@$_usuario',
+                  style: const TextStyle(color: Colors.black26, fontSize: 12, letterSpacing: 1),
+                ),
 
               const SizedBox(height: 48),
 
