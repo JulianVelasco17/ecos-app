@@ -66,7 +66,7 @@ class _PantallaRegistroState extends State<PantallaRegistro>
       vsync: this,
       duration: const Duration(milliseconds: 700),
     );
-    _offsetAnim = AlwaysStoppedAnimation(Offset.zero);
+    _offsetAnim = AlwaysStoppedAnimation(_estaciones[_estacionActual].posicion);
   }
 
   @override
@@ -546,7 +546,8 @@ class _PantallaRegistroState extends State<PantallaRegistro>
               child: IconButton(
                 icon: const Icon(Icons.arrow_back_ios, color: Color(0x66F3EBD6), size: 18),
                 onPressed: () {
-                  if (_estacionActual > 0) {
+                  final minEstacion = widget.omitirNombre ? 1 : 0;
+                  if (_estacionActual > minEstacion) {
                     _moverA(_estacionActual - 1);
                   } else {
                     Navigator.pop(context);
