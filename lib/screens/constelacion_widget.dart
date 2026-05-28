@@ -468,6 +468,7 @@ class PantallaConstelacion extends StatefulWidget {
   final int hora;
   final int minutos;
   final void Function(BuildContext) onContinuar;
+  final Future<void>? esperarCarga;
 
   const PantallaConstelacion({
     super.key,
@@ -482,6 +483,7 @@ class PantallaConstelacion extends StatefulWidget {
     required this.hora,
     required this.minutos,
     required this.onContinuar,
+    this.esperarCarga,
   });
 
   @override
@@ -502,6 +504,7 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
   String? _descLuna;
   String? _descAsc;
   bool _lecturaLista = false;
+  bool _contentListo = false;
 
   static const _fallbackSol = {
     'Aries':       'eres alguien que actúa antes de pensar, que necesita ser el primero en todo lo que importa.',
@@ -578,6 +581,15 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
     _generarLectura();
     _precargarImagenes();
     _precargarVideo();
+    if (widget.esperarCarga != null) {
+      widget.esperarCarga!.then((_) {
+        if (mounted) setState(() => _contentListo = true);
+      }).catchError((_) {
+        if (mounted) setState(() => _contentListo = true);
+      });
+    } else {
+      _contentListo = true;
+    }
   }
 
   void _precargarVideo() {
@@ -1364,17 +1376,25 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () => widget.onContinuar(context),
+                    onPressed: _contentListo ? () => widget.onContinuar(context) : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _beige,
                       foregroundColor: Colors.black,
+                      disabledBackgroundColor: _beige.withValues(alpha: 0.3),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(2)),
                       elevation: 0,
                     ),
-                    child: const Text('VER MI PERFIL',
-                        style: TextStyle(letterSpacing: 3, fontSize: 12)),
+                    child: _contentListo
+                        ? Text(
+                            widget.esperarCarga != null ? 'REVELAR LECTURA' : 'VER MI PERFIL',
+                            style: const TextStyle(letterSpacing: 3, fontSize: 12),
+                          )
+                        : const SizedBox(
+                            width: 16, height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 1.5, color: Colors.black45),
+                          ),
                   ),
                 ),
               ],
