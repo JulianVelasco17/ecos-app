@@ -5,15 +5,12 @@ import 'package:video_player/video_player.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import '../services/debug_config.dart';
 import '../services/purchases_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'lectura_carta_astral.dart';
 import 'constelacion_widget.dart';
+import '../services/calculos_astrales.dart';
 import 'home.dart';
 import 'login.dart';
 import 'crear_credenciales.dart';
-import '../services/calculos_astrales.dart';
-import '../services/aspectos_natales.dart';
-import '../services/claude_service.dart';
 
 class PantallaCompraCarta extends StatefulWidget {
   final VideoPlayerController? videoExterno;
@@ -76,50 +73,6 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
     super.dispose();
   }
 
-  Future<void> _irAConstelacion(String uid) async {
-    final userDoc = await FirebaseFirestore.instance.collection('usuarios').doc(uid).get();
-    if (!mounted || !userDoc.exists) return;
-    final datos = userDoc.data()!;
-    final fechaTs = datos['fechaNacimiento'] as dynamic;
-    final fecha   = fechaTs.toDate() as DateTime;
-    final horaParts = ((datos['horaNacimiento'] as String?) ?? '12:00').split(':');
-    final hora = int.tryParse(horaParts[0]) ?? 12;
-    final min  = int.tryParse(horaParts.length > 1 ? horaParts[1] : '0') ?? 0;
-    final lat  = (datos['latitud']  as num?)?.toDouble() ?? 0.0;
-    final lon  = (datos['longitud'] as num?)?.toDouble() ?? 0.0;
-    final carta = CalculosAstrales.calcular(fechaNacimiento: fecha, hora: hora, minutos: min, latitud: lat, longitud: lon);
-
-    final cargaFuture = () async {
-      final cached = await FirebaseFirestore.instance
-          .collection('lecturasProfundas').doc('${uid}_carta_v3').get();
-      if (cached.exists) return;
-      final etiquetas = AspectosNatales.calcular(fecha, hora, min)
-          .map((a) => '${a.planeta1} ${a.tipo} ${a.planeta2} (orbe ${a.orbe.toStringAsFixed(1)}°)').toList();
-      await ClaudeService.generarLecturaCartaProfunda(
-        nombre: datos['usuario'] as String? ?? '',
-        signoSolar: carta.signoSolar, signoLunar: carta.signoLunar,
-        ascendente: carta.ascendente, aspectos: etiquetas, planetas: carta.planetas,
-      );
-    }();
-
-    if (!mounted) return;
-    // Marcar video como visto para que lectura_carta_astral lo salte
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('carta_astral_video_visto', true);
-    if (!mounted) return;
-
-    Navigator.pushReplacement(context, MaterialPageRoute(
-      builder: (_) => PantallaConstelacion(
-        signo: carta.signoSolar, nombre: datos['usuario'] as String? ?? '',
-        signoSolar: carta.signoSolar, signoLunar: carta.signoLunar,
-        ascendente: carta.ascendente, planetas: carta.planetas,
-        casas: carta.casas, fechaNacimiento: fecha, hora: hora, minutos: min,
-        esperarCarga: cargaFuture,
-        onContinuar: (ctx) => PantallaLecturaCartaAstral.navigateTo(ctx, Offset.zero),
-      ),
-    ));
-  }
-
   Future<void> _activarDebug() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
@@ -139,12 +92,56 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
             .set({'cartaActiva': true}, SetOptions(merge: true));
       }
       if (!mounted) return;
-      await _irAConstelacion(uid);
+      await _irAVideoReveal(uid);
     } on PurchasesErrorCode catch (_) {
       if (mounted) setState(() => _activando = false);
     } catch (_) {
       if (mounted) setState(() => _activando = false);
     }
+  }
+
+  Future<void> _irAVideoReveal(String uid) async {
+    final userDoc = await FirebaseFirestore.instance.collection('usuarios').doc(uid).get();
+    if (!mounted) return;
+    final datos = userDoc.data() ?? {};
+    final nombre = datos['usuario'] as String? ?? '';
+
+    final fechaTs = datos['fechaNacimiento'];
+    List<String> datosList = [];
+    if (fechaTs != null) {
+      final fecha = (fechaTs as dynamic).toDate() as DateTime;
+      final horaParts = ((datos['horaNacimiento'] as String?) ?? '12:00').split(':');
+      final hora = int.tryParse(horaParts[0]) ?? 12;
+      final min  = int.tryParse(horaParts.length > 1 ? horaParts[1] : '0') ?? 0;
+      final lat  = (datos['latitud']  as num?)?.toDouble() ?? 0.0;
+      final lon  = (datos['longitud'] as num?)?.toDouble() ?? 0.0;
+      final carta = CalculosAstrales.calcular(
+          fechaNacimiento: fecha, hora: hora, minutos: min, latitud: lat, longitud: lon);
+      datosList = [
+        'su Sol en ${carta.signoSolar}',
+        'su Luna en ${carta.signoLunar}',
+        'su Ascendente en ${carta.ascendente}',
+        ...carta.planetas.entries.map((e) => 'su ${e.key} en ${e.value}'),
+      ];
+    }
+
+    final generacionFuture = PantallaLecturaCartaAstral.preGenerar(uid);
+
+    final onboardVideo = widget.videoExterno ?? _videoPropio;
+    _videoPropio = null;
+    final videoSolin = _videoSolin;
+    _videoSolin = null;
+
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(MaterialPageRoute(
+      builder: (_) => PantallaVideoReveal(
+        nombre: nombre,
+        datos: datosList,
+        videoPreload: onboardVideo,
+        esperarCarga: generacionFuture,
+        onRevelar: (ctx) => PantallaLecturaCartaAstral.navigateTo(ctx, Offset.zero, videoPreload: videoSolin),
+      ),
+    ));
   }
 
   void _irADescuento() {
@@ -432,49 +429,6 @@ class _PantallaDescuentoState extends State<_PantallaDescuento> {
     super.dispose();
   }
 
-  Future<void> _irAConstelacion(String uid) async {
-    final userDoc = await FirebaseFirestore.instance.collection('usuarios').doc(uid).get();
-    if (!mounted || !userDoc.exists) return;
-    final datos = userDoc.data()!;
-    final fechaTs = datos['fechaNacimiento'] as dynamic;
-    final fecha   = fechaTs.toDate() as DateTime;
-    final horaParts = ((datos['horaNacimiento'] as String?) ?? '12:00').split(':');
-    final hora = int.tryParse(horaParts[0]) ?? 12;
-    final min  = int.tryParse(horaParts.length > 1 ? horaParts[1] : '0') ?? 0;
-    final lat  = (datos['latitud']  as num?)?.toDouble() ?? 0.0;
-    final lon  = (datos['longitud'] as num?)?.toDouble() ?? 0.0;
-    final carta = CalculosAstrales.calcular(fechaNacimiento: fecha, hora: hora, minutos: min, latitud: lat, longitud: lon);
-
-    final cargaFuture = () async {
-      final cached = await FirebaseFirestore.instance
-          .collection('lecturasProfundas').doc('${uid}_carta_v3').get();
-      if (cached.exists) return;
-      final etiquetas = AspectosNatales.calcular(fecha, hora, min)
-          .map((a) => '${a.planeta1} ${a.tipo} ${a.planeta2} (orbe ${a.orbe.toStringAsFixed(1)}°)').toList();
-      await ClaudeService.generarLecturaCartaProfunda(
-        nombre: datos['usuario'] as String? ?? '',
-        signoSolar: carta.signoSolar, signoLunar: carta.signoLunar,
-        ascendente: carta.ascendente, aspectos: etiquetas, planetas: carta.planetas,
-      );
-    }();
-
-    if (!mounted) return;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('carta_astral_video_visto', true);
-    if (!mounted) return;
-
-    Navigator.pushReplacement(context, MaterialPageRoute(
-      builder: (_) => PantallaConstelacion(
-        signo: carta.signoSolar, nombre: datos['usuario'] as String? ?? '',
-        signoSolar: carta.signoSolar, signoLunar: carta.signoLunar,
-        ascendente: carta.ascendente, planetas: carta.planetas,
-        casas: carta.casas, fechaNacimiento: fecha, hora: hora, minutos: min,
-        esperarCarga: cargaFuture,
-        onContinuar: (ctx) => PantallaLecturaCartaAstral.navigateTo(ctx, Offset.zero),
-      ),
-    ));
-  }
-
   Future<void> _activarDebug() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
@@ -494,12 +448,56 @@ class _PantallaDescuentoState extends State<_PantallaDescuento> {
             .set({'cartaActiva': true}, SetOptions(merge: true));
       }
       if (!mounted) return;
-      await _irAConstelacion(uid);
+      await _irAVideoReveal(uid);
     } on PurchasesErrorCode catch (_) {
       if (mounted) setState(() => _activando = false);
     } catch (_) {
       if (mounted) setState(() => _activando = false);
     }
+  }
+
+  Future<void> _irAVideoReveal(String uid) async {
+    final userDoc = await FirebaseFirestore.instance.collection('usuarios').doc(uid).get();
+    if (!mounted) return;
+    final datos = userDoc.data() ?? {};
+    final nombre = datos['usuario'] as String? ?? '';
+
+    final fechaTs = datos['fechaNacimiento'];
+    List<String> datosList = [];
+    if (fechaTs != null) {
+      final fecha = (fechaTs as dynamic).toDate() as DateTime;
+      final horaParts = ((datos['horaNacimiento'] as String?) ?? '12:00').split(':');
+      final hora = int.tryParse(horaParts[0]) ?? 12;
+      final min  = int.tryParse(horaParts.length > 1 ? horaParts[1] : '0') ?? 0;
+      final lat  = (datos['latitud']  as num?)?.toDouble() ?? 0.0;
+      final lon  = (datos['longitud'] as num?)?.toDouble() ?? 0.0;
+      final carta = CalculosAstrales.calcular(
+          fechaNacimiento: fecha, hora: hora, minutos: min, latitud: lat, longitud: lon);
+      datosList = [
+        'su Sol en ${carta.signoSolar}',
+        'su Luna en ${carta.signoLunar}',
+        'su Ascendente en ${carta.ascendente}',
+        ...carta.planetas.entries.map((e) => 'su ${e.key} en ${e.value}'),
+      ];
+    }
+
+    final generacionFuture = PantallaLecturaCartaAstral.preGenerar(uid);
+
+    final onboardVideo = widget.videoExterno ?? _videoPropio;
+    _videoPropio = null;
+    final videoSolin = _videoSolin;
+    _videoSolin = null;
+
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(MaterialPageRoute(
+      builder: (_) => PantallaVideoReveal(
+        nombre: nombre,
+        datos: datosList,
+        videoPreload: onboardVideo,
+        esperarCarga: generacionFuture,
+        onRevelar: (ctx) => PantallaLecturaCartaAstral.navigateTo(ctx, Offset.zero, videoPreload: videoSolin),
+      ),
+    ));
   }
 
   void _irAGracias() {

@@ -17,6 +17,12 @@ import '../services/claude_service.dart';
 import 'constelacion_widget.dart';
 import 'home.dart';
 
+Map<String, String> _extraerLectura(Map<String, dynamic> raw) => {
+  for (final k in ['frase', 'big3_p1', 'big3_p2', 'aspectos', 'virtudes', 'defectos', 'amor', 'amistad', 'suerte', 'familia', 'dinero', 'futuro',
+                   'signoSolar', 'signoLunar', 'ascendente'])
+    k: raw[k] as String? ?? '',
+};
+
 class PantallaLecturaCartaAstral extends StatefulWidget {
   final VideoPlayerController? videoPreload;
   const PantallaLecturaCartaAstral({super.key, this.videoPreload});
@@ -27,6 +33,68 @@ class PantallaLecturaCartaAstral extends StatefulWidget {
       context,
       _CartaRevealRoute(origin: origin, videoPreload: videoPreload),
     );
+  }
+
+  static Future<void> preGenerar(String uid) async {
+    try {
+      final userDoc = await FirebaseFirestore.instance.collection('usuarios').doc(uid).get();
+      if (!userDoc.exists) return;
+      final datos = userDoc.data()!;
+
+      final cache = await FirebaseFirestore.instance
+          .collection('lecturasProfundas').doc('${uid}_carta_v3').get();
+      if (cache.exists) {
+        final extraido = _extraerLectura(cache.data()!);
+        if (!extraido.values.any((v) => v.contains('El cielo guarda silencio')) &&
+            extraido.values.any((v) => v.isNotEmpty)) return;
+      }
+
+      final fechaTs = datos['fechaNacimiento'];
+      if (fechaTs == null) return;
+      final fecha = (fechaTs as Timestamp).toDate();
+      final horaParts = ((datos['horaNacimiento'] as String?) ?? '12:00').split(':');
+      final hora = int.tryParse(horaParts[0]) ?? 12;
+      final min  = int.tryParse(horaParts.length > 1 ? horaParts[1] : '0') ?? 0;
+      final lat  = (datos['latitud']  as num?)?.toDouble() ?? 0.0;
+      final lon  = (datos['longitud'] as num?)?.toDouble() ?? 0.0;
+
+      final carta = CalculosAstrales.calcular(
+          fechaNacimiento: fecha, hora: hora, minutos: min, latitud: lat, longitud: lon);
+      final aspectos  = AspectosNatales.calcular(fecha, hora, min);
+      final etiquetas = aspectos.map((a) =>
+          '${a.planeta1} ${a.tipo} ${a.planeta2} (orbe ${a.orbe.toStringAsFixed(1)}°)').toList();
+
+      final rawStr = await ClaudeService.generarLecturaCartaProfunda(
+        nombre:     datos['usuario'] as String? ?? '',
+        signoSolar: carta.signoSolar,
+        signoLunar: carta.signoLunar,
+        ascendente: carta.ascendente,
+        aspectos:   etiquetas,
+        planetas:   carta.planetas,
+      );
+
+      Map<String, String> lectura = {};
+      try {
+        final clean = rawStr.replaceAll(RegExp(r'```[a-z]*', caseSensitive: false), '').replaceAll('```', '');
+        final start = clean.indexOf('{');
+        final end   = clean.lastIndexOf('}');
+        lectura = _extraerLectura(jsonDecode(clean.substring(start, end + 1)) as Map<String, dynamic>);
+      } catch (_) {
+        lectura = {'big3_p1': rawStr};
+      }
+
+      if (lectura.values.any((v) => v.isNotEmpty)) {
+        await FirebaseFirestore.instance
+            .collection('lecturasProfundas').doc('${uid}_carta_v3')
+            .set({
+              ...lectura,
+              'signoSolar': carta.signoSolar,
+              'signoLunar': carta.signoLunar,
+              'ascendente': carta.ascendente,
+              'fecha': FieldValue.serverTimestamp(),
+            });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -128,7 +196,7 @@ class _PantallaLecturaCartaAstralState extends State<PantallaLecturaCartaAstral>
           fechaNacimiento: fecha, hora: hora, minutos: min, latitud: lat, longitud: lon);
 
       if (cache.exists) {
-        final extraido = _extraer(cache.data()!);
+        final extraido = _extraerLectura(cache.data()!);
         final esFallback = extraido.values.any((v) => v.contains('El cielo guarda silencio'));
         if (!esFallback && extraido.values.any((v) => v.isNotEmpty)) {
           if (mounted) setState(() {
@@ -197,11 +265,7 @@ class _PantallaLecturaCartaAstralState extends State<PantallaLecturaCartaAstral>
     }
   }
 
-  Map<String, String> _extraer(Map<String, dynamic> raw) => {
-    for (final k in ['frase', 'big3_p1', 'big3_p2', 'aspectos', 'virtudes', 'defectos', 'amor', 'amistad', 'suerte', 'familia', 'dinero', 'futuro',
-                     'signoSolar', 'signoLunar', 'ascendente'])
-      k: raw[k] as String? ?? '',
-  };
+  Map<String, String> _extraer(Map<String, dynamic> raw) => _extraerLectura(raw);
 
   Future<void> _onVideoTerminado() async {
     final prefs = await SharedPreferences.getInstance();

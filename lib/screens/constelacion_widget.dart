@@ -724,7 +724,7 @@ class _PantallaConstelacionState extends State<PantallaConstelacion>
       ...widget.planetas.entries.map((e) => 'su ${e.key} en ${e.value}'),
     ];
     await Navigator.of(context).push(PageRouteBuilder(
-      pageBuilder: (_, __, ___) => _PantallaVideoReveal(
+      pageBuilder: (_, __, ___) => PantallaVideoReveal(
         nombre:       widget.nombre,
         datos:        datos,
         videoPreload: _videoReveal,
@@ -1603,26 +1603,33 @@ class _BotonAnimadoState extends State<_BotonAnimado> {
 
 // ── Pantalla de video reveal ──────────────────────────────────────────────────
 
-class _PantallaVideoReveal extends StatefulWidget {
+class PantallaVideoReveal extends StatefulWidget {
   final String nombre;
   final List<String> datos;
   final VideoPlayerController? videoPreload;
+  final Future<void>? esperarCarga;
+  final void Function(BuildContext)? onRevelar;
 
-  const _PantallaVideoReveal({
+  const PantallaVideoReveal({
+    super.key,
     required this.nombre,
     required this.datos,
     this.videoPreload,
+    this.esperarCarga,
+    this.onRevelar,
   });
   @override
-  State<_PantallaVideoReveal> createState() => _PantallaVideoRevealState();
+  State<PantallaVideoReveal> createState() => _PantallaVideoRevealState();
 }
 
-class _PantallaVideoRevealState extends State<_PantallaVideoReveal> {
+class _PantallaVideoRevealState extends State<PantallaVideoReveal> {
   late VideoPlayerController _video;
   double _videoOpacity = 0.0;
   bool _mostrarBoton = false;
   double _opacidadBoton = 0.0;
   int _datoIndex = 0;
+  bool _timerListo = false;
+  bool _cargaLista = false;
   double _datoOpacity = 1.0;
   Timer? _timer;
   Timer? _datoTimer;
@@ -1644,30 +1651,43 @@ class _PantallaVideoRevealState extends State<_PantallaVideoReveal> {
   }
 
   void _armarTimer() {
-    _timer = Timer(const Duration(seconds: 6), () async {
+    _timer = Timer(const Duration(seconds: 6), () {
       if (!mounted) return;
-      _datoTimer?.cancel();
-      // fade out cycling text block
-      setState(() => _datoOpacity = 0.0);
-      await Future.delayed(const Duration(milliseconds: 450));
-      if (!mounted) return;
-      // show "Tu lectura está lista" + button, both at opacity 0
-      setState(() { _mostrarBoton = true; _opacidadBoton = 0.0; });
-      await Future.delayed(const Duration(milliseconds: 50));
-      if (!mounted) return;
-      // fade them in together
-      setState(() => _opacidadBoton = 1.0);
-      Future.delayed(const Duration(milliseconds: 1500), () {
-        HapticFeedback.mediumImpact();
-      });
+      _timerListo = true;
+      _verificarMostrarBoton();
+    });
+  }
+
+  Future<void> _verificarMostrarBoton() async {
+    if (!_timerListo || !_cargaLista) return;
+    if (!mounted) return;
+    _datoTimer?.cancel();
+    setState(() => _datoOpacity = 0.0);
+    await Future.delayed(const Duration(milliseconds: 450));
+    if (!mounted) return;
+    setState(() { _mostrarBoton = true; _opacidadBoton = 0.0; });
+    await Future.delayed(const Duration(milliseconds: 50));
+    if (!mounted) return;
+    setState(() => _opacidadBoton = 1.0);
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      HapticFeedback.mediumImpact();
     });
   }
 
   @override
   void initState() {
     super.initState();
+    if (widget.onRevelar != null) _timerListo = true; // post-pago: no esperar timer
+    if (widget.esperarCarga != null) {
+      widget.esperarCarga!.then((_) {
+        if (mounted) { _cargaLista = true; _verificarMostrarBoton(); }
+      }).catchError((_) {
+        if (mounted) { _cargaLista = true; _verificarMostrarBoton(); }
+      });
+    } else {
+      _cargaLista = true;
+    }
     if (widget.videoPreload != null && widget.videoPreload!.value.isInitialized) {
-      // Ya precargado — úsalo directo
       _video = widget.videoPreload!;
       _video.play();
       _videoOpacity = 1.0;
@@ -1675,7 +1695,6 @@ class _PantallaVideoRevealState extends State<_PantallaVideoReveal> {
         if (mounted) { setState(() {}); _iniciarCicloDatos(); _armarTimer(); }
       });
     } else {
-      // Sin precarga — inicializar ahora
       _video = (widget.videoPreload ?? VideoPlayerController.networkUrl(Uri.parse(_url)))
         ..setLooping(true)
         ..setVolume(0);
@@ -1790,13 +1809,13 @@ class _PantallaVideoRevealState extends State<_PantallaVideoReveal> {
                 duration: const Duration(milliseconds: 2500),
                 curve: Curves.easeIn,
                 child: _BotonAnimado(
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => PantallaCompraCarta(
-                      videoExterno: _video,
-                    )),
-                  ),
+                  onTap: widget.onRevelar != null
+                      ? () => widget.onRevelar!(context)
+                      : () => Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => PantallaCompraCarta(videoExterno: _video)),
+                          ),
                   filled: true,
-                  label: 'REVELAR LECTURA',
+                  label: widget.onRevelar != null ? 'REVELAR REPORTE' : 'REVELAR LECTURA',
                   tallPadding: true,
                 ),
               ),
