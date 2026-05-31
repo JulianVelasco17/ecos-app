@@ -9,6 +9,7 @@ import '../services/calculos_astrales.dart';
 import 'constelacion_widget.dart';
 import 'crear_credenciales.dart';
 import 'home.dart';
+import '../main.dart';
 
 // ─── Posición de cada estación en el mundo 2D ─────────────────────────────────
 class _Estacion {
@@ -460,7 +461,16 @@ class _PantallaRegistroState extends State<PantallaRegistro>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: _estacionActual > 1,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const PantallaBienvenida()),
+          (_) => false,
+        );
+      },
+      child: Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
@@ -543,7 +553,7 @@ class _PantallaRegistroState extends State<PantallaRegistro>
           ),
         ],
       ),
-    );
+    ));
   }
 }
 

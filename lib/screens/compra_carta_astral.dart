@@ -144,12 +144,10 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
     ));
   }
 
-  void _irADescuento() {
+  void _irAGracias() {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (_) => _PantallaDescuento(videoExterno: widget.videoExterno),
-      ),
+      MaterialPageRoute(builder: (_) => const _PantallaGracias()),
     );
   }
 
@@ -157,7 +155,7 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (_, __) => _irADescuento(),
+      onPopInvokedWithResult: (_, __) => _irAGracias(),
       child: Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -191,7 +189,7 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       GestureDetector(
-                        onTap: _irADescuento,
+                        onTap: _irAGracias,
                         behavior: HitTestBehavior.opaque,
                         child: const Padding(
                           padding: EdgeInsets.only(right: 12, top: 8),
@@ -309,7 +307,7 @@ class _PantallaCompraCartaState extends State<PantallaCompraCarta> {
 
                   Center(
                     child: GestureDetector(
-                      onTap: _irADescuento,
+                      onTap: _irAGracias,
                       behavior: HitTestBehavior.opaque,
                       child: const Padding(
                         padding: EdgeInsets.all(12),
@@ -361,321 +359,6 @@ class _Beneficio extends StatelessWidget {
   }
 }
 
-class _PantallaDescuento extends StatefulWidget {
-  final VideoPlayerController? videoExterno;
-
-  const _PantallaDescuento({this.videoExterno});
-
-  @override
-  State<_PantallaDescuento> createState() => _PantallaDescuentoState();
-}
-
-class _PantallaDescuentoState extends State<_PantallaDescuento> {
-  bool _activando = false;
-  VideoPlayerController? _videoPropio;
-  VideoPlayerController? _videoSolin;
-  String _precioStr = r'$39';
-  String _precioOrigStr = r'$59';
-
-  Future<void> _cargarPrecio() async {
-    try {
-      await PurchasesService.ensureConfigured();
-      final productos = await Purchases.getProducts([
-        'com.ecos.astroapp.carta_profunda_descuento',
-        'com.ecos.astroapp.carta_profunda',
-      ]);
-      if (!mounted) return;
-      setState(() {
-        final desc = productos.where((p) => p.identifier.contains('descuento')).firstOrNull;
-        final orig = productos.where((p) => !p.identifier.contains('descuento')).firstOrNull;
-        if (desc != null) _precioStr = '${desc.priceString} ${desc.currencyCode}';
-        if (orig != null) _precioOrigStr = '${orig.priceString} ${orig.currencyCode}';
-      });
-    } catch (_) {}
-  }
-
-  static const _url =
-      'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Fonboard.mp4?alt=media&token=4dc6d672-2bb1-43b5-933b-47fda187ac9c';
-  static const _urlSolin =
-      'https://firebasestorage.googleapis.com/v0/b/astro-fd0bf.firebasestorage.app/o/Assets%2Fsolinvert.mov?alt=media&token=459f6a7d-0890-4f3a-8656-9937d323b7fa';
-
-  VideoPlayerController get _video => widget.videoExterno ?? _videoPropio!;
-  bool get _videoListo =>
-      (widget.videoExterno?.value.isInitialized ?? false) ||
-      (_videoPropio?.value.isInitialized ?? false);
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.videoExterno == null) {
-      _videoPropio = VideoPlayerController.networkUrl(Uri.parse(_url))
-        ..setLooping(true)
-        ..setVolume(0)
-        ..initialize().then((_) {
-          if (mounted) { setState(() {}); _videoPropio!.play(); }
-        });
-    }
-    _videoSolin = VideoPlayerController.networkUrl(Uri.parse(_urlSolin))
-      ..setLooping(false)
-      ..setVolume(0)
-      ..initialize();
-    _cargarPrecio();
-  }
-
-  @override
-  void dispose() {
-    _videoPropio?.dispose();
-    _videoSolin?.dispose();
-    super.dispose();
-  }
-
-  Future<void> _activarDebug() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-    setState(() => _activando = true);
-    try {
-      if (DebugConfig.instance.activo) {
-        await FirebaseFirestore.instance
-            .collection('usuarios').doc(uid)
-            .set({'cartaActiva': true}, SetOptions(merge: true));
-      } else {
-        await PurchasesService.ensureConfigured();
-        final products = await Purchases.getProducts(['com.ecos.astroapp.carta_profunda_descuento']);
-        if (products.isEmpty) throw Exception('producto no disponible');
-        await Purchases.purchaseStoreProduct(products.first);
-        await FirebaseFirestore.instance
-            .collection('usuarios').doc(uid)
-            .set({'cartaActiva': true}, SetOptions(merge: true));
-      }
-      if (!mounted) return;
-      await _irAVideoReveal(uid);
-    } on PurchasesErrorCode catch (_) {
-      if (mounted) setState(() => _activando = false);
-    } catch (_) {
-      if (mounted) setState(() => _activando = false);
-    }
-  }
-
-  Future<void> _irAVideoReveal(String uid) async {
-    final userDoc = await FirebaseFirestore.instance.collection('usuarios').doc(uid).get();
-    if (!mounted) return;
-    final datos = userDoc.data() ?? {};
-    final nombre = datos['usuario'] as String? ?? '';
-
-    final fechaTs = datos['fechaNacimiento'];
-    List<String> datosList = [];
-    if (fechaTs != null) {
-      final fecha = (fechaTs as dynamic).toDate() as DateTime;
-      final horaParts = ((datos['horaNacimiento'] as String?) ?? '12:00').split(':');
-      final hora = int.tryParse(horaParts[0]) ?? 12;
-      final min  = int.tryParse(horaParts.length > 1 ? horaParts[1] : '0') ?? 0;
-      final lat  = (datos['latitud']  as num?)?.toDouble() ?? 0.0;
-      final lon  = (datos['longitud'] as num?)?.toDouble() ?? 0.0;
-      final carta = CalculosAstrales.calcular(
-          fechaNacimiento: fecha, hora: hora, minutos: min, latitud: lat, longitud: lon);
-      datosList = [
-        'su Sol en ${carta.signoSolar}',
-        'su Luna en ${carta.signoLunar}',
-        'su Ascendente en ${carta.ascendente}',
-        ...carta.planetas.entries.map((e) => 'su ${e.key} en ${e.value}'),
-      ];
-    }
-
-    final generacionFuture = PantallaLecturaCartaAstral.preGenerar(uid);
-
-    final onboardVideo = widget.videoExterno ?? _videoPropio;
-    _videoPropio = null;
-    final videoSolin = _videoSolin;
-    _videoSolin = null;
-
-    if (!mounted) return;
-    Navigator.of(context).pushReplacement(MaterialPageRoute(
-      builder: (_) => PantallaVideoReveal(
-        nombre: nombre,
-        datos: datosList,
-        videoPreload: onboardVideo,
-        esperarCarga: generacionFuture,
-        onRevelar: (ctx) => PantallaLecturaCartaAstral.navigateTo(ctx, Offset.zero, videoPreload: videoSolin),
-      ),
-    ));
-  }
-
-  void _irAGracias() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const _PantallaGracias()),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (_, __) => _irAGracias(),
-      child: Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          if (_videoListo)
-            Positioned.fill(
-              child: FittedBox(
-                fit: BoxFit.cover,
-                child: SizedBox(
-                  width: _video.value.size.width,
-                  height: _video.value.size.height,
-                  child: VideoPlayer(_video),
-                ),
-              ),
-            ),
-          Positioned.fill(
-            child: Container(color: Colors.black.withValues(alpha: 0.90)),
-          ),
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 48),
-
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      GestureDetector(
-                        onTap: _irAGracias,
-                        behavior: HitTestBehavior.opaque,
-                        child: const Padding(
-                          padding: EdgeInsets.only(right: 12, top: 6),
-                          child: Icon(Icons.arrow_back_ios, color: Colors.white38, size: 18),
-                        ),
-                      ),
-                      const Expanded(
-                        child: Text(
-                          'espera,\ntenemos algo\npara ti',
-                          style: TextStyle(
-                            fontFamily: 'PlayfairDisplay',
-                            color: Color(0xFFE8DFD0),
-                            fontSize: 48,
-                            fontWeight: FontWeight.w400,
-                            letterSpacing: 1.0,
-                            height: 1.2,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-                  const Text(
-                    'por ser tu primera carta natal, te dejamos un precio especial.\nsolo por esta vez ;)',
-                    style: TextStyle(color: Colors.white38, fontSize: 15, letterSpacing: 0.3, height: 1.8),
-                  ),
-
-                  const SizedBox(height: 56),
-
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF3EBD6),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
-                          children: [
-                            Text(
-                              _precioStr,
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 40,
-                                fontWeight: FontWeight.w300,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'pago único',
-                              style: TextStyle(color: Colors.black45, fontSize: 13, letterSpacing: 0.5),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Text(
-                              _precioOrigStr,
-                              style: const TextStyle(
-                                color: Colors.black26,
-                                fontSize: 13,
-                                decoration: TextDecoration.lineThrough,
-                              ),
-                            ),
-                            SizedBox(width: 6),
-                            Text(
-                              '34% de descuento',
-                              style: TextStyle(color: Colors.black45, fontSize: 12, letterSpacing: 0.3),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'sin suscripción, sin cobros futuros',
-                          style: TextStyle(color: Colors.black38, fontSize: 13, letterSpacing: 0.5),
-                        ),
-                        const SizedBox(height: 24),
-                        SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: _activando ? null : _activarDebug,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.black,
-                                foregroundColor: const Color(0xFFF3EBD6),
-                                disabledBackgroundColor: Colors.black26,
-                                padding: const EdgeInsets.symmetric(vertical: 18),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-                                elevation: 0,
-                              ),
-                              child: _activando
-                                  ? const SizedBox(width: 18, height: 18,
-                                      child: CircularProgressIndicator(color: Colors.black54, strokeWidth: 1.5))
-                                  : const Text('DESBLOQUEAR MI CARTA',
-                                      style: TextStyle(letterSpacing: 3, fontSize: 12)),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  Center(
-                    child: GestureDetector(
-                      onTap: () => Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => const _PantallaGracias()),
-                      ),
-                      behavior: HitTestBehavior.opaque,
-                      child: const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: Text(
-                          'no, gracias',
-                          style: TextStyle(color: Colors.white24, fontSize: 12, letterSpacing: 1),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    ));
-  }
-}
 
 class _PantallaGracias extends StatelessWidget {
   const _PantallaGracias();
