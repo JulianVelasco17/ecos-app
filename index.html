@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ecos — Brújula personal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream:   #F5F0E8;
+      --ink:     #1A1410;
+      --gold:    #C9A84C;
+      --gold2:   #E8C97A;
+      --muted:   #8C7B6B;
+      --dark:    #0E0C0A;
+      --card:    #1C1812;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--dark);
+      color: var(--cream);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE OVERLAY ─────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.35;
+    }
+
+    /* ── HERO ──────────────────────────────────────── */
+    .hero {
+      min-height: 100svh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      padding: 2.5rem clamp(1.5rem, 6vw, 6rem);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 70% 30%, rgba(201,168,76,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 80% at 20% 80%, rgba(201,168,76,0.05) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    /* star dots */
+    .stars {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .star {
+      position: absolute;
+      width: 2px; height: 2px;
+      border-radius: 50%;
+      background: var(--gold2);
+      opacity: 0;
+      animation: twinkle var(--d, 4s) ease-in-out var(--delay, 0s) infinite;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0; transform: scale(1); }
+      50%       { opacity: var(--op, 0.6); transform: scale(1.4); }
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      letter-spacing: 0.18em;
+      color: var(--cream);
+      text-transform: uppercase;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      transition: color 0.3s;
+    }
+    .nav-links a:hover { color: var(--gold); }
+
+    .hero-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 2rem;
+      max-width: 680px;
+      position: relative;
+      z-index: 2;
+      padding: 4rem 0 2rem;
+    }
+
+    .eyebrow {
+      font-size: 0.72rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .eyebrow::before {
+      content: '';
+      display: block;
+      width: 2rem;
+      height: 1px;
+      background: var(--gold);
+    }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(3.2rem, 8vw, 6.5rem);
+      line-height: 1.0;
+      font-weight: 400;
+      color: var(--cream);
+    }
+    h1 em {
+      font-style: italic;
+      color: var(--gold);
+    }
+
+    .hero-desc {
+      font-size: 1.05rem;
+      line-height: 1.75;
+      color: var(--muted);
+      max-width: 480px;
+    }
+
+    .cta-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+
+    .btn-primary {
+      background: var(--gold);
+      color: var(--dark);
+      padding: 0.85rem 2rem;
+      border-radius: 2px;
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: background 0.3s, transform 0.2s;
+    }
+    .btn-primary:hover { background: var(--gold2); transform: translateY(-2px); }
+
+    .btn-secondary {
+      border: 1px solid rgba(201,168,76,0.35);
+      color: var(--gold);
+      padding: 0.85rem 2rem;
+      border-radius: 2px;
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: border-color 0.3s, background 0.3s, transform 0.2s;
+    }
+    .btn-secondary:hover {
+      border-color: var(--gold);
+      background: rgba(201,168,76,0.06);
+      transform: translateY(-2px);
+    }
+
+    .hero-scroll {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding-bottom: 1rem;
+      opacity: 0.6;
+    }
+    .scroll-line {
+      width: 1px;
+      height: 2.5rem;
+      background: linear-gradient(to bottom, var(--gold), transparent);
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.4; }
+      50%       { opacity: 1; }
+    }
+
+    /* ── FLOATING PHONE MOCKUP ─────────────────────── */
+    .hero-visual {
+      position: absolute;
+      right: clamp(2rem, 8vw, 8rem);
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 2;
+      animation: float 6s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(-50%) translateY(0); }
+      50%       { transform: translateY(-50%) translateY(-18px); }
+    }
+
+    .phone-frame {
+      width: 260px;
+      height: 520px;
+      border-radius: 36px;
+      border: 1.5px solid rgba(201,168,76,0.3);
+      overflow: hidden;
+      position: relative;
+      background: var(--card);
+      box-shadow:
+        0 0 0 6px rgba(201,168,76,0.04),
+        0 40px 80px rgba(0,0,0,0.6),
+        0 0 60px rgba(201,168,76,0.06);
+    }
+    .phone-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top;
+    }
+    .phone-glow {
+      position: absolute;
+      bottom: -40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px;
+      height: 80px;
+      background: radial-gradient(ellipse, rgba(201,168,76,0.2), transparent 70%);
+      pointer-events: none;
+    }
+
+    @media (max-width: 900px) {
+      .hero-visual { display: none; }
+      .hero-content { max-width: 100%; }
+    }
+
+    /* ── SECTION BASE ──────────────────────────────── */
+    section {
+      padding: clamp(4rem, 10vw, 8rem) clamp(1.5rem, 6vw, 6rem);
+    }
+
+    .section-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .section-label::before {
+      content: '';
+      display: block;
+      width: 1.5rem;
+      height: 1px;
+      background: var(--gold);
+    }
+
+    h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 400;
+      color: var(--cream);
+      line-height: 1.15;
+      margin-bottom: 1.5rem;
+    }
+    h2 em { font-style: italic; color: var(--gold); }
+
+    /* ── SCREENSHOTS ───────────────────────────────── */
+    .screenshots {
+      background: rgba(255,255,255,0.015);
+      border-top: 1px solid rgba(201,168,76,0.1);
+      border-bottom: 1px solid rgba(201,168,76,0.1);
+    }
+
+    .screens-grid {
+      display: flex;
+      gap: 1.5rem;
+      overflow-x: auto;
+      padding-bottom: 1rem;
+      scrollbar-width: none;
+      margin-top: 3rem;
+    }
+    .screens-grid::-webkit-scrollbar { display: none; }
+
+    .screen-card {
+      flex: 0 0 200px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards;
+    }
+    .screen-card:nth-child(1) { animation-delay: 0.1s; }
+    .screen-card:nth-child(2) { animation-delay: 0.2s; }
+    .screen-card:nth-child(3) { animation-delay: 0.3s; }
+    .screen-card:nth-child(4) { animation-delay: 0.4s; }
+    .screen-card:nth-child(5) { animation-delay: 0.5s; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .screen-img {
+      width: 200px;
+      height: 400px;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid rgba(201,168,76,0.15);
+      background: var(--card);
+      transition: transform 0.4s, border-color 0.3s;
+    }
+    .screen-img:hover {
+      transform: translateY(-8px) scale(1.02);
+      border-color: rgba(201,168,76,0.4);
+    }
+    .screen-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top;
+    }
+    .screen-label {
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    /* ── FEATURES ──────────────────────────────────── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5px;
+      margin-top: 3.5rem;
+      border: 1.5px solid rgba(201,168,76,0.12);
+    }
+
+    .feature {
+      padding: 2.5rem 2rem;
+      background: rgba(255,255,255,0.02);
+      border: 1.5px solid rgba(201,168,76,0.12);
+      margin: -1.5px;
+      transition: background 0.3s;
+    }
+    .feature:hover { background: rgba(201,168,76,0.04); }
+
+    .feature-icon {
+      font-size: 1.6rem;
+      margin-bottom: 1.2rem;
+      display: block;
+    }
+
+    .feature h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      font-weight: 500;
+      color: var(--cream);
+      margin-bottom: 0.6rem;
+    }
+
+    .feature p {
+      font-size: 0.88rem;
+      line-height: 1.7;
+      color: var(--muted);
+    }
+
+    /* ── TECH STACK ────────────────────────────────── */
+    .stack-section {
+      border-top: 1px solid rgba(201,168,76,0.1);
+    }
+
+    .stack-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      margin-top: 3.5rem;
+      align-items: start;
+    }
+    @media (max-width: 700px) {
+      .stack-cols { grid-template-columns: 1fr; gap: 2rem; }
+    }
+
+    .stack-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .stack-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 1rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      gap: 1rem;
+    }
+
+    .stack-layer {
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      min-width: 100px;
+    }
+
+    .stack-tech {
+      font-family: 'Playfair Display', serif;
+      font-size: 0.95rem;
+      color: var(--cream);
+      text-align: right;
+    }
+
+    .stack-desc {
+      font-size: 0.9rem;
+      line-height: 1.8;
+      color: var(--muted);
+    }
+
+    /* ── ABOUT / CTA ───────────────────────────────── */
+    .cta-section {
+      text-align: center;
+      border-top: 1px solid rgba(201,168,76,0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      top: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(ellipse, rgba(201,168,76,0.07), transparent 65%);
+      pointer-events: none;
+    }
+
+    .cta-section h2 {
+      font-size: clamp(2.2rem, 6vw, 4rem);
+    }
+
+    .cta-section p {
+      font-size: 1rem;
+      color: var(--muted);
+      max-width: 500px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.75;
+    }
+
+    /* ── FOOTER ────────────────────────────────────── */
+    footer {
+      padding: 2rem clamp(1.5rem, 6vw, 6rem);
+      border-top: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    footer .logo { font-size: 1rem; }
+
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+      list-style: none;
+    }
+    .footer-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      transition: color 0.3s;
+    }
+    .footer-links a:hover { color: var(--gold); }
+
+    .footer-copy {
+      font-size: 0.72rem;
+      color: rgba(140,123,107,0.5);
+      letter-spacing: 0.08em;
+    }
+
+    /* ── DIVIDER ───────────────────────────────────── */
+    .divider {
+      width: 1px;
+      height: 4rem;
+      background: linear-gradient(to bottom, transparent, var(--gold), transparent);
+      margin: 0 auto 3rem;
+      opacity: 0.4;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── HERO ── -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+
+    <!-- Stars -->
+    <div class="stars" id="stars"></div>
+
+    <nav>
+      <span class="logo">Ecos</span>
+      <ul class="nav-links">
+        <li><a href="#pantallas">App</a></li>
+        <li><a href="#funciones">Funciones</a></li>
+        <li><a href="#stack">Stack</a></li>
+        <li><a href="https://github.com/JulianVelasco17/ecos-app" target="_blank">GitHub</a></li>
+      </ul>
+    </nav>
+
+    <div class="hero-content">
+      <span class="eyebrow">Proyecto de desarrollo · iOS &amp; Android</span>
+      <h1>Tu brújula<br /><em>personal.</em></h1>
+      <p class="hero-desc">
+        Aplicación de autoconocimiento y astrología construida en Flutter.
+        Lecturas diarias generadas con IA, carta natal interactiva y compatibilidad
+        entre signos — todo con un tono que mezcla introspección y perspectiva crítica.
+      </p>
+      <div class="cta-row">
+        <a href="https://github.com/JulianVelasco17/ecos-app" target="_blank" class="btn-primary">Ver código</a>
+        <a href="#pantallas" class="btn-secondary">Ver la app</a>
+      </div>
+    </div>
+
+    <!-- Phone mockup -->
+    <div class="hero-visual">
+      <div class="phone-frame">
+        <img
+          src="https://github.com/user-attachments/assets/54b37dd7-159b-49cf-a08c-a70bfeec23df"
+          alt="Ecos app — pantalla principal"
+        />
+      </div>
+      <div class="phone-glow"></div>
+    </div>
+
+    <div class="hero-scroll">
+      <div class="scroll-line"></div>
+      Scroll
+    </div>
+  </section>
+
+  <!-- ── SCREENSHOTS ── -->
+  <section class="screenshots" id="pantallas">
+    <div class="section-label">Interfaz</div>
+    <h2>Diseñada para<br /><em>la introspección</em></h2>
+
+    <div class="screens-grid">
+      <div class="screen-card">
+        <div class="screen-img">
+          <img src="https://github.com/user-attachments/assets/54b37dd7-159b-49cf-a08c-a70bfeec23df" alt="Inicio" />
+        </div>
+        <span class="screen-label">Inicio</span>
+      </div>
+      <div class="screen-card">
+        <div class="screen-img">
+          <img src="https://github.com/user-attachments/assets/0570c049-97a9-493f-9afe-2ae49ea4042b" alt="Clima astral" />
+        </div>
+        <span class="screen-label">Clima astral</span>
+      </div>
+      <div class="screen-card">
+        <div class="screen-img">
+          <img src="https://github.com/user-attachments/assets/312671df-5a97-4c9f-873a-59181573064a" alt="Lectura diaria" />
+        </div>
+        <span class="screen-label">Lectura diaria</span>
+      </div>
+      <div class="screen-card">
+        <div class="screen-img">
+          <img src="https://github.com/user-attachments/assets/cedfacfd-2146-4378-94cb-791edae36e5b" alt="Tu Big 3" />
+        </div>
+        <span class="screen-label">Tu Big 3</span>
+      </div>
+      <div class="screen-card">
+        <div class="screen-img">
+          <img src="https://github.com/user-attachments/assets/63a03331-3053-49ae-abf3-d949d3cc0a4c" alt="Carta natal" />
+        </div>
+        <span class="screen-label">Carta natal</span>
+      </div>
+      <div class="screen-card">
+        <div class="screen-img">
+          <img src="https://github.com/user-attachments/assets/98f16a05-279d-441b-9c1c-c4c38fa7f150" alt="Arquetipo" />
+        </div>
+        <span class="screen-label">Arquetipo</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FEATURES ── -->
+  <section id="funciones">
+    <div class="section-label">Funcionalidades</div>
+    <h2>Construido de<br /><em>principio a fin</em></h2>
+
+    <div class="features-grid">
+      <div class="feature">
+        <span class="feature-icon">✦</span>
+        <h3>Lecturas con IA</h3>
+        <p>Contenido personalizado generado por Claude (Anthropic) según signo solar, ascendente y área de vida. Banco estructurado de frases procesado en Cloud Functions.</p>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">◯</span>
+        <h3>Carta natal interactiva</h3>
+        <p>Cálculo e interpretación de posiciones planetarias. Renderizado con shaders GLSL personalizados para efectos visuales únicos.</p>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">⊹</span>
+        <h3>Autenticación completa</h3>
+        <p>Google Sign In y Apple Sign In integrados. Gestión de sesiones con Firebase Auth y datos en Cloud Firestore.</p>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">◈</span>
+        <h3>Modelo freemium</h3>
+        <p>Suscripción premium gestionada con RevenueCat. Contenido diferenciado por nivel, con lógica de paywall y restauración de compras.</p>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">◇</span>
+        <h3>Notificaciones push</h3>
+        <p>Recordatorios diarios y lecturas programadas vía Firebase Cloud Messaging + flutter_local_notifications con soporte de timezone.</p>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">✧</span>
+        <h3>Widget de pantalla</h3>
+        <p>Widget nativo para iOS y Android que muestra la lectura del día sin necesidad de abrir la app, usando home_widget.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── STACK ── -->
+  <section class="stack-section" id="stack">
+    <div class="section-label">Stack técnico</div>
+    <h2>Arquitectura<br /><em>del producto</em></h2>
+
+    <div class="stack-cols">
+      <div class="stack-list">
+        <div class="stack-item">
+          <span class="stack-layer">Frontend</span>
+          <span class="stack-tech">Flutter (Dart)</span>
+        </div>
+        <div class="stack-item">
+          <span class="stack-layer">Backend</span>
+          <span class="stack-tech">Firebase Cloud Functions</span>
+        </div>
+        <div class="stack-item">
+          <span class="stack-layer">Base de datos</span>
+          <span class="stack-tech">Cloud Firestore</span>
+        </div>
+        <div class="stack-item">
+          <span class="stack-layer">Auth</span>
+          <span class="stack-tech">Firebase Auth · Apple · Google</span>
+        </div>
+        <div class="stack-item">
+          <span class="stack-layer">IA generativa</span>
+          <span class="stack-tech">Anthropic API (Claude Haiku)</span>
+        </div>
+        <div class="stack-item">
+          <span class="stack-layer">Monetización</span>
+          <span class="stack-tech">RevenueCat</span>
+        </div>
+        <div class="stack-item">
+          <span class="stack-layer">Almacenamiento</span>
+          <span class="stack-tech">Firebase Storage</span>
+        </div>
+        <div class="stack-item">
+          <span class="stack-layer">Visual</span>
+          <span class="stack-tech">Shaders GLSL · Playfair Display</span>
+        </div>
+      </div>
+
+      <div>
+        <p class="stack-desc">
+          Ecos es un producto completo: desde el diseño de cada pantalla hasta la
+          infraestructura backend que lo sostiene. La integración con Claude API corre
+          en Cloud Functions para mantener las API keys fuera del cliente. El modelo
+          freemium está implementado con RevenueCat en ambas plataformas.
+        </p>
+        <br />
+        <p class="stack-desc">
+          Los efectos visuales del marble shader están escritos en GLSL y compilados
+          por Flutter al momento de build. La arquitectura está pensada para escalar
+          sin rediseño: nuevas lecturas, nuevos arquetipos o nuevas secciones se agregan
+          sin tocar la lógica de presentación.
+        </p>
+        <br />
+        <div class="cta-row" style="margin-top:1.5rem">
+          <a href="https://github.com/JulianVelasco17/ecos-app" target="_blank" class="btn-secondary">
+            Ver repositorio →
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA ── -->
+  <section class="cta-section">
+    <div class="divider"></div>
+    <div class="section-label" style="justify-content:center">Contacto</div>
+    <h2>¿Hablamos?</h2>
+    <p>
+      Desarrollado por Bernardo Julián Velasco Terán,<br />
+      ingeniero industrial y desarrollador de software.
+    </p>
+    <div class="cta-row" style="justify-content:center">
+      <a href="mailto:julian.velasco@eccos.online" class="btn-primary">julian.velasco@eccos.online</a>
+      <a href="https://github.com/JulianVelasco17" target="_blank" class="btn-secondary">GitHub</a>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    <span class="logo">Ecos</span>
+    <ul class="footer-links">
+      <li><a href="https://sites.google.com/view/eccos-privacy" target="_blank">Privacidad</a></li>
+      <li><a href="https://github.com/JulianVelasco17/ecos-app" target="_blank">GitHub</a></li>
+      <li><a href="mailto:julian.velasco@eccos.online">Contacto</a></li>
+    </ul>
+    <span class="footer-copy">© 2026 Julián Velasco</span>
+  </footer>
+
+  <script>
+    // Generate stars
+    const starsEl = document.getElementById('stars');
+    for (let i = 0; i < 80; i++) {
+      const s = document.createElement('div');
+      s.className = 'star';
+      s.style.cssText = `
+        left: ${Math.random() * 100}%;
+        top: ${Math.random() * 100}%;
+        --d: ${3 + Math.random() * 5}s;
+        --delay: ${Math.random() * 6}s;
+        --op: ${0.3 + Math.random() * 0.6};
+        width: ${Math.random() > 0.7 ? 3 : 2}px;
+        height: ${Math.random() > 0.7 ? 3 : 2}px;
+      `;
+      starsEl.appendChild(s);
+    }
+  </script>
+</body>
+</html>
