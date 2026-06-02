@@ -1,4 +1,4 @@
-# mi_primera_app
+# Ecos - Brujula personal
 
 A new Flutter project.
 
